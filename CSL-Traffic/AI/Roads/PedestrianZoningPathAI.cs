@@ -4,8 +4,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using CSL_Traffic.Extensions;
+using System.Reflection;
+using System.Collections;
 
-namespace PedestrianZoning
+namespace CSL_Traffic
 {
 	/*
 	 * Self explanatory. Most of the code (if not all, can't really remember if I changed anything) was taken
@@ -13,7 +16,83 @@ namespace PedestrianZoning
 	 */
 	class PedestrianZoningPathAI : PedestrianPathAI
 	{
+		static bool sm_initialized;
+
 		public bool m_enableZoning = true;
+
+		public static void Initialize(NetCollection collection, Transform customPrefabs)
+		{
+			if (sm_initialized)
+				return;
+
+			NetInfo originalPedestrianPath = collection.m_prefabs.Where(p => p.name == "Pedestrian Pavement").FirstOrDefault();
+			if (originalPedestrianPath == null)
+				throw new KeyNotFoundException("Pedestrian Pavement was not found on " + collection.name);
+
+			GameObject instance = GameObject.Instantiate<GameObject>(originalPedestrianPath.gameObject); ;
+			instance.name = "Zonable Pedestrian Pavement";
+			instance.transform.SetParent(customPrefabs);
+			GameObject.Destroy(instance.GetComponent<PedestrianPathAI>());
+			instance.AddComponent<PedestrianZoningPathAI>();
+
+			NetInfo zonablePedestrianPath = instance.GetComponent<NetInfo>();
+			zonablePedestrianPath.m_prefabInitialized = false;
+			zonablePedestrianPath.m_netAI = null;
+			zonablePedestrianPath.m_flattenTerrain = true;
+			zonablePedestrianPath.m_halfWidth = 4f;
+			zonablePedestrianPath.m_autoRemove = false;
+			zonablePedestrianPath.m_flatJunctions = true;
+			zonablePedestrianPath.m_surfaceLevel = 0f;
+			zonablePedestrianPath.m_class = ScriptableObject.CreateInstance<ItemClass>();
+			zonablePedestrianPath.m_class.m_service = ItemClass.Service.Road;
+			zonablePedestrianPath.m_class.m_subService = ItemClass.SubService.None;
+			zonablePedestrianPath.m_class.m_level = ItemClass.Level.Level1;
+			typeof(NetInfo).GetFieldByName("m_UICategory").SetValue(zonablePedestrianPath, "RoadsSmall");
+
+			// Pedestrian lane
+			NetInfo.Lane[] lanes = new NetInfo.Lane[3];
+			lanes[0] = zonablePedestrianPath.m_lanes[0];
+			lanes[0].m_width = 6f;
+			PropInfo lampProp = lanes[0].m_laneProps.m_props[0].m_prop;
+			lanes[0].m_laneProps = ScriptableObject.CreateInstance<NetLaneProps>();
+			lanes[0].m_laneProps.m_props = new NetLaneProps.Prop[1];
+			lanes[0].m_laneProps.m_props[0] = new NetLaneProps.Prop() { m_prop = lampProp, m_position = new Vector3(-4f, 0f, 0f), m_repeatDistance = 30f };
+
+			// Backward Lane
+			lanes[1] = new NetInfo.Lane();
+			lanes[1].m_position = -1.5f;
+			lanes[1].m_width = 3f;
+			lanes[1].m_verticalOffset = 0f;
+			lanes[1].m_stopOffset = 0.1f;
+			lanes[1].m_speedLimit = 0.3f;
+			lanes[1].m_direction = NetInfo.Direction.Backward;
+			lanes[1].m_laneType = (NetInfo.LaneType)((byte)32);
+			lanes[1].m_vehicleType = VehicleInfo.VehicleType.Car;
+			lanes[1].m_laneProps = ScriptableObject.CreateInstance<NetLaneProps>();
+			lanes[1].m_allowStop = true;
+			lanes[1].m_useTerrainHeight = false;
+
+			// Forward Lane
+			lanes[2] = new NetInfo.Lane();
+			lanes[2].m_position = 1.5f;
+			lanes[2].m_width = 3f;
+			lanes[2].m_verticalOffset = 0f;
+			lanes[2].m_stopOffset = 0.1f;
+			lanes[2].m_speedLimit = 0.3f;
+			lanes[2].m_direction = NetInfo.Direction.Forward;
+			lanes[2].m_laneType = (NetInfo.LaneType)((byte)32);
+			lanes[2].m_vehicleType = VehicleInfo.VehicleType.Car;
+			lanes[2].m_laneProps = ScriptableObject.CreateInstance<NetLaneProps>();
+			lanes[2].m_allowStop = true;
+			lanes[2].m_useTerrainHeight = false;
+
+			zonablePedestrianPath.m_lanes = lanes;
+
+			MethodInfo initMethod = typeof(NetCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
+			Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { zonablePedestrianPath }, new string[] { } }));
+			
+			sm_initialized = true;
+		}
 
 		public override void GetEffectRadius(out float radius, out bool capped, out UnityEngine.Color color)
 		{
@@ -237,6 +316,127 @@ namespace PedestrianZoning
 				}
 			}
 			return toolErrors;
+		}
+
+		public override NetInfo GetInfo(float elevation, float length, bool incoming, bool outgoing, bool curved, bool enableDouble, ref ToolBase.ToolErrors errors)
+		{
+			if (incoming || outgoing)
+			{
+				int num;
+				int num2;
+				Singleton<BuildingManager>.instance.CalculateOutsideConnectionCount(this.m_info.m_class.m_service, this.m_info.m_class.m_subService, out num, out num2);
+				if ((incoming && num >= 4) || (outgoing && num2 >= 4))
+				{
+					errors |= ToolBase.ToolErrors.TooManyConnections;
+				}
+			}
+			if (this.m_invisible)
+			{
+				return this.m_info;
+			}
+			if (elevation > 255f)
+			{
+				errors |= ToolBase.ToolErrors.HeightTooHigh;
+			}
+			if (this.m_bridgeInfo != null && elevation > 25f && length > 45f && !curved && (enableDouble || !this.m_bridgeInfo.m_netAI.RequireDoubleSegments()))
+			{
+				return this.m_bridgeInfo;
+			}
+			if (this.m_elevatedInfo != null && elevation > 2f)
+			{
+				return this.m_elevatedInfo;
+			}
+			if (elevation > 4f)
+			{
+				errors |= ToolBase.ToolErrors.HeightTooHigh;
+			}
+			return this.m_info;
+		}
+
+		public override void UpdateLaneConnection(ushort nodeID, ref NetNode data)
+		{
+			uint num = 0u;
+			byte offset = 0;
+			float num2 = 1E+10f;
+			if ((data.m_flags & NetNode.Flags.ForbidLaneConnection) == NetNode.Flags.None)
+			{
+				float maxDistance = 8f;
+				if ((data.m_flags & NetNode.Flags.End) != NetNode.Flags.None)
+				{
+					maxDistance = 16f;
+				}
+				PathUnit.Position pathPos;
+				PathUnit.Position position;
+				float num3;
+				float num4;
+				if (this.m_connectService1 != ItemClass.Service.None && PathManager.FindPathPosition(data.m_position, this.m_connectService1, (NetInfo.LaneType)((byte)32), VehicleInfo.VehicleType.None | VehicleInfo.VehicleType.Car, maxDistance, out pathPos, out position, out num3, out num4) && num3 < num2)
+				{
+					num2 = num3;
+					num = PathManager.GetLaneID(pathPos);
+					offset = pathPos.m_offset;
+				}
+				PathUnit.Position pathPos2;
+				PathUnit.Position position2;
+				float num5;
+				float num6;
+				if (this.m_connectService2 != ItemClass.Service.None && PathManager.FindPathPosition(data.m_position, this.m_connectService2, (NetInfo.LaneType)((byte)32), VehicleInfo.VehicleType.None | VehicleInfo.VehicleType.Car, maxDistance, out pathPos2, out position2, out num5, out num6) && num5 < num2 && (this.m_canConnectTunnel || !Singleton<NetManager>.instance.m_segments.m_buffer[(int)pathPos2.m_segment].Info.m_netAI.IsUnderground()))
+				{
+					num = PathManager.GetLaneID(pathPos2);
+					offset = pathPos2.m_offset;
+				}
+			}
+			if (num != data.m_lane)
+			{
+				if (data.m_lane != 0u)
+				{
+					this.RemoveLaneConnection(nodeID, ref data);
+				}
+				if (num != 0u)
+				{
+					this.AddLaneConnection(nodeID, ref data, num, offset);
+				}
+			}
+		}
+
+		private void AddLaneConnection(ushort nodeID, ref NetNode data, uint laneID, byte offset)
+		{
+			NetManager instance = Singleton<NetManager>.instance;
+			data.m_lane = laneID;
+			data.m_laneOffset = offset;
+			data.m_nextLaneNode = instance.m_lanes.m_buffer[(int)((UIntPtr)data.m_lane)].m_nodes;
+			instance.m_lanes.m_buffer[(int)((UIntPtr)data.m_lane)].m_nodes = nodeID;
+		}
+		private void RemoveLaneConnection(ushort nodeID, ref NetNode data)
+		{
+			NetManager instance = Singleton<NetManager>.instance;
+			ushort num = 0;
+			ushort num2 = instance.m_lanes.m_buffer[(int)((UIntPtr)data.m_lane)].m_nodes;
+			int num3 = 0;
+			while (num2 != 0)
+			{
+				if (num2 == nodeID)
+				{
+					if (num == 0)
+					{
+						instance.m_lanes.m_buffer[(int)((UIntPtr)data.m_lane)].m_nodes = data.m_nextLaneNode;
+					}
+					else
+					{
+						instance.m_nodes.m_buffer[(int)num].m_nextLaneNode = data.m_nextLaneNode;
+					}
+					break;
+				}
+				num = num2;
+				num2 = instance.m_nodes.m_buffer[(int)num2].m_nextLaneNode;
+				if (++num3 > 32768)
+				{
+					CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
+					break;
+				}
+			}
+			data.m_lane = 0u;
+			data.m_laneOffset = 0;
+			data.m_nextLaneNode = 0;
 		}
 	}
 }

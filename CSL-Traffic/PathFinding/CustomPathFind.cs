@@ -2,15 +2,12 @@ using ColossalFramework;
 using ColossalFramework.Math;
 using ColossalFramework.UI;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Threading;
 using UnityEngine;
-using PedestrianZoning.Extensions;
+using CSL_Traffic.Extensions;
 
-namespace PedestrianZoning
+namespace CSL_Traffic
 {
 	/*
 	 * This is the class responsible for pathfinding. It's all in here since none of the methods can be overwritten.

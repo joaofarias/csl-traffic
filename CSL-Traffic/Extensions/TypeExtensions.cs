@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace PedestrianZoning.Extensions
+namespace CSL_Traffic.Extensions
 {
 	public static class TypeExtensions
 	{
 		/// <summary>
 		/// Returns all fields from this type, including static, private and inherited private fields.
 		/// </summary>
-		public static IEnumerable<FieldInfo> GetAllFields(this Type type)
+		public static IEnumerable<FieldInfo> GetAllFieldsFromType(this Type type)
 		{
 			if (type == null)
 				return Enumerable.Empty<FieldInfo>();
@@ -19,7 +19,7 @@ namespace PedestrianZoning.Extensions
 								 BindingFlags.Static | BindingFlags.Instance |
 								 BindingFlags.DeclaredOnly;
 			if (type.BaseType != null)
-				return type.GetFields(flags).Concat(type.BaseType.GetAllFields());
+				return type.GetFields(flags).Concat(type.BaseType.GetAllFieldsFromType());
 			else
 				return type.GetFields(flags);
 		}
@@ -30,7 +30,7 @@ namespace PedestrianZoning.Extensions
 		/// </summary>
 		public static FieldInfo GetFieldByName(this Type type, string name)
 		{
-			return type.GetAllFields().Where(p => p.Name == name).FirstOrDefault();
+			return type.GetAllFieldsFromType().Where(p => p.Name == name).FirstOrDefault();
 		}
 	}
 }

@@ -1,15 +1,15 @@
 using ICities;
 using UnityEngine;
 
-namespace PedestrianZoning
+namespace CSL_Traffic
 {
-	public class PedestrianZoning : LoadingExtensionBase, IUserMod
+	public class CSLTraffic : LoadingExtensionBase, IUserMod
 	{
 		GameObject m_initializer;
 
 		public string Name
 		{
-			get { return "Pedestrian Zoning"; }
+			get { return "Zonable Pedestrian Paths"; }
 		}
 
 		public string Description
@@ -23,7 +23,7 @@ namespace PedestrianZoning
 
 			if (GameObject.Find("Initializer") == null)
 			{
-				m_initializer = new GameObject("Initializer");
+				m_initializer = new GameObject("Custom Prefabs");
 				m_initializer.AddComponent<Initializer>();
 			}
 		}

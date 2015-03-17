@@ -1,11 +1,9 @@
 using ColossalFramework.Math;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
-using PedestrianZoning.Extensions;
+using CSL_Traffic.Extensions;
 
-namespace PedestrianZoning
+namespace CSL_Traffic
 {
 	/*
 	 * The PathManager is needed to use the CustomPathFind class that is where the real magic happens.
