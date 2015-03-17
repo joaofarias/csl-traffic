@@ -1,5 +1,9 @@
+using ColossalFramework.Globalization;
 using ICities;
+using System.Collections.Generic;
 using UnityEngine;
+using CSL_Traffic.Extensions;
+using ColossalFramework;
 
 namespace CSL_Traffic
 {
@@ -21,16 +25,16 @@ namespace CSL_Traffic
 		{
 			base.OnCreated(loading);
 
-			if (GameObject.Find("Initializer") == null)
+			if (m_initializer == null)
 			{
-				m_initializer = new GameObject("Custom Prefabs");
+				m_initializer = new GameObject("CSL-Traffic Custom Prefabs");
 				m_initializer.AddComponent<Initializer>();
 			}
 		}
 
-		public override void OnLevelUnloading()
+		public override void OnReleased()
 		{
-			base.OnLevelUnloading();
+			base.OnReleased();
 
 			GameObject.Destroy(m_initializer);
 		}

@@ -11,7 +11,7 @@ namespace CSL_Traffic
 {
 	class PedestrianZoningBridgeAI : PedestrianBridgeAI
 	{
-		static bool sm_initialized;
+		public static bool sm_initialized;
 
 		public static void Initialize(NetCollection collection, Transform customPrefabs)
 		{
@@ -85,6 +85,9 @@ namespace CSL_Traffic
 		public override void InitializePrefab()
 		{
 			base.InitializePrefab();
+
+			this.m_constructionCost = 2000;
+			this.m_maintenanceCost = 250;
 
 			try
 			{

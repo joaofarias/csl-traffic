@@ -10,7 +10,7 @@ namespace CSL_Traffic
 {
 	class CustomFireTruckAI : FireTruckAI, IVehicle
 	{
-		static bool sm_initialized;
+		public static bool sm_initialized;
 		// TODO: check performance on these and compare with transcribed methods
 		//static MethodInfo sm_arriveAtTarget = typeof(FireTruckAI).GetMethod("ArriveAtTarget", BindingFlags.Instance | BindingFlags.NonPublic);
 		//static MethodInfo sm_extinguishFire = typeof(FireTruckAI).GetMethod("ExtinguishFire", BindingFlags.Instance | BindingFlags.NonPublic);

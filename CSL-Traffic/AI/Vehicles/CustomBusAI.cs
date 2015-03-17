@@ -9,7 +9,7 @@ namespace CSL_Traffic
 {
 	class CustomBusAI : BusAI, IVehicle
 	{
-		static bool sm_initialized;
+		public static bool sm_initialized;
 
 		public static void Initialize(VehicleCollection collection, Transform customPrefabs)
 		{

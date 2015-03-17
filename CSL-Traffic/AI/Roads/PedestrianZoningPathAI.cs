@@ -16,7 +16,7 @@ namespace CSL_Traffic
 	 */
 	class PedestrianZoningPathAI : PedestrianPathAI
 	{
-		static bool sm_initialized;
+		public static bool sm_initialized;
 
 		public bool m_enableZoning = true;
 
@@ -92,6 +92,14 @@ namespace CSL_Traffic
 			Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { zonablePedestrianPath }, new string[] { } }));
 			
 			sm_initialized = true;
+		}
+
+		public override void InitializePrefab()
+		{
+			base.InitializePrefab();
+
+			this.m_constructionCost = 2000;
+			this.m_maintenanceCost = 250;
 		}
 
 		public override void GetEffectRadius(out float radius, out bool capped, out UnityEngine.Color color)

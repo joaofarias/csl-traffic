@@ -14,7 +14,7 @@ namespace CSL_Traffic
 	 */
 	public class CustomGarbageTruckAI : GarbageTruckAI, IVehicle
 	{
-		static bool sm_initialized;
+		public static bool sm_initialized;
 		//static MethodInfo sm_tryCollectGarbage = typeof(FireTruckAI).GetMethod("TryCollectGarbage", BindingFlags.Instance | BindingFlags.NonPublic, Type.DefaultBinder, new[] { typeof(ushort), typeof(Vehicle), typeof(Vehicle.Frame) }, null);
 		//static MethodInfo sm_tryCollectGarbageBig = typeof(FireTruckAI).GetMethod("TryCollectGarbage", BindingFlags.Instance | BindingFlags.NonPublic, Type.DefaultBinder, new[] { typeof(ushort), typeof(Vehicle), typeof(Vehicle.Frame), typeof(ushort), typeof(Building)  }, null);
 		//static MethodInfo sm_arriveAtTarget = typeof(FireTruckAI).GetMethod("ArriveAtTarget", BindingFlags.Instance | BindingFlags.NonPublic);
