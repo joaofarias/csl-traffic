@@ -14,5 +14,7 @@ namespace CSL_Traffic
 		void ArrivingToDestination(ushort vehicleID, ref Vehicle vehicleData);
 		float CalculateTargetSpeed(ushort vehicleID, ref Vehicle data, float speedLimit, float curve);
 		void InvalidPath(ushort vehicleID, ref Vehicle vehicleData, ushort leaderID, ref Vehicle leaderData);
+        bool IsHeavyVehicle();
+        bool IgnoreBlocked(ushort vehicleID, ref Vehicle vehicleData);
 	}
 }

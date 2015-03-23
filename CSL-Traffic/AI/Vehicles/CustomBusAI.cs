@@ -101,5 +101,15 @@ namespace CSL_Traffic
 		{
 			base.InvalidPath(vehicleID, ref vehicleData, leaderID, ref leaderData);
 		}
+
+        public new bool IsHeavyVehicle()
+        {
+            return base.IsHeavyVehicle();
+        }
+
+        public new bool IgnoreBlocked(ushort vehicleID, ref Vehicle vehicleData)
+        {
+            return base.IgnoreBlocked(vehicleID, ref vehicleData);
+        }
 	}
 }

@@ -6,6 +6,8 @@ using CSL_Traffic.Extensions;
 using ColossalFramework.Globalization;
 using ColossalFramework;
 using System.IO;
+using System.Text;
+using System.Collections;
 
 namespace CSL_Traffic
 {
@@ -21,7 +23,10 @@ namespace CSL_Traffic
 
 		void Start()
 		{
-			ReplacePathManager();
+            if ((CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) != OptionsManager.ModOptions.GhostMode)
+            {
+                ReplacePathManager();
+            }
 		}
 		
 		void Update()
@@ -36,11 +41,13 @@ namespace CSL_Traffic
 				m_initialized = false;
 
 				// roads
-				PedestrianZoningPathAI.sm_initialized = false;
-				PedestrianZoningBridgeAI.sm_initialized = false;
+				ZonablePedestrianPathAI.sm_initialized = false;
+				ZonablePedestrianBridgeAI.sm_initialized = false;
 				
 				// vehicles
 				CustomAmbulanceAI.sm_initialized = false;
+                CustomBusAI.sm_initialized = false;
+                CustomCargoTruckAI.sm_initialized = false;
 				CustomFireTruckAI.sm_initialized = false;
 				CustomGarbageTruckAI.sm_initialized = false;
 				CustomHearseAI.sm_initialized = false;
@@ -59,27 +66,33 @@ namespace CSL_Traffic
 		{
 			try {
 				NetCollection beautificationNetCollection = GameObject.Find("Beautification").GetComponent<NetCollection>();
+                //NetCollection roadsNetCollection = GameObject.Find("Road").GetComponent<NetCollection>();
 				VehicleCollection garbageVehicleCollection = GameObject.Find("Garbage").GetComponent<VehicleCollection>();
 				VehicleCollection policeVehicleCollection = GameObject.Find("Police Department").GetComponent<VehicleCollection>();
 				//VehicleCollection publicTansportVehicleCollection = GameObject.Find("Public Transport").GetComponent<VehicleCollection>();
 				VehicleCollection healthCareVehicleCollection = GameObject.Find("Health Care").GetComponent<VehicleCollection>();
 				VehicleCollection fireDepartmentVehicleCollection = GameObject.Find("Fire Department").GetComponent<VehicleCollection>();
-
+                VehicleCollection industrialVehicleCollection = GameObject.Find("Industrial").GetComponent<VehicleCollection>();
+                
 				// Localization
 				UpdateLocalization();
 
 				// roads
-				PedestrianZoningPathAI.Initialize(beautificationNetCollection, transform);
-				PedestrianZoningBridgeAI.Initialize(beautificationNetCollection, transform);
+				ZonablePedestrianPathAI.Initialize(beautificationNetCollection, transform);
+				ZonablePedestrianBridgeAI.Initialize(beautificationNetCollection, transform);
 				
 				// vehicles
-				CustomGarbageTruckAI.Initialize(garbageVehicleCollection, transform);
-				CustomAmbulanceAI.Initialize(healthCareVehicleCollection, transform);
-				//CustomBusAI.Initialize(publicTansportVehicleCollection, transform);
-				CustomFireTruckAI.Initialize(fireDepartmentVehicleCollection, transform);
-				CustomHearseAI.Initialize(healthCareVehicleCollection, transform);
-				CustomPoliceCarAI.Initialize(policeVehicleCollection, transform);
-
+                if ((CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) != OptionsManager.ModOptions.GhostMode)
+                {
+                    CustomAmbulanceAI.Initialize(healthCareVehicleCollection, transform);
+                    //CustomBusAI.Initialize(publicTansportVehicleCollection, transform);
+                    CustomCargoTruckAI.Initialize(industrialVehicleCollection, transform);
+                    CustomFireTruckAI.Initialize(fireDepartmentVehicleCollection, transform);
+                    CustomGarbageTruckAI.Initialize(garbageVehicleCollection, transform);
+                    CustomHearseAI.Initialize(healthCareVehicleCollection, transform);
+                    CustomPoliceCarAI.Initialize(policeVehicleCollection, transform);
+                }
+				
 				m_initialized = true;
 			} catch(KeyNotFoundException knf) {
 #if DEBUG
@@ -88,6 +101,56 @@ namespace CSL_Traffic
 #endif
 			} catch(Exception) {}
 		}
+
+        //IEnumerator Print()
+        //{
+        //    yield return new WaitForSeconds(30f);
+
+        //    foreach (var item in GameObject.FindObjectsOfType<GameObject>())
+        //    {
+        //        if (item.transform.parent == null)
+        //            printGameObjects(item);
+        //    }
+        //}
+
+        //void printGameObjects(GameObject go, int depth = 0)
+        //{
+        //    StringBuilder sb = new StringBuilder();
+        //    for (int i = 0; i < depth; i++)
+        //    {
+        //        sb.Append(">");
+        //    }
+        //    sb.Append("> ");
+        //    sb.Append(go.name);
+        //    sb.Append("\n");
+
+        //    System.IO.File.AppendAllText("MapScene.txt", sb.ToString());
+
+        //    printComponents(go, depth);
+
+        //    foreach (Transform t in go.transform)
+        //    {
+        //        printGameObjects(t.gameObject, depth + 1);
+        //    }
+        //}
+
+        //void printComponents(GameObject go, int depth)
+        //{
+        //    foreach (var item in go.GetComponents<Component>())
+        //    {
+        //        StringBuilder sb = new StringBuilder();
+        //        for (int i = 0; i < depth; i++)
+        //        {
+        //            sb.Append(" ");
+        //        }
+        //        sb.Append("  -- ");
+        //        sb.Append(item.GetType().Name);
+        //        sb.Append("\n");
+
+        //        System.IO.File.AppendAllText("MapScene.txt", sb.ToString());
+        //    }
+        //}
+
 
 		// Replace the pathfinding system for mine
 		void ReplacePathManager()

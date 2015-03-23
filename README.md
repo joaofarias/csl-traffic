@@ -9,7 +9,7 @@ You don't need to start a new game to use this mod but you should backup your sa
 The goal of this mod is to improve traffic in Cities: Skylines by adding new roads, vehicles, tools and behaviours.
 
 # Current State
-At this time, this mod only adds a new pedestrian path that is zonable and can be used by garbage trucks.
+At this time, this mod only adds a new pedestrian path that is zonable and can be used by all services and trucks (optionally).
 
 # Roadmap
 - Different randomized vehicle speeds (already developed but not yet included)

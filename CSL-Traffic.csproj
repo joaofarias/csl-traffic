@@ -1,0 +1,101 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{B72BBA25-29E5-4180-BFE9-653D6E347F3F}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <NoStandardLibraries>false</NoStandardLibraries>
+    <AssemblyName>CSL-Traffic</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <RootNamespace>CSL_Traffic</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Cities_Skylines\Cities_Data\Managed\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="ColossalManaged">
+      <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Cities_Skylines\Cities_Data\Managed\ColossalManaged.dll</HintPath>
+    </Reference>
+    <Reference Include="ICities">
+      <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Cities_Skylines\Cities_Data\Managed\ICities.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="UnityEngine">
+      <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Cities_Skylines\Cities_Data\Managed\UnityEngine.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include=".gitattributes" />
+    <Content Include=".gitignore" />
+    <Content Include=".git\ms-persist.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".git\config" />
+    <None Include=".git\description" />
+    <None Include=".git\HEAD" />
+    <None Include=".git\hooks\README.sample" />
+    <None Include=".git\index" />
+    <None Include=".git\info\exclude" />
+    <None Include=".git\objects\pack\pack-036acf936e092a9caecde56d823a2e6d15cdf093.idx" />
+    <None Include=".git\objects\pack\pack-036acf936e092a9caecde56d823a2e6d15cdf093.pack" />
+    <None Include=".git\refs\heads\master" />
+    <None Include=".git\refs\remotes\origin\master" />
+    <None Include="README.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="CSL-Traffic\AI\Roads\ZonablePedestrianBridgeAI.cs" />
+    <Compile Include="CSL-Traffic\AI\Roads\ZonablePedestrianPathAI.cs" />
+    <Compile Include="CSL-Traffic\AI\Vehicles\CustomAmbulanceAI.cs" />
+    <Compile Include="CSL-Traffic\AI\Vehicles\CustomBusAI.cs" />
+    <Compile Include="CSL-Traffic\AI\Vehicles\CustomCarAI.cs" />
+    <Compile Include="CSL-Traffic\AI\Vehicles\CustomCargoTruckAI.cs" />
+    <Compile Include="CSL-Traffic\AI\Vehicles\CustomFireTruckAI.cs" />
+    <Compile Include="CSL-Traffic\AI\Vehicles\CustomGarbageTruckAI.cs" />
+    <Compile Include="CSL-Traffic\AI\Vehicles\CustomHearseAI.cs" />
+    <Compile Include="CSL-Traffic\AI\Vehicles\CustomPoliceCarAI.cs" />
+    <Compile Include="CSL-Traffic\AI\Vehicles\CustomVehicleAI.cs" />
+    <Compile Include="CSL-Traffic\AI\Vehicles\IVehicle.cs" />
+    <Compile Include="CSL-Traffic\CSLTraffic.cs" />
+    <Compile Include="CSL-Traffic\Extensions\TypeExtensions.cs" />
+    <Compile Include="CSL-Traffic\Initializer.cs" />
+    <Compile Include="CSL-Traffic\OptionsManager.cs" />
+    <Compile Include="CSL-Traffic\PathFinding\CustomPathFind.cs" />
+    <Compile Include="CSL-Traffic\PathFinding\CustomPathManager.cs" />
+    <Compile Include="CSL-Traffic\Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include=".git\objects\info\" />
+    <Folder Include=".git\refs\tags\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSHARP.Targets" />
+  <ProjectExtensions>
+    <VisualStudio AllowExistingFolder="true" />
+  </ProjectExtensions>
+</Project>
