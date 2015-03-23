@@ -89,6 +89,7 @@
     <Compile Include="CSL-Traffic\PathFinding\CustomPathFind.cs" />
     <Compile Include="CSL-Traffic\PathFinding\CustomPathManager.cs" />
     <Compile Include="CSL-Traffic\Properties\AssemblyInfo.cs" />
+    <Compile Include="CSL-Traffic\Tools\CustomTransportTool.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include=".git\objects\info\" />

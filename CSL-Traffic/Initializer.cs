@@ -69,11 +69,13 @@ namespace CSL_Traffic
                 //NetCollection roadsNetCollection = GameObject.Find("Road").GetComponent<NetCollection>();
 				VehicleCollection garbageVehicleCollection = GameObject.Find("Garbage").GetComponent<VehicleCollection>();
 				VehicleCollection policeVehicleCollection = GameObject.Find("Police Department").GetComponent<VehicleCollection>();
-				//VehicleCollection publicTansportVehicleCollection = GameObject.Find("Public Transport").GetComponent<VehicleCollection>();
+				VehicleCollection publicTansportVehicleCollection = GameObject.Find("Public Transport").GetComponent<VehicleCollection>();
 				VehicleCollection healthCareVehicleCollection = GameObject.Find("Health Care").GetComponent<VehicleCollection>();
 				VehicleCollection fireDepartmentVehicleCollection = GameObject.Find("Fire Department").GetComponent<VehicleCollection>();
                 VehicleCollection industrialVehicleCollection = GameObject.Find("Industrial").GetComponent<VehicleCollection>();
-                
+
+                ToolController toolController = GameObject.Find("Tool Controller").GetComponent<ToolController>();
+
 				// Localization
 				UpdateLocalization();
 
@@ -81,16 +83,19 @@ namespace CSL_Traffic
 				ZonablePedestrianPathAI.Initialize(beautificationNetCollection, transform);
 				ZonablePedestrianBridgeAI.Initialize(beautificationNetCollection, transform);
 				
-				// vehicles
                 if ((CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) != OptionsManager.ModOptions.GhostMode)
                 {
+                    // vehicles
                     CustomAmbulanceAI.Initialize(healthCareVehicleCollection, transform);
-                    //CustomBusAI.Initialize(publicTansportVehicleCollection, transform);
+                    CustomBusAI.Initialize(publicTansportVehicleCollection, transform);
                     CustomCargoTruckAI.Initialize(industrialVehicleCollection, transform);
                     CustomFireTruckAI.Initialize(fireDepartmentVehicleCollection, transform);
                     CustomGarbageTruckAI.Initialize(garbageVehicleCollection, transform);
                     CustomHearseAI.Initialize(healthCareVehicleCollection, transform);
                     CustomPoliceCarAI.Initialize(policeVehicleCollection, transform);
+
+                    //Tools
+                    CustomTransportTool.Initialize(toolController);
                 }
 				
 				m_initialized = true;
