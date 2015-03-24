@@ -8,6 +8,7 @@ using ColossalFramework;
 using System.IO;
 using System.Text;
 using System.Collections;
+using System.Linq;
 
 namespace CSL_Traffic
 {
@@ -26,6 +27,7 @@ namespace CSL_Traffic
             if ((CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) != OptionsManager.ModOptions.GhostMode)
             {
                 ReplacePathManager();
+                ReplaceTransportManager();
             }
 		}
 		
@@ -52,6 +54,12 @@ namespace CSL_Traffic
 				CustomGarbageTruckAI.sm_initialized = false;
 				CustomHearseAI.sm_initialized = false;
 				CustomPoliceCarAI.sm_initialized = false;
+
+                // Tools
+                CustomTransportTool.sm_initialized = false;
+
+                // Transports
+                BusTransportLineAI.sm_initialized = false;
 			}
 		}
 
@@ -65,15 +73,24 @@ namespace CSL_Traffic
 		void TryReplacePrefabs()
 		{
 			try {
+                // NetCollections
 				NetCollection beautificationNetCollection = GameObject.Find("Beautification").GetComponent<NetCollection>();
                 //NetCollection roadsNetCollection = GameObject.Find("Road").GetComponent<NetCollection>();
+                NetCollection publicTansportNetCollection = GameObject.Find("Public Transport").GetComponent<NetCollection>();
+
+                // VehicleCollections
 				VehicleCollection garbageVehicleCollection = GameObject.Find("Garbage").GetComponent<VehicleCollection>();
 				VehicleCollection policeVehicleCollection = GameObject.Find("Police Department").GetComponent<VehicleCollection>();
-				//VehicleCollection publicTansportVehicleCollection = GameObject.Find("Public Transport").GetComponent<VehicleCollection>();
+				VehicleCollection publicTansportVehicleCollection = GameObject.Find("Public Transport").GetComponent<VehicleCollection>();
 				VehicleCollection healthCareVehicleCollection = GameObject.Find("Health Care").GetComponent<VehicleCollection>();
 				VehicleCollection fireDepartmentVehicleCollection = GameObject.Find("Fire Department").GetComponent<VehicleCollection>();
                 VehicleCollection industrialVehicleCollection = GameObject.Find("Industrial").GetComponent<VehicleCollection>();
-                
+
+                TransportCollection publicTransportTransportCollection = GameObject.Find("Public Transport").GetComponent<TransportCollection>();
+
+                // Tools
+                ToolController toolController = GameObject.Find("Tool Controller").GetComponent<ToolController>();
+
 				// Localization
 				UpdateLocalization();
 
@@ -81,16 +98,22 @@ namespace CSL_Traffic
 				ZonablePedestrianPathAI.Initialize(beautificationNetCollection, transform);
 				ZonablePedestrianBridgeAI.Initialize(beautificationNetCollection, transform);
 				
-				// vehicles
                 if ((CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) != OptionsManager.ModOptions.GhostMode)
                 {
+                    // Transports
+                    BusTransportLineAI.Initialize(publicTansportNetCollection, publicTansportVehicleCollection, publicTransportTransportCollection, transform);
+
+                    // vehicles
                     CustomAmbulanceAI.Initialize(healthCareVehicleCollection, transform);
-                    //CustomBusAI.Initialize(publicTansportVehicleCollection, transform);
+                    CustomBusAI.Initialize(publicTansportVehicleCollection, transform);
                     CustomCargoTruckAI.Initialize(industrialVehicleCollection, transform);
                     CustomFireTruckAI.Initialize(fireDepartmentVehicleCollection, transform);
                     CustomGarbageTruckAI.Initialize(garbageVehicleCollection, transform);
                     CustomHearseAI.Initialize(healthCareVehicleCollection, transform);
                     CustomPoliceCarAI.Initialize(policeVehicleCollection, transform);
+
+                    //Tools
+                    CustomTransportTool.Initialize(toolController);
                 }
 				
 				m_initialized = true;
@@ -106,7 +129,7 @@ namespace CSL_Traffic
         //{
         //    yield return new WaitForSeconds(30f);
 
-        //    foreach (var item in GameObject.FindObjectsOfType<GameObject>())
+        //    foreach (var item in Resources.FindObjectsOfTypeAll<GameObject>().Except(GameObject.FindObjectsOfType<GameObject>()))
         //    {
         //        if (item.transform.parent == null)
         //            printGameObjects(item);
@@ -124,7 +147,7 @@ namespace CSL_Traffic
         //    sb.Append(go.name);
         //    sb.Append("\n");
 
-        //    System.IO.File.AppendAllText("MapScene.txt", sb.ToString());
+        //    System.IO.File.AppendAllText("MapScenePrefabs.txt", sb.ToString());
 
         //    printComponents(go, depth);
 
@@ -147,7 +170,7 @@ namespace CSL_Traffic
         //        sb.Append(item.GetType().Name);
         //        sb.Append("\n");
 
-        //        System.IO.File.AppendAllText("MapScene.txt", sb.ToString());
+        //        System.IO.File.AppendAllText("MapScenePrefabs.txt", sb.ToString());
         //    }
         //}
 
@@ -172,6 +195,29 @@ namespace CSL_Traffic
 			// Destroy in 10 seconds to give time to all references to update to the new manager without crashing
 			GameObject.Destroy(originalPathManager, 10f);
 		}
+
+        void ReplaceTransportManager()
+        {
+            // Change TransportManager to CustomTransportManager
+            FieldInfo sInstance = typeof(ColossalFramework.Singleton<TransportManager>).GetFieldByName("sInstance");
+            TransportManager originalTransportManager = ColossalFramework.Singleton<TransportManager>.instance;
+            CustomTransportManager customTransportManager = originalTransportManager.gameObject.AddComponent<CustomTransportManager>();
+            customTransportManager.SetOriginalValues(originalTransportManager);
+
+            // change the new instance in the singleton
+            sInstance.SetValue(null, customTransportManager);
+
+            // change the manager in the SimulationManager
+            FastList<ISimulationManager> managers = (FastList<ISimulationManager>)typeof(SimulationManager).GetFieldByName("m_managers").GetValue(null);
+            managers.Remove(originalTransportManager);
+            managers.Add(customTransportManager);
+
+            // add to renderable managers
+            RenderManager.RegisterRenderableManager(customTransportManager);
+
+            // Destroy in 10 seconds to give time to all references to update to the new manager without crashing
+            GameObject.Destroy(originalTransportManager, 10f);
+        }
 
 		void UpdateLocalization()
 		{

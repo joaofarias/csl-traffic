@@ -72,6 +72,7 @@
   <ItemGroup>
     <Compile Include="CSL-Traffic\AI\Roads\ZonablePedestrianBridgeAI.cs" />
     <Compile Include="CSL-Traffic\AI\Roads\ZonablePedestrianPathAI.cs" />
+    <Compile Include="CSL-Traffic\Transports\BusTransportLineAI.cs" />
     <Compile Include="CSL-Traffic\AI\Vehicles\CustomAmbulanceAI.cs" />
     <Compile Include="CSL-Traffic\AI\Vehicles\CustomBusAI.cs" />
     <Compile Include="CSL-Traffic\AI\Vehicles\CustomCarAI.cs" />
@@ -89,6 +90,8 @@
     <Compile Include="CSL-Traffic\PathFinding\CustomPathFind.cs" />
     <Compile Include="CSL-Traffic\PathFinding\CustomPathManager.cs" />
     <Compile Include="CSL-Traffic\Properties\AssemblyInfo.cs" />
+    <Compile Include="CSL-Traffic\Tools\CustomTransportTool.cs" />
+    <Compile Include="CSL-Traffic\Transports\CustomTransportManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include=".git\objects\info\" />

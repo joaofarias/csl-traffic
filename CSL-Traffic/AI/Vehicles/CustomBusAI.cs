@@ -22,10 +22,13 @@ namespace CSL_Traffic
 			GameObject instance = GameObject.Instantiate<GameObject>(originalBus.gameObject);
 			instance.name = "Bus";
 			instance.transform.SetParent(customPrefabs);
-			BusAI bai = instance.GetComponent<BusAI>();
-			System.IO.File.AppendAllText("Bus.txt", bai.m_passengerCapacity + " | " + bai.m_ticketPrice + "\n");
+			
+            BusAI busAI = instance.GetComponent<BusAI>();
+            TransportInfo transportInfo = busAI.m_transportInfo;
+            
 			GameObject.Destroy(instance.GetComponent<BusAI>());
-			instance.AddComponent<CustomBusAI>();
+			CustomBusAI customBusAI = instance.AddComponent<CustomBusAI>();
+            customBusAI.m_transportInfo = transportInfo;
 
 			VehicleInfo bus = instance.GetComponent<VehicleInfo>();
 			bus.m_prefabInitialized = false;
@@ -39,14 +42,55 @@ namespace CSL_Traffic
 
 		public override void InitializeAI()
 		{
-			base.InitializeAI();
-			// FIXME: m_transportInfo = ??
+			base.InitializeAI();            
+
 #if DEBUG
 			System.IO.File.AppendAllText("Debug.txt", "Initializing Bus AI.\n");
 #endif
 		}
 
-		// TODO: simulation step and searchpathfind
+        public override void SimulationStep(ushort vehicleID, ref Vehicle vehicleData, ref Vehicle.Frame frameData, ushort leaderID, ref Vehicle leaderData, int lodPhysics)
+        {
+            if ((vehicleData.m_flags & Vehicle.Flags.Stopped) != Vehicle.Flags.None)
+            {
+                vehicleData.m_waitCounter += 1;
+                if (this.CanLeave(vehicleID, ref vehicleData))
+                {
+                    vehicleData.m_flags &= ~Vehicle.Flags.Stopped;
+                    vehicleData.m_flags |= Vehicle.Flags.Leaving;
+                    vehicleData.m_waitCounter = 0;
+                }
+            }
+            CustomCarAI.SimulationStep(this, vehicleID, ref vehicleData, ref frameData, leaderID, ref leaderData, lodPhysics);
+            if ((vehicleData.m_flags & Vehicle.Flags.GoingBack) == Vehicle.Flags.None && this.ShouldReturnToSource(vehicleID, ref vehicleData))
+            {
+                this.SetTransportLine(vehicleID, ref vehicleData, 0);
+            }
+        }
+
+        protected override bool StartPathFind(ushort vehicleID, ref Vehicle vehicleData, Vector3 startPos, Vector3 endPos, bool startBothWays, bool endBothWays)
+        {
+            return CustomCarAI.StartPathFind(this, vehicleID, ref vehicleData, startPos, endPos, startBothWays, endBothWays, true);
+        }
+
+
+        /*
+		 * Private unmodified methods
+		 */
+
+        private bool ShouldReturnToSource(ushort vehicleID, ref Vehicle data)
+        {
+            if (data.m_sourceBuilding != 0)
+            {
+                BuildingManager instance = Singleton<BuildingManager>.instance;
+                if ((instance.m_buildings.m_buffer[(int)data.m_sourceBuilding].m_flags & Building.Flags.Active) == Building.Flags.None && instance.m_buildings.m_buffer[(int)data.m_sourceBuilding].m_fireIntensity == 0)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
 
 		/*
 		 * Interface Proxy Methods
