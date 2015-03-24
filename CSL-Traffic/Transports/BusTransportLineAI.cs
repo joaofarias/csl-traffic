@@ -15,7 +15,7 @@ namespace CSL_Traffic
     {
         public static bool sm_initialized;
 
-        public static void Initialize(NetCollection collection, Transform customPrefabs)
+        public static void Initialize(NetCollection collection, VehicleCollection vehicleCollection, Transform customPrefabs)
         {
             if (sm_initialized)
                 return;
@@ -26,15 +26,18 @@ namespace CSL_Traffic
 
             GameObject instance = GameObject.Instantiate<GameObject>(originalBusLine.gameObject); ;
             instance.name = "Bus Line";
-            instance.transform.SetParent(customPrefabs);
+            instance.transform.SetParent(customPrefabs); 
             GameObject.Destroy(instance.GetComponent<TransportLineAI>());
             instance.AddComponent<BusTransportLineAI>();
-
-           
 
             NetInfo busLine = instance.GetComponent<NetInfo>();
             busLine.m_prefabInitialized = false;
             busLine.m_netAI = null;
+
+            VehicleInfo originalBus = vehicleCollection.m_prefabs.Where(p => p.name.Contains("Bus")).FirstOrDefault();
+            if (originalBus == null)
+                throw new KeyNotFoundException("Bus was not found on " + collection.name);
+            (originalBus.m_vehicleAI as BusAI).m_transportInfo.m_netInfo = busLine;
 
             MethodInfo initMethod = typeof(NetCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
             Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { busLine }, new string[] { "Bus Line" } }));
@@ -48,6 +51,12 @@ namespace CSL_Traffic
 
             this.m_publicTransportAccumulation = 50;
             this.m_netService = ItemClass.Service.Road;
+
+
+
+#if DEBUG
+            System.IO.File.AppendAllText("Debug.txt", "Initializing Bus Transport Line AI.\n");
+#endif
         }
 
         public override void SimulationStep(ushort segmentID, ref NetSegment data)
@@ -239,6 +248,7 @@ namespace CSL_Traffic
 
         public static bool UpdateMeshData(TransportLine transportLine, ushort lineID)
         {
+            //return transportLine.UpdateMeshData(lineID);
             bool flag = true;
             int num = 0;
             int num2 = 0;

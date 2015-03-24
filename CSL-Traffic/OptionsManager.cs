@@ -17,8 +17,9 @@ namespace CSL_Traffic
             None = 0,
             AllowTrucksInPedestrianRoads = 1,
             AllowResidentsInPedestrianRoads = 2,
+            DisableCentralLaneOnPedestrianRoads = 4,
 
-            All = 3,
+            All = 7,
 
             GhostMode = long.MaxValue
         }
@@ -27,6 +28,8 @@ namespace CSL_Traffic
         GameObject m_optionsPanel;
 
         UICheckBox m_allowTrucksCheckBox;
+        //UICheckBox m_allowTrucksCheckBox;
+        UICheckBox m_disableCentralLaneCheckBox;
         UICheckBox m_ghostModeCheckBox;
         
         bool m_initialized;
@@ -122,6 +125,23 @@ namespace CSL_Traffic
             this.m_allowTrucksCheckBox.text = "Allow Trucks in Pedestrian Roads";
             this.m_allowTrucksCheckBox.isVisible = true;
 
+            // allow residents
+            //GameObject allowTrucks = GameObject.Instantiate<GameObject>(checkboxTemplate);
+            //GameObject.Destroy(allowTrucks.GetComponent<BindProperty>());
+            //allowTrucks.transform.SetParent(optionsList.transform);
+            ////allowTrucks.transform.localPosition = localPosition + new Vector3(0.05f, -0.1f, 0f);
+            //this.m_allowTrucksCheckBox = allowTrucks.GetComponent<UICheckBox>();
+            //this.m_allowTrucksCheckBox.isChecked = false;
+            //this.m_allowTrucksCheckBox.text = "Allow Trucks in Pedestrian Roads";
+            //this.m_allowTrucksCheckBox.isVisible = true;
+
+            // disable central lane
+            GameObject disableCentralLane = GameObject.Instantiate<GameObject>(allowTrucks);
+            disableCentralLane.transform.SetParent(allowTrucks.transform.parent);
+            this.m_disableCentralLaneCheckBox = disableCentralLane.GetComponent<UICheckBox>();
+            this.m_disableCentralLaneCheckBox.isChecked = false;
+            this.m_disableCentralLaneCheckBox.text = "Disable Central Lane on Pedestrian Roads";
+            this.m_disableCentralLaneCheckBox.isVisible = true;
 
 
 
@@ -129,7 +149,6 @@ namespace CSL_Traffic
 
             GameObject ghostMode = GameObject.Instantiate<GameObject>(allowTrucks);
             ghostMode.transform.SetParent(this.m_optionsPanel.transform);
-            //ghostMode.transform.localPosition = localPosition + new Vector3(0.05f, -0.8f, 0f);
             this.m_ghostModeCheckBox = ghostMode.GetComponent<UICheckBox>();
             this.m_ghostModeCheckBox.isChecked = false;
             this.m_ghostModeCheckBox.text = "Enable Ghost Mode (disables all mod functionality leaving only enough logic to load the map)";
@@ -171,6 +190,11 @@ namespace CSL_Traffic
                 options.allowTrucks = true;
                 CSLTraffic.Options |= ModOptions.AllowTrucksInPedestrianRoads;
             }
+            if (this.m_disableCentralLaneCheckBox.isChecked)
+            {
+                options.disableCentralLane = true;
+                CSLTraffic.Options |= ModOptions.DisableCentralLaneOnPedestrianRoads;
+            }
             if (this.m_ghostModeCheckBox.isChecked)
             {
                 options.ghostMode = true;
@@ -205,6 +229,11 @@ namespace CSL_Traffic
                 this.m_allowTrucksCheckBox.isChecked = true;
                 CSLTraffic.Options |= ModOptions.AllowTrucksInPedestrianRoads;
             }
+            if (options.disableCentralLane)
+            {
+                this.m_disableCentralLaneCheckBox.isChecked = true;
+                CSLTraffic.Options |= ModOptions.DisableCentralLaneOnPedestrianRoads;
+            }
             if (options.ghostMode)
             {
                 this.m_ghostModeCheckBox.isChecked = true;
@@ -220,7 +249,7 @@ namespace CSL_Traffic
 
         void Update()
         {
-            if (!m_initialized || m_optionsButtonGo == null)
+            if (!m_initialized || (Application.loadedLevel == 5 && m_optionsButtonGo == null))
             {
                 try
                 {
@@ -234,6 +263,7 @@ namespace CSL_Traffic
         {
             public bool allowTrucks;
             //public bool allowResidents;
+            public bool disableCentralLane;
             
             public bool ghostMode;
         }

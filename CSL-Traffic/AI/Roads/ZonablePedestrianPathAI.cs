@@ -53,45 +53,116 @@ namespace CSL_Traffic
             zonablePedestrianPath.m_class.m_level = ItemClass.Level.Level1;
             typeof(NetInfo).GetFieldByName("m_UICategory").SetValue(zonablePedestrianPath, "RoadsSmall");
 
-            // Pedestrian lane
-            NetInfo.Lane[] lanes = new NetInfo.Lane[3];
-            lanes[0] = zonablePedestrianPath.m_lanes[0];
-            lanes[0].m_width = 8f;
-            PropInfo lampProp = lanes[0].m_laneProps.m_props[0].m_prop;
-            lanes[0].m_laneProps = ScriptableObject.CreateInstance<NetLaneProps>();
-            lanes[0].m_laneProps.m_props = new NetLaneProps.Prop[2];
-            lanes[0].m_laneProps.m_props[0] = new NetLaneProps.Prop() { m_prop = lampProp, m_position = new Vector3(-4.5f, 0f, 0f), m_repeatDistance = 60f, m_segmentOffset = 0f };
-            lanes[0].m_laneProps.m_props[1] = new NetLaneProps.Prop() { m_prop = lampProp, m_position = new Vector3(4.5f, 0f, 0f), m_repeatDistance = 60f, m_segmentOffset = 30f };
+            if ((CSLTraffic.Options & OptionsManager.ModOptions.DisableCentralLaneOnPedestrianRoads) == OptionsManager.ModOptions.None)
+            {
+                NetInfo.Lane[] lanes = new NetInfo.Lane[3];
 
-            // Backward Lane
-            lanes[1] = new NetInfo.Lane();
-            lanes[1].m_position = -1.5f;
-            lanes[1].m_width = 3f;
-            lanes[1].m_verticalOffset = 0f;
-            lanes[1].m_stopOffset = 0.1f;
-            lanes[1].m_speedLimit = 0.3f;
-            lanes[1].m_direction = NetInfo.Direction.Backward;
-            lanes[1].m_laneType = (NetInfo.LaneType)((byte)32);
-            lanes[1].m_vehicleType = VehicleInfo.VehicleType.Car;
-            lanes[1].m_laneProps = ScriptableObject.CreateInstance<NetLaneProps>();
-            lanes[1].m_allowStop = true;
-            lanes[1].m_useTerrainHeight = false;
+                // Central Pedestrian lane
+                lanes[0] = zonablePedestrianPath.m_lanes[0];
+                lanes[0].m_width = 9f;
+                PropInfo lampProp = lanes[0].m_laneProps.m_props[0].m_prop;
+                lanes[0].m_laneProps = ScriptableObject.CreateInstance<NetLaneProps>();
+                lanes[0].m_laneProps.m_props = new NetLaneProps.Prop[2];
+                lanes[0].m_laneProps.m_props[0] = new NetLaneProps.Prop() { m_prop = lampProp, m_position = new Vector3(-4.75f, 0f, 0f), m_repeatDistance = 60f, m_segmentOffset = 0f };
+                lanes[0].m_laneProps.m_props[1] = new NetLaneProps.Prop() { m_prop = lampProp, m_position = new Vector3(4.75f, 0f, 0f), m_repeatDistance = 60f, m_segmentOffset = 30f };
 
-            // Forward Lane
-            lanes[2] = new NetInfo.Lane();
-            lanes[2].m_position = 1.5f;
-            lanes[2].m_width = 3f;
-            lanes[2].m_verticalOffset = 0f;
-            lanes[2].m_stopOffset = 0.1f;
-            lanes[2].m_speedLimit = 0.3f;
-            lanes[2].m_direction = NetInfo.Direction.Forward;
-            lanes[2].m_laneType = (NetInfo.LaneType)((byte)32);
-            lanes[2].m_vehicleType = VehicleInfo.VehicleType.Car;
-            lanes[2].m_laneProps = ScriptableObject.CreateInstance<NetLaneProps>();
-            lanes[2].m_allowStop = true;
-            lanes[2].m_useTerrainHeight = false;
+                // Backward Lane
+                lanes[1] = new NetInfo.Lane();
+                lanes[1].m_position = -1.5f;
+                lanes[1].m_width = 3f;
+                lanes[1].m_verticalOffset = 0f;
+                lanes[1].m_stopOffset = 0.1f;
+                lanes[1].m_speedLimit = 0.3f;
+                lanes[1].m_direction = NetInfo.Direction.Backward;
+                lanes[1].m_laneType = (NetInfo.LaneType)((byte)32);
+                lanes[1].m_vehicleType = VehicleInfo.VehicleType.Car;
+                lanes[1].m_laneProps = ScriptableObject.CreateInstance<NetLaneProps>();
+                lanes[1].m_allowStop = true;
+                lanes[1].m_useTerrainHeight = false;
 
-            zonablePedestrianPath.m_lanes = lanes;
+                // Forward Lane
+                lanes[2] = new NetInfo.Lane();
+                lanes[2].m_position = 1.5f;
+                lanes[2].m_width = 3f;
+                lanes[2].m_verticalOffset = 0f;
+                lanes[2].m_stopOffset = 0.1f;
+                lanes[2].m_speedLimit = 0.3f;
+                lanes[2].m_direction = NetInfo.Direction.Forward;
+                lanes[2].m_laneType = (NetInfo.LaneType)((byte)32);
+                lanes[2].m_vehicleType = VehicleInfo.VehicleType.Car;
+                lanes[2].m_laneProps = ScriptableObject.CreateInstance<NetLaneProps>();
+                lanes[2].m_allowStop = true;
+                lanes[2].m_useTerrainHeight = false;
+
+                zonablePedestrianPath.m_lanes = lanes;
+            }
+            else
+            {
+                NetInfo.Lane[] lanes = new NetInfo.Lane[4];
+
+                // Left Pedestrian lane
+                lanes[0] = new NetInfo.Lane();
+                lanes[0].m_position = -4f;
+                lanes[0].m_width = 2f;
+                lanes[0].m_verticalOffset = zonablePedestrianPath.m_lanes[0].m_verticalOffset;
+                lanes[0].m_stopOffset = zonablePedestrianPath.m_lanes[0].m_stopOffset;
+                lanes[0].m_speedLimit = zonablePedestrianPath.m_lanes[0].m_speedLimit;
+                lanes[0].m_direction = NetInfo.Direction.Both;
+                lanes[0].m_laneType = NetInfo.LaneType.Pedestrian;
+                lanes[0].m_vehicleType = VehicleInfo.VehicleType.None;
+                lanes[0].m_laneProps = ScriptableObject.CreateInstance<NetLaneProps>();
+                lanes[0].m_laneProps.m_props = new NetLaneProps.Prop[1];
+                lanes[0].m_laneProps.m_props[0] = new NetLaneProps.Prop() { m_prop = zonablePedestrianPath.m_lanes[0].m_laneProps.m_props[0].m_prop, m_position = new Vector3(-.75f, 0f, 0f), m_repeatDistance = 60f, m_segmentOffset = 0f };
+                lanes[0].m_allowStop = true;
+                lanes[0].m_useTerrainHeight = false;
+
+
+                // Backward Lane
+                lanes[1] = new NetInfo.Lane();
+                lanes[1].m_position = -1.5f;
+                lanes[1].m_width = 3f;
+                lanes[1].m_verticalOffset = 0f;
+                lanes[1].m_stopOffset = 0.1f;
+                lanes[1].m_speedLimit = 0.3f;
+                lanes[1].m_direction = NetInfo.Direction.Backward;
+                lanes[1].m_laneType = (NetInfo.LaneType)((byte)32);
+                lanes[1].m_vehicleType = VehicleInfo.VehicleType.Car;
+                lanes[1].m_laneProps = ScriptableObject.CreateInstance<NetLaneProps>();
+                lanes[1].m_allowStop = true;
+                lanes[1].m_useTerrainHeight = false;
+
+                // Forward Lane
+                lanes[2] = new NetInfo.Lane();
+                lanes[2].m_position = 1.5f;
+                lanes[2].m_width = 3f;
+                lanes[2].m_verticalOffset = 0f;
+                lanes[2].m_stopOffset = 0.1f;
+                lanes[2].m_speedLimit = 0.3f;
+                lanes[2].m_direction = NetInfo.Direction.Forward;
+                lanes[2].m_laneType = (NetInfo.LaneType)((byte)32);
+                lanes[2].m_vehicleType = VehicleInfo.VehicleType.Car;
+                lanes[2].m_laneProps = ScriptableObject.CreateInstance<NetLaneProps>();
+                lanes[2].m_allowStop = true;
+                lanes[2].m_useTerrainHeight = false;
+
+                // Right Pedestrian lane
+                lanes[3] = new NetInfo.Lane();
+                lanes[3].m_position = 4f;
+                lanes[3].m_width = 2f;
+                lanes[3].m_verticalOffset = zonablePedestrianPath.m_lanes[0].m_verticalOffset;
+                lanes[3].m_stopOffset = zonablePedestrianPath.m_lanes[0].m_stopOffset;
+                lanes[3].m_speedLimit = zonablePedestrianPath.m_lanes[0].m_speedLimit;
+                lanes[3].m_direction = NetInfo.Direction.Both;
+                lanes[3].m_laneType = NetInfo.LaneType.Pedestrian;
+                lanes[3].m_vehicleType = VehicleInfo.VehicleType.None;
+                lanes[3].m_laneProps = ScriptableObject.CreateInstance<NetLaneProps>();
+                lanes[0].m_laneProps.m_props = new NetLaneProps.Prop[1];
+                lanes[0].m_laneProps.m_props[0] = new NetLaneProps.Prop() { m_prop = zonablePedestrianPath.m_lanes[0].m_laneProps.m_props[0].m_prop, m_position = new Vector3(.75f, 0f, 0f), m_repeatDistance = 60f, m_segmentOffset = 30f };
+                lanes[3].m_allowStop = true;
+                lanes[3].m_useTerrainHeight = false;
+
+                zonablePedestrianPath.m_lanes = lanes;
+            }
 
             Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { zonablePedestrianPath }, new string[] { } }));
 
@@ -101,6 +172,10 @@ namespace CSL_Traffic
 		public override void InitializePrefab()
 		{
 			base.InitializePrefab();
+
+#if DEBUG
+            System.IO.File.AppendAllText("Debug.txt", "Initializing Zonable Pedestrian Path AI.\n");
+#endif
 
 			this.m_constructionCost = 2000;
 			this.m_maintenanceCost = 250;

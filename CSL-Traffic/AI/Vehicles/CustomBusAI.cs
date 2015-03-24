@@ -22,10 +22,13 @@ namespace CSL_Traffic
 			GameObject instance = GameObject.Instantiate<GameObject>(originalBus.gameObject);
 			instance.name = "Bus";
 			instance.transform.SetParent(customPrefabs);
-			BusAI bai = instance.GetComponent<BusAI>();
-			System.IO.File.AppendAllText("Bus.txt", bai.m_passengerCapacity + " | " + bai.m_ticketPrice + "\n");
+			
+            BusAI busAI = instance.GetComponent<BusAI>();
+            TransportInfo transportInfo = busAI.m_transportInfo;
+            
 			GameObject.Destroy(instance.GetComponent<BusAI>());
-			instance.AddComponent<CustomBusAI>();
+			CustomBusAI customBusAI = instance.AddComponent<CustomBusAI>();
+            customBusAI.m_transportInfo = transportInfo;
 
 			VehicleInfo bus = instance.GetComponent<VehicleInfo>();
 			bus.m_prefabInitialized = false;
@@ -39,8 +42,8 @@ namespace CSL_Traffic
 
 		public override void InitializeAI()
 		{
-			base.InitializeAI();
-			// FIXME: m_transportInfo = ??
+			base.InitializeAI();            
+
 #if DEBUG
 			System.IO.File.AppendAllText("Debug.txt", "Initializing Bus AI.\n");
 #endif

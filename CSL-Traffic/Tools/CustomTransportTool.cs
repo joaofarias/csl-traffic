@@ -8,6 +8,7 @@ using System.Collections;
 using System.Reflection;
 using ColossalFramework;
 using ColossalFramework.Math;
+using ColossalFramework.Globalization;
 
 namespace CSL_Traffic
 {
@@ -656,6 +657,7 @@ namespace CSL_Traffic
             this.SetEditLine(0, false);
             return false;
         }
+
         private void SetEditLine(ushort line, bool forceRefresh)
         {
             if (line != this.m_lastEditLine || forceRefresh)
@@ -683,6 +685,72 @@ namespace CSL_Traffic
                     instance.m_lines.m_buffer[(int)this.m_tempLine].CloneLine(this.m_tempLine, this.m_lastEditLine);
                     BusTransportLineAI.UpdateMeshData(instance.m_lines.m_buffer[(int)this.m_tempLine], this.m_tempLine);
                 }
+            }
+        }
+
+        protected override void OnToolUpdate()
+        {
+            if (!this.m_toolController.IsInsideUI && Cursor.visible)
+            {
+                CustomTransportTool.Mode mode = this.m_mode;
+                ushort lastEditLine = this.m_lastEditLine;
+                int hoverStopIndex = this.m_hoverStopIndex;
+                int hoverSegmentIndex = this.m_hoverSegmentIndex;
+                Vector3 hitPosition = this.m_hitPosition;
+                string text = null;
+                if (this.m_errors != ToolBase.ToolErrors.Pending && this.m_errors != ToolBase.ToolErrors.RaycastFailed)
+                {
+                    if (mode == CustomTransportTool.Mode.NewLine)
+                    {
+                        if (hoverStopIndex != -1)
+                        {
+                            text = Locale.Get("TOOL_DRAG_STOP");
+                        }
+                        else if (hoverSegmentIndex != -1)
+                        {
+                            text = Locale.Get("TOOL_DRAG_LINE");
+                        }
+                        else
+                        {
+                            text = Locale.Get("TOOL_NEW_LINE");
+                        }
+                    }
+                    else if (mode == CustomTransportTool.Mode.AddStops)
+                    {
+                        if (lastEditLine != 0)
+                        {
+                            ushort stops = Singleton<TransportManager>.instance.m_lines.m_buffer[(int)lastEditLine].m_stops;
+                            if (stops != 0)
+                            {
+                                Vector3 position = Singleton<NetManager>.instance.m_nodes.m_buffer[(int)stops].m_position;
+                                if (Vector3.SqrMagnitude(hitPosition - position) < 6.25f)
+                                {
+                                    text = Locale.Get("TOOL_CLOSE_LINE");
+                                }
+                            }
+                        }
+                        if (text == null)
+                        {
+                            text = Locale.Get("TOOL_ADD_STOP");
+                        }
+                    }
+                    else if (mode == CustomTransportTool.Mode.MoveStops)
+                    {
+                        if (hoverStopIndex != -1)
+                        {
+                            text = Locale.Get("TOOL_MOVE_STOP");
+                        }
+                        else if (hoverSegmentIndex != -1)
+                        {
+                            text = Locale.Get("TOOL_ADD_STOP");
+                        }
+                    }
+                }
+                base.ShowToolInfo(true, text, this.m_hitPosition);
+            }
+            else
+            {
+                base.ShowToolInfo(false, null, this.m_hitPosition);
             }
         }
     }
