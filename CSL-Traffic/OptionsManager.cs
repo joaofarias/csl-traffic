@@ -221,7 +221,13 @@ namespace CSL_Traffic
         void Update()
         {
             if (!m_initialized || m_optionsButtonGo == null)
-                Start();
+            {
+                try
+                {
+                    Start();
+                }
+                catch { }
+            }
         }
 
         public struct Options
