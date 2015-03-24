@@ -151,7 +151,7 @@ namespace CSL_Traffic
                 return true;
             }
             uint path;
-            if ((Singleton<PathManager>.instance as CustomPathManager).CreatePath(out path, ref Singleton<SimulationManager>.instance.m_randomizer, Singleton<SimulationManager>.instance.m_currentBuildIndex, startPosA, startPosB, endPosA, endPosB, NetInfo.LaneType.Vehicle | (NetInfo.LaneType)((byte)32), vehicleType, 20000f, false, true, true, skipQueue))
+            if ((Singleton<PathManager>.instance as CustomPathManager).CreatePath(out path, ref Singleton<SimulationManager>.instance.m_randomizer, Singleton<SimulationManager>.instance.m_currentBuildIndex, startPosA, startPosB, endPosA, endPosB, NetInfo.LaneType.Vehicle | (NetInfo.LaneType)((byte)32) | ((NetInfo.LaneType)((byte)64)), vehicleType, 20000f, false, true, true, skipQueue))
             {
                 if (startPosA.m_segment != 0 && startPosB.m_segment != 0)
                 {
@@ -240,7 +240,7 @@ namespace CSL_Traffic
                 NetManager instance = Singleton<NetManager>.instance;
                 int num;
                 uint num2;
-                if (instance.m_segments.m_buffer[(int)pos.m_segment].GetClosestLane((int)pos.m_lane, NetInfo.LaneType.Vehicle | (NetInfo.LaneType)((byte)32), vehicleType, out num, out num2))
+                if (instance.m_segments.m_buffer[(int)pos.m_segment].GetClosestLane((int)pos.m_lane, NetInfo.LaneType.Vehicle | (NetInfo.LaneType)((byte)32) | ((NetInfo.LaneType)((byte)64)), vehicleType, out num, out num2))
                 {
                     pos.m_lane = (byte)num;
                     return true;

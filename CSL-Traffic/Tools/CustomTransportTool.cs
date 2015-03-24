@@ -507,7 +507,7 @@ namespace CSL_Traffic
                 Vector3 vector;
                 int num3;
                 float num4;
-                if (segment != 0 && instance.m_segments.m_buffer[(int)segment].GetClosestLanePosition(hitPos, NetInfo.LaneType.Pedestrian, VehicleInfo.VehicleType.None, out point, out num, out num2) && instance.m_segments.m_buffer[(int)segment].GetClosestLanePosition(point, NetInfo.LaneType.Vehicle | (NetInfo.LaneType)((byte)32), info.m_vehicleType, out vector, out num3, out num4))
+                if (segment != 0 && instance.m_segments.m_buffer[(int)segment].GetClosestLanePosition(hitPos, NetInfo.LaneType.Pedestrian, VehicleInfo.VehicleType.None, out point, out num, out num2) && instance.m_segments.m_buffer[(int)segment].GetClosestLanePosition(point, NetInfo.LaneType.Vehicle | (NetInfo.LaneType)((byte)32) | ((NetInfo.LaneType)((byte)64)), info.m_vehicleType, out vector, out num3, out num4))
                 {
                     PathUnit.Position pathPos;
                     pathPos.m_segment = segment;

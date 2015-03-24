@@ -181,7 +181,7 @@ namespace CSL_Traffic
 					}
 					return;
 				}
-				if ((byte)(lane2.m_laneType & (NetInfo.LaneType.Vehicle | NetInfo.LaneType.Cargo | ((NetInfo.LaneType)((byte)32)))) == 0)
+                if ((byte)(lane2.m_laneType & (NetInfo.LaneType.Vehicle | NetInfo.LaneType.Cargo | ((NetInfo.LaneType)((byte)32)) | ((NetInfo.LaneType)((byte)64)))) == 0)
 				{
 					(vehicleAI as IVehicle).InvalidPath(vehicleID, ref vehicleData, vehicleID, ref vehicleData);
 					return;

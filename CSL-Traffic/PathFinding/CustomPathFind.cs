@@ -750,7 +750,7 @@ namespace CSL_Traffic
 						}
 					}
 					NetInfo.LaneType laneType = this.m_laneTypes & ~NetInfo.LaneType.Pedestrian;
-					laneType &= ~(item.m_lanesUsed & (NetInfo.LaneType.Vehicle | ((NetInfo.LaneType)((byte)32))));
+                    laneType &= ~(item.m_lanesUsed & (NetInfo.LaneType.Vehicle | ((NetInfo.LaneType)((byte)32)) | ((NetInfo.LaneType)((byte)64))));
 					int num15;
 					uint lane3;
 					if (laneType != NetInfo.LaneType.None && instance.m_segments.m_buffer[(int)segment2].GetClosestLane(lane2, laneType, this.m_vehicleTypes, out num15, out lane3))
@@ -1009,7 +1009,7 @@ namespace CSL_Traffic
 			NetInfo.LaneType laneType2 = this.m_laneTypes;
 			if (!enableVehicle)
 			{
-				laneType2 &= ~(NetInfo.LaneType.Vehicle | ((NetInfo.LaneType)((byte)32)));
+                laneType2 &= ~(NetInfo.LaneType.Vehicle | ((NetInfo.LaneType)((byte)32)) | ((NetInfo.LaneType)((byte)64)));
 			}
 			if (!enablePedestrian)
 			{
@@ -1065,7 +1065,7 @@ namespace CSL_Traffic
 								float num18 = (float)Mathf.Abs((int)(item2.m_position.m_offset - this.m_startOffsetB)) * 0.003921569f;
 								item2.m_comparisonValue += num18 * segment.m_averageLength / (num17 * this.m_maxLength);
 							}
-							if (!this.m_ignoreBlocked && (segment.m_flags & NetSegment.Flags.Blocked) != NetSegment.Flags.None && (lane2.m_laneType & (NetInfo.LaneType.Vehicle | ((NetInfo.LaneType)((byte)32)))) != 0)
+                            if (!this.m_ignoreBlocked && (segment.m_flags & NetSegment.Flags.Blocked) != NetSegment.Flags.None && (lane2.m_laneType & (NetInfo.LaneType.Vehicle | ((NetInfo.LaneType)((byte)32)) | ((NetInfo.LaneType)((byte)64)))) != 0)
 							{
 								item2.m_comparisonValue += 0.1f;
 								result = true;
@@ -1348,7 +1348,7 @@ namespace CSL_Traffic
 		{
 			if (laneTypes == NetInfo.LaneType.None || (byte)(laneTypes & lane.m_laneType) != 0)
 			{
-				if ((byte)(lane.m_laneType & (NetInfo.LaneType.Vehicle | NetInfo.LaneType.Parking | NetInfo.LaneType.Cargo | ((NetInfo.LaneType)((byte)32)))) == 0)
+                if ((byte)(lane.m_laneType & (NetInfo.LaneType.Vehicle | NetInfo.LaneType.Parking | NetInfo.LaneType.Cargo | ((NetInfo.LaneType)((byte)32)) | ((NetInfo.LaneType)((byte)64)))) == 0)
 				{
 					return true;
 				}

@@ -45,6 +45,7 @@ namespace CSL_Traffic
 				// roads
 				ZonablePedestrianPathAI.sm_initialized = false;
 				ZonablePedestrianBridgeAI.sm_initialized = false;
+                LargeRoadWithBusLanesAI.sm_initialized = false;
 				
 				// vehicles
 				CustomAmbulanceAI.sm_initialized = false;
@@ -75,7 +76,7 @@ namespace CSL_Traffic
 			try {
                 // NetCollections
 				NetCollection beautificationNetCollection = GameObject.Find("Beautification").GetComponent<NetCollection>();
-                //NetCollection roadsNetCollection = GameObject.Find("Road").GetComponent<NetCollection>();
+                NetCollection roadsNetCollection = GameObject.Find("Road").GetComponent<NetCollection>();
                 NetCollection publicTansportNetCollection = GameObject.Find("Public Transport").GetComponent<NetCollection>();
 
                 // VehicleCollections
@@ -97,6 +98,7 @@ namespace CSL_Traffic
 				// roads
 				ZonablePedestrianPathAI.Initialize(beautificationNetCollection, transform);
 				ZonablePedestrianBridgeAI.Initialize(beautificationNetCollection, transform);
+                LargeRoadWithBusLanesAI.Initialize(roadsNetCollection, transform);
 				
                 if ((CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) != OptionsManager.ModOptions.GhostMode)
                 {
