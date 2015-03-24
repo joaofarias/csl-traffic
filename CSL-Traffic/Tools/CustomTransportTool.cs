@@ -681,7 +681,7 @@ namespace CSL_Traffic
                 if (this.m_tempLine != 0)
                 {
                     instance.m_lines.m_buffer[(int)this.m_tempLine].CloneLine(this.m_tempLine, this.m_lastEditLine);
-                    instance.m_lines.m_buffer[(int)this.m_tempLine].UpdateMeshData(this.m_tempLine);
+                    BusTransportLineAI.UpdateMeshData(instance.m_lines.m_buffer[(int)this.m_tempLine], this.m_tempLine);
                 }
             }
         }

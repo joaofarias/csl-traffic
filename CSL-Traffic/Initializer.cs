@@ -26,6 +26,7 @@ namespace CSL_Traffic
             if ((CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) != OptionsManager.ModOptions.GhostMode)
             {
                 ReplacePathManager();
+                ReplaceTransportManager();
             }
 		}
 		
@@ -177,6 +178,26 @@ namespace CSL_Traffic
 			// Destroy in 10 seconds to give time to all references to update to the new manager without crashing
 			GameObject.Destroy(originalPathManager, 10f);
 		}
+
+        void ReplaceTransportManager()
+        {
+            // Change TransportManager to CustomTransportManager
+            FieldInfo sInstance = typeof(ColossalFramework.Singleton<TransportManager>).GetFieldByName("sInstance");
+            TransportManager originalTransportManager = ColossalFramework.Singleton<TransportManager>.instance;
+            CustomTransportManager customTransportManager = originalTransportManager.gameObject.AddComponent<CustomTransportManager>();
+            customTransportManager.SetOriginalValues(originalTransportManager);
+
+            // change the new instance in the singleton
+            sInstance.SetValue(null, customTransportManager);
+
+            // change the manager in the SimulationManager
+            FastList<ISimulationManager> managers = (FastList<ISimulationManager>)typeof(SimulationManager).GetFieldByName("m_managers").GetValue(null);
+            managers.Remove(originalTransportManager);
+            managers.Add(customTransportManager);
+
+            // Destroy in 10 seconds to give time to all references to update to the new manager without crashing
+            GameObject.Destroy(originalTransportManager, 10f);
+        }
 
 		void UpdateLocalization()
 		{
