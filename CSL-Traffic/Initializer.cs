@@ -86,6 +86,8 @@ namespace CSL_Traffic
 				VehicleCollection fireDepartmentVehicleCollection = GameObject.Find("Fire Department").GetComponent<VehicleCollection>();
                 VehicleCollection industrialVehicleCollection = GameObject.Find("Industrial").GetComponent<VehicleCollection>();
 
+                TransportCollection publicTransportTransportCollection = GameObject.Find("Public Transport").GetComponent<TransportCollection>();
+
                 // Tools
                 ToolController toolController = GameObject.Find("Tool Controller").GetComponent<ToolController>();
 
@@ -99,7 +101,7 @@ namespace CSL_Traffic
                 if ((CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) != OptionsManager.ModOptions.GhostMode)
                 {
                     // Transports
-                    BusTransportLineAI.Initialize(publicTansportNetCollection, publicTansportVehicleCollection, transform);
+                    BusTransportLineAI.Initialize(publicTansportNetCollection, publicTansportVehicleCollection, publicTransportTransportCollection, transform);
 
                     // vehicles
                     CustomAmbulanceAI.Initialize(healthCareVehicleCollection, transform);

@@ -7,6 +7,7 @@ using UnityEngine;
 using CSL_Traffic.Extensions;
 using ColossalFramework;
 using System.Threading;
+using ColossalFramework.Math;
 
 namespace CSL_Traffic
 {
@@ -118,7 +119,8 @@ namespace CSL_Traffic
                                 ushort num3 = (ushort)(i << 6 | j);
                                 if (this.m_lines.m_buffer[(int)num3].m_flags != TransportLine.Flags.None)
                                 {
-                                    if (BusTransportLineAI.UpdatePaths(this.m_lines.m_buffer[(int)num3], num3) && BusTransportLineAI.UpdateMeshData(this.m_lines.m_buffer[(int)num3], num3))
+                                    if (BusTransportLineAI.UpdatePaths(ref this.m_lines.m_buffer[(int)num3], num3) && BusTransportLineAI.UpdateMeshData(ref this.m_lines.m_buffer[(int)num3], num3))
+                                    //if (this.m_lines.m_buffer[(int)num3].UpdatePaths(num3) && this.m_lines.m_buffer[(int)num3].UpdateMeshData(num3))
                                     {
                                         num2 &= ~(1uL << j);
                                     }
@@ -203,6 +205,102 @@ namespace CSL_Traffic
                     }
                 }
             }
+        }
+
+        public new bool RayCast(Ray ray, float rayLength, out Vector3 hit, out ushort lineIndex, out int stopIndex, out int segmentIndex)
+        {
+            int num = 0;
+            int num2 = 0;
+            int num3 = 0;
+            int num4 = 0;
+            float num5 = 16f;
+            float num6 = 9f;
+            Vector3 vector = Vector3.zero;
+            Vector3 vector2 = Vector3.zero;
+            Vector3 origin = ray.origin;
+            Vector3 normalized = ray.direction.normalized;
+            Vector3 b = ray.origin + normalized * rayLength;
+            Segment3 segment = new Segment3(origin, b);
+            NetManager instance = Singleton<NetManager>.instance;
+            for (int i = 1; i < 256; i++)
+            {
+                if ((this.m_lines.m_buffer[i].m_flags & (TransportLine.Flags.Created | TransportLine.Flags.Temporary)) == TransportLine.Flags.Created && this.m_lines.m_buffer[i].m_bounds.IntersectRay(ray))
+                {
+                    TransportManager.LineSegment[] array = this.m_lineSegments[i];
+                    Bezier3[] array2 = this.m_lineCurves[i];
+                    ushort stops = this.m_lines.m_buffer[i].m_stops;
+                    ushort num7 = stops;
+                    int num8 = 0;
+                    while (num7 != 0)
+                    {
+                        Vector3 position = instance.m_nodes.m_buffer[(int)num7].m_position;
+                        float num9 = Line3.DistanceSqr(ray.direction, ray.origin - position);
+                        if (num9 < num5)
+                        {
+                            num = i;
+                            num3 = num8;
+                            num5 = num9;
+                            vector = position;
+                        }
+                        if (array.Length > num8 && array[num8].m_bounds.IntersectRay(ray))
+                        {
+                            int curveStart = array[num8].m_curveStart;
+                            int curveEnd = array[num8].m_curveEnd;
+                            for (int j = curveStart; j < curveEnd; j++)
+                            {
+                                Vector3 min = array2[j].Min() - new Vector3(3f, 3f, 3f);
+                                Vector3 max = array2[j].Max() + new Vector3(3f, 3f, 3f);
+                                Bounds bounds = default(Bounds);
+                                bounds.SetMinMax(min, max);
+                                if (bounds.IntersectRay(ray))
+                                {
+                                    float t;
+                                    float num10;
+                                    num9 = array2[j].DistanceSqr(segment, out t, out num10);
+                                    if (num9 < num6)
+                                    {
+                                        num2 = i;
+                                        num4 = num8;
+                                        num6 = num9;
+                                        vector2 = array2[j].Position(t);
+                                    }
+                                }
+                            }
+                        }
+                        num7 = TransportLine.GetNextStop(num7);
+                        if (num7 == stops)
+                        {
+                            break;
+                        }
+                        if (++num8 >= 32768)
+                        {
+                            CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
+                            break;
+                        }
+                    }
+                }
+            }
+            if (num != 0)
+            {
+                hit = vector;
+                lineIndex = (ushort)num;
+                stopIndex = num3;
+                segmentIndex = -1;
+                return true;
+            }
+            if (num2 != 0)
+            {
+                hit = vector2;
+                lineIndex = (ushort)num2;
+                stopIndex = -1;
+                segmentIndex = num4;
+                return true;
+            }
+            hit = Vector3.zero;
+            lineIndex = 0;
+            stopIndex = -1;
+            segmentIndex = -1;
+            return false;
         }
     }
 }

@@ -279,7 +279,7 @@ namespace CSL_Traffic
                         ushort num;
                         int hoverStopIndex;
                         int hoverSegmentIndex;
-                        if (Singleton<TransportManager>.instance.RayCast(this.m_mouseRay, this.m_mouseRayLength, out vector, out num, out hoverStopIndex, out hoverSegmentIndex))
+                        if ((Singleton<TransportManager>.instance as CustomTransportManager).RayCast(this.m_mouseRay, this.m_mouseRayLength, out vector, out num, out hoverStopIndex, out hoverSegmentIndex))
                         {
                             TransportInfo info = Singleton<TransportManager>.instance.m_lines.m_buffer[(int)num].Info;
                             bool flag = info == prefab;
@@ -683,7 +683,7 @@ namespace CSL_Traffic
                 if (this.m_tempLine != 0)
                 {
                     instance.m_lines.m_buffer[(int)this.m_tempLine].CloneLine(this.m_tempLine, this.m_lastEditLine);
-                    BusTransportLineAI.UpdateMeshData(instance.m_lines.m_buffer[(int)this.m_tempLine], this.m_tempLine);
+                    BusTransportLineAI.UpdateMeshData(ref instance.m_lines.m_buffer[(int)this.m_tempLine], this.m_tempLine);
                 }
             }
         }

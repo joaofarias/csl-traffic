@@ -15,7 +15,7 @@ namespace CSL_Traffic
     {
         public static bool sm_initialized;
 
-        public static void Initialize(NetCollection collection, VehicleCollection vehicleCollection, Transform customPrefabs)
+        public static void Initialize(NetCollection collection, VehicleCollection vehicleCollection, TransportCollection transportCollection, Transform customPrefabs)
         {
             if (sm_initialized)
                 return;
@@ -41,6 +41,13 @@ namespace CSL_Traffic
 
             MethodInfo initMethod = typeof(NetCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
             Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { busLine }, new string[] { "Bus Line" } }));
+
+            // transport
+            TransportInfo originalTransportInfo = transportCollection.m_prefabs.Where(p => p.name.Contains("Bus")).FirstOrDefault();
+            if (originalTransportInfo == null)
+                throw new KeyNotFoundException("But Transport Info not found on " + transportCollection.name);
+
+            originalTransportInfo.m_netInfo = busLine;
 
             sm_initialized = true;
         }
@@ -246,7 +253,7 @@ namespace CSL_Traffic
 
         // from TransportLine
 
-        public static bool UpdateMeshData(TransportLine transportLine, ushort lineID)
+        public static bool UpdateMeshData(ref TransportLine transportLine, ushort lineID)
         {
             //return transportLine.UpdateMeshData(lineID);
             bool flag = true;
@@ -382,10 +389,11 @@ namespace CSL_Traffic
             {
                 Monitor.Exit(instance.m_lineMeshData);
             }
+
             return flag;
         }
 
-        public static bool UpdatePaths(TransportLine transportLine, ushort lineID)
+        public static bool UpdatePaths(ref TransportLine transportLine, ushort lineID)
         {
             bool flag = true;
             NetManager instance = Singleton<NetManager>.instance;
