@@ -45,7 +45,7 @@ namespace CSL_Traffic
             GameObject mod = null;
             foreach (var item in modsList.GetComponentsInChildren<UILabel>().Where(l => l.name == "Name"))
             {
-                if (item.text.Contains("jfarias") || item.text.Contains("Zonable Pedestrian Paths"))
+                if (item.text.Contains("jfarias") || item.text.Contains("Traffic++"))
                 {
                     mod = item.transform.parent.gameObject;
                     break;
