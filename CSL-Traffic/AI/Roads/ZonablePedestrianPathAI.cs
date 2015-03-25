@@ -18,18 +18,27 @@ namespace CSL_Traffic
             if (sm_initialized)
                 return;
 
-            NetInfo originalPedestrianPath = collection.m_prefabs.Where(p => p.name == "Pedestrian Pavement").FirstOrDefault();
+            Initialize(collection, customPrefabs, "Pedestrian Pavement", "Zonable Pedestrian Pavement");
+            Initialize(collection, customPrefabs, "Pedestrian Gravel", "Zonable Pedestrian Gravel");
+
+            sm_initialized = true;
+        }
+
+        static void Initialize(NetCollection collection, Transform customPrefabs, string prefabName, string instanceName)
+        {
+            NetInfo originalPedestrianPath = collection.m_prefabs.Where(p => p.name == prefabName).FirstOrDefault();
             if (originalPedestrianPath == null)
-                throw new KeyNotFoundException("Pedestrian Pavement was not found on " + collection.name);
+                throw new KeyNotFoundException(prefabName + " was not found on " + collection.name);
 
             GameObject instance = GameObject.Instantiate<GameObject>(originalPedestrianPath.gameObject); ;
-            instance.name = "Zonable Pedestrian Pavement";
+            instance.name = instanceName;
 
             MethodInfo initMethod = typeof(NetCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
             if ((CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) == OptionsManager.ModOptions.GhostMode)
             {
                 instance.transform.SetParent(originalPedestrianPath.transform.parent);
                 Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { instance.GetComponent<NetInfo>() }, new string[] { } }));
+                sm_initialized = true;
                 return;
             }
 
@@ -60,11 +69,15 @@ namespace CSL_Traffic
                 // Central Pedestrian lane
                 lanes[0] = zonablePedestrianPath.m_lanes[0];
                 lanes[0].m_width = 9f;
-                PropInfo lampProp = lanes[0].m_laneProps.m_props[0].m_prop;
-                lanes[0].m_laneProps = ScriptableObject.CreateInstance<NetLaneProps>();
-                lanes[0].m_laneProps.m_props = new NetLaneProps.Prop[2];
-                lanes[0].m_laneProps.m_props[0] = new NetLaneProps.Prop() { m_prop = lampProp, m_position = new Vector3(-4.75f, 0f, 0f), m_repeatDistance = 60f, m_segmentOffset = 0f };
-                lanes[0].m_laneProps.m_props[1] = new NetLaneProps.Prop() { m_prop = lampProp, m_position = new Vector3(4.75f, 0f, 0f), m_repeatDistance = 60f, m_segmentOffset = 30f };
+                if (prefabName.Contains("Pavement"))
+                {
+                    PropInfo lampProp = lanes[0].m_laneProps.m_props[0].m_prop;
+                    lanes[0].m_laneProps = ScriptableObject.CreateInstance<NetLaneProps>();
+                    lanes[0].m_laneProps.m_props = new NetLaneProps.Prop[2];
+                    lanes[0].m_laneProps.m_props[0] = new NetLaneProps.Prop() { m_prop = lampProp, m_position = new Vector3(-4.75f, 0f, 0f), m_repeatDistance = 60f, m_segmentOffset = 0f };
+                    lanes[0].m_laneProps.m_props[1] = new NetLaneProps.Prop() { m_prop = lampProp, m_position = new Vector3(4.75f, 0f, 0f), m_repeatDistance = 60f, m_segmentOffset = 30f };
+                }
+                
 
                 // Backward Lane
                 lanes[1] = new NetInfo.Lane();
@@ -111,8 +124,11 @@ namespace CSL_Traffic
                 lanes[0].m_laneType = NetInfo.LaneType.Pedestrian;
                 lanes[0].m_vehicleType = VehicleInfo.VehicleType.None;
                 lanes[0].m_laneProps = ScriptableObject.CreateInstance<NetLaneProps>();
-                lanes[0].m_laneProps.m_props = new NetLaneProps.Prop[1];
-                lanes[0].m_laneProps.m_props[0] = new NetLaneProps.Prop() { m_prop = zonablePedestrianPath.m_lanes[0].m_laneProps.m_props[0].m_prop, m_position = new Vector3(-.75f, 0f, 0f), m_repeatDistance = 60f, m_segmentOffset = 0f };
+                if (prefabName.Contains("Pavement"))
+                {
+                    lanes[0].m_laneProps.m_props = new NetLaneProps.Prop[1];
+                    lanes[0].m_laneProps.m_props[0] = new NetLaneProps.Prop() { m_prop = zonablePedestrianPath.m_lanes[0].m_laneProps.m_props[0].m_prop, m_position = new Vector3(-.75f, 0f, 0f), m_repeatDistance = 60f, m_segmentOffset = 0f };
+                }
                 lanes[0].m_allowStop = true;
                 lanes[0].m_useTerrainHeight = false;
 
@@ -156,8 +172,11 @@ namespace CSL_Traffic
                 lanes[3].m_laneType = NetInfo.LaneType.Pedestrian;
                 lanes[3].m_vehicleType = VehicleInfo.VehicleType.None;
                 lanes[3].m_laneProps = ScriptableObject.CreateInstance<NetLaneProps>();
-                lanes[0].m_laneProps.m_props = new NetLaneProps.Prop[1];
-                lanes[0].m_laneProps.m_props[0] = new NetLaneProps.Prop() { m_prop = zonablePedestrianPath.m_lanes[0].m_laneProps.m_props[0].m_prop, m_position = new Vector3(.75f, 0f, 0f), m_repeatDistance = 60f, m_segmentOffset = 30f };
+                if (prefabName.Contains("Pavement"))
+                {
+                    lanes[3].m_laneProps.m_props = new NetLaneProps.Prop[1];
+                    lanes[3].m_laneProps.m_props[0] = new NetLaneProps.Prop() { m_prop = zonablePedestrianPath.m_lanes[0].m_laneProps.m_props[0].m_prop, m_position = new Vector3(.75f, 0f, 0f), m_repeatDistance = 60f, m_segmentOffset = 30f };
+                }
                 lanes[3].m_allowStop = true;
                 lanes[3].m_useTerrainHeight = false;
 
@@ -165,8 +184,6 @@ namespace CSL_Traffic
             }
 
             Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { zonablePedestrianPath }, new string[] { } }));
-
-            sm_initialized = true;
         }
 
 		public override void InitializePrefab()
@@ -176,9 +193,17 @@ namespace CSL_Traffic
 #if DEBUG
             System.IO.File.AppendAllText("Debug.txt", "Initializing Zonable Pedestrian Path AI.\n");
 #endif
-
-			this.m_constructionCost = 2000;
-			this.m_maintenanceCost = 250;
+            if (name.Contains("Pavement"))
+            {
+                this.m_constructionCost = 2000;
+                this.m_maintenanceCost = 250;
+            }
+            else
+            {
+                this.m_constructionCost = 1000;
+                this.m_maintenanceCost = 150;
+            }
+			
 			this.m_enableZoning = true;
 
 			base.StartCoroutine(this.FixNodes());

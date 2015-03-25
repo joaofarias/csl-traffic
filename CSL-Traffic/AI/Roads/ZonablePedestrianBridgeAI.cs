@@ -28,6 +28,7 @@ namespace CSL_Traffic
             {
                 instance.transform.SetParent(originalPedestrianBridge.transform.parent);
                 Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new NetInfo[] { instance.GetComponent<NetInfo>() }, new string[0]}));
+                sm_initialized = true;
                 return;
             }
 
@@ -88,6 +89,7 @@ namespace CSL_Traffic
 						
 			sm_initialized = true;
 		}
+
 		public override void InitializePrefab()
 		{
 			base.InitializePrefab();

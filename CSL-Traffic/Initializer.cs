@@ -46,6 +46,7 @@ namespace CSL_Traffic
 				ZonablePedestrianPathAI.sm_initialized = false;
 				ZonablePedestrianBridgeAI.sm_initialized = false;
                 LargeRoadWithBusLanesAI.sm_initialized = false;
+                LargeRoadWithBusLanesBridgeAI.sm_initialized = false;
 				
 				// vehicles
 				CustomAmbulanceAI.sm_initialized = false;
@@ -99,6 +100,7 @@ namespace CSL_Traffic
 				ZonablePedestrianPathAI.Initialize(beautificationNetCollection, transform);
 				ZonablePedestrianBridgeAI.Initialize(beautificationNetCollection, transform);
                 LargeRoadWithBusLanesAI.Initialize(roadsNetCollection, transform);
+                LargeRoadWithBusLanesBridgeAI.Initialize(roadsNetCollection, transform);
 				
                 if ((CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) != OptionsManager.ModOptions.GhostMode)
                 {
@@ -233,6 +235,7 @@ namespace CSL_Traffic
 				if (locale == null)
 					throw new KeyNotFoundException("Locale is null");
 
+                // Pedestrian Pavement
 				Locale.Key k = new Locale.Key()
 				{
 					m_Identifier = "NET_TITLE",
@@ -246,6 +249,36 @@ namespace CSL_Traffic
 					m_Key = "Zonable Pedestrian Pavement"
 				};
 				locale.AddLocalizedString(k, "Paved roads are nicer to walk on than gravel. They offer access to pedestrians and can be used by public service vehicles.");
+
+                // Pedestrian Gravel
+                k = new Locale.Key()
+                {
+                    m_Identifier = "NET_TITLE",
+                    m_Key = "Zonable Pedestrian Gravel"
+                };
+                locale.AddLocalizedString(k, "Pedestrian Gravel Road");
+
+                k = new Locale.Key()
+                {
+                    m_Identifier = "NET_DESC",
+                    m_Key = "Zonable Pedestrian Gravel"
+                };
+                locale.AddLocalizedString(k, "Gravel roads allow pedestrians to walk fast and easy. They can also be used by public service vehicles.");
+
+                // Large road with bus
+                k = new Locale.Key()
+                {
+                    m_Identifier = "NET_TITLE",
+                    m_Key = "Large Road With Bus Lanes"
+                };
+                locale.AddLocalizedString(k, "Six-Lane Road With Bus Lanes");
+
+                k = new Locale.Key()
+                {
+                    m_Identifier = "NET_DESC",
+                    m_Key = "Large Road With Bus Lanes"
+                };
+                locale.AddLocalizedString(k, "A six-lane road with parking spaces and dedicated bus lanes. The bus lanes can be used by vehicles in emergency. Supports high-traffic.");
 
 				m_localizationInitialized = true;
 			}

@@ -25,13 +25,13 @@ namespace CSL_Traffic
                     sm_optionsManager = new GameObject("OptionsManager");
                     sm_optionsManager.AddComponent<OptionsManager>();
                 }
-                return "Zonable Pedestrian Paths";
+                return "Traffic++";
             }
 		}
 
 		public string Description
 		{
-			get { return "Enables zoning on pedestrian paths."; }
+			get { return "Adds zonable pedestrian paths and other traffic improvements."; }
 		}
 
 		public override void OnCreated(ILoading loading)
