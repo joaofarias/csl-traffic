@@ -15,6 +15,11 @@ namespace CSL_Traffic
 		{
 			if (sm_initialized)
 				return;
+
+#if DEBUG
+            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Initializing Ambulance AI.\n");
+#endif
+
 			VehicleInfo originalAmbulance = collection.m_prefabs.Where(p => p.name == "Ambulance").FirstOrDefault();
 			if (originalAmbulance == null)
 				throw new KeyNotFoundException("Ambulance was not found on " + collection.name);
@@ -39,8 +44,9 @@ namespace CSL_Traffic
 		{
 			base.InitializeAI();
 			this.m_patientCapacity = 1;
+
 #if DEBUG
-			System.IO.File.AppendAllText("Debug.txt", "Initializing Ambulance AI.\n");
+            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Ambulance AI successfully initialized.\n");
 #endif
 		}
 

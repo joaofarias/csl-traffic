@@ -15,6 +15,10 @@ namespace CSL_Traffic
 			if (sm_initialized)
 				return;
 
+#if DEBUG
+            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Initializing Cargo Truck AI.\n");
+#endif
+
 			int length = collection.m_prefabs.Length;
 			VehicleInfo[] vehicles = new VehicleInfo[length];
 			string[] vehicleNames = new string[length];
@@ -48,7 +52,7 @@ namespace CSL_Traffic
 			this.m_cargoCapacity = ((name == "Lorry") ? 8000 : 6000);
 
 #if DEBUG
-            System.IO.File.AppendAllText("Debug.txt", "Initializing Cargo Truck AI.\n");
+            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Cargo Truck AI successfully initialized (" + name + ").\n");
 #endif
 		}
 		public override void SimulationStep(ushort vehicleID, ref Vehicle vehicleData, ushort leaderID, ref Vehicle leaderData, int lodPhysics)

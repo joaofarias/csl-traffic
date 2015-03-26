@@ -24,6 +24,11 @@ namespace CSL_Traffic
 		{
 			if (sm_initialized)
 				return;
+
+#if DEBUG
+            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Initializing Garbage Truck AI.\n");
+#endif
+
 			VehicleInfo originalGarbageTruck = collection.m_prefabs.Where(p => p.name == "Garbage Truck").FirstOrDefault();
 			if (originalGarbageTruck == null)
 				throw new KeyNotFoundException("Garbage Truck was not found on " + collection.name);
@@ -48,9 +53,11 @@ namespace CSL_Traffic
 		{
 			base.InitializeAI();
 			this.m_cargoCapacity = 20000;
+
 #if DEBUG
-			System.IO.File.AppendAllText("Debug.txt", "Initializing Custom Garbage Truck AI.\n");
+            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Garbage Truck AI successfully initialized.\n");
 #endif
+      
 		}
 
 		public override void SimulationStep(ushort vehicleID, ref Vehicle vehicleData, ref Vehicle.Frame frameData, ushort leaderID, ref Vehicle leaderData, int lodPhysics)

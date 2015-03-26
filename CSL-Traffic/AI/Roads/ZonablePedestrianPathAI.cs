@@ -18,6 +18,10 @@ namespace CSL_Traffic
             if (sm_initialized)
                 return;
 
+#if DEBUG
+            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Initializing Zonable Pedestrian Path AI.\n");
+#endif
+
             Initialize(collection, customPrefabs, "Pedestrian Pavement", "Zonable Pedestrian Pavement");
             Initialize(collection, customPrefabs, "Pedestrian Gravel", "Zonable Pedestrian Gravel");
 
@@ -30,7 +34,7 @@ namespace CSL_Traffic
             if (originalPedestrianPath == null)
                 throw new KeyNotFoundException(prefabName + " was not found on " + collection.name);
 
-            GameObject instance = GameObject.Instantiate<GameObject>(originalPedestrianPath.gameObject); ;
+            GameObject instance = GameObject.Instantiate<GameObject>(originalPedestrianPath.gameObject);
             instance.name = instanceName;
 
             MethodInfo initMethod = typeof(NetCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
@@ -190,9 +194,6 @@ namespace CSL_Traffic
 		{
 			base.InitializePrefab();
 
-#if DEBUG
-            System.IO.File.AppendAllText("Debug.txt", "Initializing Zonable Pedestrian Path AI.\n");
-#endif
             if (name.Contains("Pavement"))
             {
                 this.m_constructionCost = 2000;
@@ -207,6 +208,10 @@ namespace CSL_Traffic
 			this.m_enableZoning = true;
 
 			base.StartCoroutine(this.FixNodes());
+
+#if DEBUG
+            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Zonable Pedestrian Path AI successfully initialized (" + name + ").\n");
+#endif
 		}
 
 		private IEnumerator FixNodes()

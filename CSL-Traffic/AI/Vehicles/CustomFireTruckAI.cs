@@ -20,6 +20,11 @@ namespace CSL_Traffic
 		{
 			if (sm_initialized)
 				return;
+
+#if DEBUG
+            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Initializing Fire Truck AI.\n");
+#endif
+
 			VehicleInfo originalFireTruck = collection.m_prefabs.Where(p => p.name == "Fire Truck").FirstOrDefault();
 			if (originalFireTruck == null)
 				throw new KeyNotFoundException("Fire Truck was not found on " + collection.name);
@@ -45,7 +50,7 @@ namespace CSL_Traffic
 			base.InitializeAI();
 			this.m_fireFightingRate = 75;
 #if DEBUG
-			System.IO.File.AppendAllText("Debug.txt", "Initializing Fire Truck AI.\n");
+            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Fire Truck AI successfully initialized.\n");
 #endif
 		}
 

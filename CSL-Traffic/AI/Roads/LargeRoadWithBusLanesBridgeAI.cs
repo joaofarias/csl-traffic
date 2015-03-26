@@ -18,6 +18,10 @@ namespace CSL_Traffic
             if (sm_initialized)
                 return;
 
+#if DEBUG
+            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Initializing Large Road Bridge AI.\n");
+#endif
+
             Initialize(collection, customPrefabs, "Large Road Bridge", "Large Road Bridge With Bus Lanes");
             Initialize(collection, customPrefabs, "Large Road Elevated", "Large Road Elevated With Bus Lanes");
 
@@ -30,7 +34,7 @@ namespace CSL_Traffic
             if (originalRoadBridge == null)
                 throw new KeyNotFoundException(prefabName + " was not found on " + collection.name);
 
-            GameObject instance = GameObject.Instantiate<GameObject>(originalRoadBridge.gameObject); ;
+            GameObject instance = GameObject.Instantiate<GameObject>(originalRoadBridge.gameObject);
             instance.name = instanceName;
 
             MethodInfo initMethod = typeof(NetCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
@@ -108,13 +112,22 @@ namespace CSL_Traffic
                     
                     this.m_bridgePillarInfo = pillarPrefab.GetComponent<BuildingInfo>();
                 }
-                    
+
+#if DEBUG
+                System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Large Road Bridge AI successfully initialized (" + name + ").\n");
+#endif
                     
             }
             catch (KeyNotFoundException knf)
             {
 #if DEBUG
-                System.IO.File.AppendAllText("Debug.txt", "Error initializing Large Road Bridge AI: " + knf.Message + "\n");
+                System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Error initializing Large Road Bridge AI: " + knf.Message + "\n");
+#endif
+            }
+            catch (Exception e)
+            {
+#if DEBUG
+                System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Unexpected " + e.GetType().Name + " initializing Large Road Bridge AI: " + e.Message + "\n" + e.StackTrace + "\n");
 #endif
             }
         }

@@ -6,6 +6,7 @@ using CSL_Traffic.Extensions;
 using ColossalFramework;
 using System;
 using System.Text;
+using ColossalFramework.Plugins;
 
 namespace CSL_Traffic
 {
@@ -25,6 +26,7 @@ namespace CSL_Traffic
                     sm_optionsManager = new GameObject("OptionsManager");
                     sm_optionsManager.AddComponent<OptionsManager>();
                 }
+
                 return "Traffic++";
             }
 		}
@@ -43,18 +45,18 @@ namespace CSL_Traffic
                 sm_optionsManager.GetComponent<OptionsManager>().Load();
             }
 
-			if (m_initializer == null)
-			{
-				m_initializer = new GameObject("CSL-Traffic Custom Prefabs");
-				m_initializer.AddComponent<Initializer>();
-			}
+            if (m_initializer == null)
+            {
+                m_initializer = new GameObject("CSL-Traffic Custom Prefabs");
+                m_initializer.AddComponent<Initializer>();
+            }
 		}
 
 		public override void OnReleased()
 		{
 			base.OnReleased();
 
-			GameObject.Destroy(m_initializer);
+            GameObject.Destroy(m_initializer);
 		}
 	}
 }

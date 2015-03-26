@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using UnityEngine;
+using CSL_Traffic.Extensions;
 
 namespace CSL_Traffic
 {
@@ -20,13 +21,25 @@ namespace CSL_Traffic
             if (sm_initialized)
                 return;
 
-            NetInfo originalBusLine = collection.m_prefabs.Where(p => p.name == "Bus Line").FirstOrDefault();
+#if DEBUG
+            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Initializing Bus Transport Line AI.\n");
+#endif
+            Initialize(collection, transportCollection, customPrefabs, "Bus Line", "Bus");
+            //Initialize(collection, transportCollection, customPrefabs, "Metro Line", "Metro");
+           
+
+            sm_initialized = true;
+        }
+
+        static void Initialize(NetCollection netCollection, TransportCollection transportCollection, Transform customPrefabs, string prefabName, string transportName)
+        {
+            NetInfo originalBusLine = netCollection.m_prefabs.Where(p => p.name == prefabName).FirstOrDefault();
             if (originalBusLine == null)
-                throw new KeyNotFoundException("Bus Line was not found on " + collection.name);
+                throw new KeyNotFoundException(prefabName + " was not found on " + netCollection.name);
 
             GameObject instance = GameObject.Instantiate<GameObject>(originalBusLine.gameObject); ;
-            instance.name = "Bus Line";
-            instance.transform.SetParent(customPrefabs); 
+            instance.name = prefabName;
+            instance.transform.SetParent(customPrefabs);
             GameObject.Destroy(instance.GetComponent<TransportLineAI>());
             instance.AddComponent<BusTransportLineAI>();
 
@@ -34,35 +47,37 @@ namespace CSL_Traffic
             busLine.m_prefabInitialized = false;
             busLine.m_netAI = null;
 
-            VehicleInfo originalBus = vehicleCollection.m_prefabs.Where(p => p.name.Contains("Bus")).FirstOrDefault();
-            if (originalBus == null)
-                throw new KeyNotFoundException("Bus was not found on " + collection.name);
-            (originalBus.m_vehicleAI as BusAI).m_transportInfo.m_netInfo = busLine;
-
             MethodInfo initMethod = typeof(NetCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
-            Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { busLine }, new string[] { "Bus Line" } }));
+            Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { netCollection.name, new[] { busLine }, new string[] { prefabName } }));
 
             // transport
-            TransportInfo originalTransportInfo = transportCollection.m_prefabs.Where(p => p.name.Contains("Bus")).FirstOrDefault();
+            TransportInfo originalTransportInfo = transportCollection.m_prefabs.Where(p => p.name.Contains(transportName)).FirstOrDefault();
             if (originalTransportInfo == null)
-                throw new KeyNotFoundException("But Transport Info not found on " + transportCollection.name);
+                throw new KeyNotFoundException(transportName + " Transport Info not found on " + transportCollection.name);
 
             originalTransportInfo.m_netInfo = busLine;
-
-            sm_initialized = true;
         }
 
         public override void InitializePrefab()
         {
+            if (name.Contains("Bus"))
+            {
+                this.m_publicTransportAccumulation = 50;
+                this.m_netService = ItemClass.Service.Road;
+            }
+            else
+            {
+                this.m_maxPassengerWaitingDistance = 25;
+                this.m_publicTransportAccumulation = 75;
+                this.m_publicTransportRadius = 300;
+                this.m_netService = ItemClass.Service.PublicTransport;
+                this.m_vehicleType = VehicleInfo.VehicleType.Metro;
+            }
+
             base.InitializePrefab();
 
-            this.m_publicTransportAccumulation = 50;
-            this.m_netService = ItemClass.Service.Road;
-
-
-
 #if DEBUG
-            System.IO.File.AppendAllText("Debug.txt", "Initializing Bus Transport Line AI.\n");
+            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Transport Line AI successfully initialized (" + name + ").\n");
 #endif
         }
 

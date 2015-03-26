@@ -19,11 +19,15 @@ namespace CSL_Traffic
             if (sm_initialized)
                 return;
 
+#if DEBUG
+            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Initializing Large Road With Bus Lanes AI.\n");
+#endif
+
             NetInfo originalLargeRoad = collection.m_prefabs.Where(p => p.name == "Large Road").FirstOrDefault();
             if (originalLargeRoad == null)
                 throw new KeyNotFoundException("Large Road was not found on " + collection.name);
 
-            GameObject instance = GameObject.Instantiate<GameObject>(originalLargeRoad.gameObject); ;
+            GameObject instance = GameObject.Instantiate<GameObject>(originalLargeRoad.gameObject);
             instance.name = "Large Road With Bus Lanes";
 
             MethodInfo initMethod = typeof(NetCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
@@ -58,16 +62,16 @@ namespace CSL_Traffic
         {
             base.InitializePrefab();
 
-#if DEBUG
-            System.IO.File.AppendAllText("Debug.txt", "Initializing Large Road With Bus Lanes AI.\n");
-#endif
-
             this.m_trafficLights = true;
             this.m_noiseAccumulation = 24;
             this.m_noiseRadius = 50;
             this.m_constructionCost = 8000;
             this.m_maintenanceCost = 662;
             this.m_enableZoning = true;
+
+#if DEBUG
+            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Large Road With Bus Lanes AI successfully initialized.\n");
+#endif
         }
     }
 }

@@ -14,8 +14,8 @@ namespace CSL_Traffic
 {
 	class Initializer : MonoBehaviour
 	{
-		bool m_initialized;
 		bool m_localizationInitialized;
+        bool m_initialized;
 
 		void Awake()
 		{
@@ -30,17 +30,11 @@ namespace CSL_Traffic
                 ReplaceTransportManager();
             }
 		}
-		
-		void Update()
-		{
-			if (!m_initialized)
-				TryReplacePrefabs();
-		}
 
 		void OnLevelWasLoaded(int level) {
 			if (level == 6)
 			{
-				m_initialized = false;
+                m_initialized = false;
 
 				// roads
 				ZonablePedestrianPathAI.sm_initialized = false;
@@ -65,6 +59,18 @@ namespace CSL_Traffic
 			}
 		}
 
+        void Update()
+        {
+            if (!m_initialized)
+            {
+                if ((CSLTraffic.Options & OptionsManager.ModOptions.FixMissingArrows) == OptionsManager.ModOptions.FixMissingArrows)
+                    StartCoroutine(ReplacePrefabs());
+                else
+                    TryReplacePrefabs();
+            }
+                
+        }
+
 		/*
 		 * In here I'm changing the prefabs to have my classes. This way, every time the game instantiates
 		 * a prefab that I've changed, that object will run my code.
@@ -72,36 +78,110 @@ namespace CSL_Traffic
 		 * run it on update. I want to make sure I make the switch as soon as they exist to prevent the game
 		 * from instantianting objects without my code.
 		 */
-		void TryReplacePrefabs()
+		IEnumerator ReplacePrefabs()
 		{
-			try {
-                // NetCollections
-				NetCollection beautificationNetCollection = GameObject.Find("Beautification").GetComponent<NetCollection>();
-                NetCollection roadsNetCollection = GameObject.Find("Road").GetComponent<NetCollection>();
-                NetCollection publicTansportNetCollection = GameObject.Find("Public Transport").GetComponent<NetCollection>();
+            if (m_initialized)
+                yield break;
 
-                // VehicleCollections
-				VehicleCollection garbageVehicleCollection = GameObject.Find("Garbage").GetComponent<VehicleCollection>();
-				VehicleCollection policeVehicleCollection = GameObject.Find("Police Department").GetComponent<VehicleCollection>();
-				VehicleCollection publicTansportVehicleCollection = GameObject.Find("Public Transport").GetComponent<VehicleCollection>();
-				VehicleCollection healthCareVehicleCollection = GameObject.Find("Health Care").GetComponent<VehicleCollection>();
-				VehicleCollection fireDepartmentVehicleCollection = GameObject.Find("Fire Department").GetComponent<VehicleCollection>();
-                VehicleCollection industrialVehicleCollection = GameObject.Find("Industrial").GetComponent<VehicleCollection>();
+            m_initialized = true;
+#if DEBUG
+            // TODO: create a class to handle logging
+            System.IO.File.Delete("TrafficPP_Debug.txt");
+            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Initializing Traffic++.\n\n");
+#endif
 
-                TransportCollection publicTransportTransportCollection = GameObject.Find("Public Transport").GetComponent<TransportCollection>();
+            NetCollection beautificationNetCollection = null;
+            NetCollection roadsNetCollection = null;
+            NetCollection publicTansportNetCollection = null;
+            VehicleCollection garbageVehicleCollection = null;
+            VehicleCollection policeVehicleCollection = null;
+            VehicleCollection publicTansportVehicleCollection = null;
+            VehicleCollection healthCareVehicleCollection = null;
+            VehicleCollection fireDepartmentVehicleCollection = null;
+            VehicleCollection industrialVehicleCollection = null;
+            TransportCollection publicTransportTransportCollection = null;
+            ToolController toolController = null;
 
-                // Tools
-                ToolController toolController = GameObject.Find("Tool Controller").GetComponent<ToolController>();
+            bool ready = false;
+            while (!ready)
+            {
+                yield return new WaitForEndOfFrame();
 
-				// Localization
-				UpdateLocalization();
+                try {
+                    // NetCollections
+                    beautificationNetCollection = TryGetComponent<NetCollection>("Beautification");
+                    if (beautificationNetCollection == null)
+                        continue;
 
-				// roads
-				ZonablePedestrianPathAI.Initialize(beautificationNetCollection, transform);
-				ZonablePedestrianBridgeAI.Initialize(beautificationNetCollection, transform);
+                    roadsNetCollection = TryGetComponent<NetCollection>("Road");
+                    if (roadsNetCollection == null)
+                        continue;
+
+                    publicTansportNetCollection = TryGetComponent<NetCollection>("Public Transport");
+                    if (publicTansportNetCollection == null)
+                        continue;
+
+                    // VehicleCollections
+                    garbageVehicleCollection = TryGetComponent<VehicleCollection>("Garbage");
+                    if (garbageVehicleCollection == null)
+                        continue;
+
+                    policeVehicleCollection = TryGetComponent<VehicleCollection>("Police Department");
+                    if (policeVehicleCollection == null)
+                        continue;
+
+                    publicTansportVehicleCollection = TryGetComponent<VehicleCollection>("Public Transport");
+                    if (publicTansportVehicleCollection == null)
+                        continue;
+
+                    healthCareVehicleCollection = TryGetComponent<VehicleCollection>("Health Care");
+                    if (healthCareVehicleCollection == null)
+                        continue;
+
+                    fireDepartmentVehicleCollection = TryGetComponent<VehicleCollection>("Fire Department");
+                    if (fireDepartmentVehicleCollection == null)
+                        continue;
+
+                    industrialVehicleCollection = TryGetComponent<VehicleCollection>("Industrial");
+                    if (industrialVehicleCollection == null)
+                        continue;
+
+                    // Transports
+                    publicTransportTransportCollection = TryGetComponent<TransportCollection>("Public Transport");
+                    if (publicTransportTransportCollection == null)
+                        continue;
+
+                    // Tools
+                    toolController = TryGetComponent<ToolController>("Tool Controller");
+                    if (toolController == null)
+                        continue;
+
+                    ready = true;
+                }
+                catch (Exception e)
+                {
+#if DEBUG
+                    System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Unexpected " + e.GetType().Name + " getting required components: " + e.Message + "\n" + e.StackTrace + "\n");
+#endif
+                }
+            }
+
+            // allow 10 frames for objects to initialize (after some testing, I found that 5 is the minimum required. 10 should be safe for everyone)
+            for (int i = 0; i < 6; i++)
+            {
+                yield return new WaitForEndOfFrame();
+            }            
+
+            try {
+                // Localization
+                UpdateLocalization();
+
+                // roads
+                ZonablePedestrianPathAI.Initialize(beautificationNetCollection, transform);
+                ZonablePedestrianBridgeAI.Initialize(beautificationNetCollection, transform);
                 LargeRoadWithBusLanesAI.Initialize(roadsNetCollection, transform);
                 LargeRoadWithBusLanesBridgeAI.Initialize(roadsNetCollection, transform);
-				
+
                 if ((CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) != OptionsManager.ModOptions.GhostMode)
                 {
                     // Transports
@@ -119,15 +199,150 @@ namespace CSL_Traffic
                     //Tools
                     CustomTransportTool.Initialize(toolController);
                 }
-				
-				m_initialized = true;
+
+#if DEBUG
+                System.IO.File.AppendAllText("TrafficPP_Debug.txt", "\nTraffic++ Initialized.\n\n");
+#endif
+
 			} catch(KeyNotFoundException knf) {
 #if DEBUG
-				System.IO.File.AppendAllText("Debug.txt", "Error trying to initialize custom prefabs: " + knf.Message + "\n");
-				m_initialized = true;
+                System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Error trying to initialize custom prefabs: " + knf.Message + "\n");
 #endif
-			} catch(Exception) {}
+            }
+            catch (Exception e )
+            {
+#if DEBUG
+                System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Unexpected " + e.GetType().Name + " trying to initialize custom prefabs: " + e.Message + "\n" + e.StackTrace + "\n");
+#endif
+            }
 		}
+
+        void TryReplacePrefabs()
+        {
+            NetCollection beautificationNetCollection = null;
+            NetCollection roadsNetCollection = null;
+            NetCollection publicTansportNetCollection = null;
+            VehicleCollection garbageVehicleCollection = null;
+            VehicleCollection policeVehicleCollection = null;
+            VehicleCollection publicTansportVehicleCollection = null;
+            VehicleCollection healthCareVehicleCollection = null;
+            VehicleCollection fireDepartmentVehicleCollection = null;
+            VehicleCollection industrialVehicleCollection = null;
+            TransportCollection publicTransportTransportCollection = null;
+            ToolController toolController = null;
+
+            try
+            {
+                // NetCollections
+                beautificationNetCollection = TryGetComponent<NetCollection>("Beautification");
+                if (beautificationNetCollection == null)
+                    return;
+
+                roadsNetCollection = TryGetComponent<NetCollection>("Road");
+                if (roadsNetCollection == null)
+                    return;
+
+                publicTansportNetCollection = TryGetComponent<NetCollection>("Public Transport");
+                if (publicTansportNetCollection == null)
+                    return;
+
+                // VehicleCollections
+                garbageVehicleCollection = TryGetComponent<VehicleCollection>("Garbage");
+                if (garbageVehicleCollection == null)
+                    return;
+
+                policeVehicleCollection = TryGetComponent<VehicleCollection>("Police Department");
+                if (policeVehicleCollection == null)
+                    return;
+
+                publicTansportVehicleCollection = TryGetComponent<VehicleCollection>("Public Transport");
+                if (publicTansportVehicleCollection == null)
+                    return;
+
+                healthCareVehicleCollection = TryGetComponent<VehicleCollection>("Health Care");
+                if (healthCareVehicleCollection == null)
+                    return;
+
+                fireDepartmentVehicleCollection = TryGetComponent<VehicleCollection>("Fire Department");
+                if (fireDepartmentVehicleCollection == null)
+                    return;
+
+                industrialVehicleCollection = TryGetComponent<VehicleCollection>("Industrial");
+                if (industrialVehicleCollection == null)
+                    return;
+
+                // Transports
+                publicTransportTransportCollection = TryGetComponent<TransportCollection>("Public Transport");
+                if (publicTransportTransportCollection == null)
+                    return;
+
+                // Tools
+                toolController = TryGetComponent<ToolController>("Tool Controller");
+                if (toolController == null)
+                    return;
+
+            }
+            catch (Exception e)
+            {
+#if DEBUG
+                System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Unexpected " + e.GetType().Name + " getting required components: " + e.Message + "\n" + e.StackTrace + "\n");
+#endif
+            }
+
+#if DEBUG
+            // TODO: create a class to handle logging
+            System.IO.File.Delete("TrafficPP_Debug.txt");
+            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Initializing Traffic++.\n\n");
+#endif
+
+            try
+            {
+                // Localization
+                UpdateLocalization();
+
+                // roads
+                ZonablePedestrianPathAI.Initialize(beautificationNetCollection, transform);
+                ZonablePedestrianBridgeAI.Initialize(beautificationNetCollection, transform);
+                LargeRoadWithBusLanesAI.Initialize(roadsNetCollection, transform);
+                LargeRoadWithBusLanesBridgeAI.Initialize(roadsNetCollection, transform);
+
+                if ((CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) != OptionsManager.ModOptions.GhostMode)
+                {
+                    // Transports
+                    BusTransportLineAI.Initialize(publicTansportNetCollection, publicTansportVehicleCollection, publicTransportTransportCollection, transform);
+
+                    // vehicles
+                    CustomAmbulanceAI.Initialize(healthCareVehicleCollection, transform);
+                    CustomBusAI.Initialize(publicTansportVehicleCollection, transform);
+                    CustomCargoTruckAI.Initialize(industrialVehicleCollection, transform);
+                    CustomFireTruckAI.Initialize(fireDepartmentVehicleCollection, transform);
+                    CustomGarbageTruckAI.Initialize(garbageVehicleCollection, transform);
+                    CustomHearseAI.Initialize(healthCareVehicleCollection, transform);
+                    CustomPoliceCarAI.Initialize(policeVehicleCollection, transform);
+
+                    //Tools
+                    CustomTransportTool.Initialize(toolController);
+                }
+
+                m_initialized = true;
+#if DEBUG
+                System.IO.File.AppendAllText("TrafficPP_Debug.txt", "\nTraffic++ Initialized.\n\n");
+#endif
+
+            }
+            catch (KeyNotFoundException knf)
+            {
+#if DEBUG
+                System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Error trying to initialize custom prefabs: " + knf.Message + "\n");
+#endif
+            }
+            catch (Exception e)
+            {
+#if DEBUG
+                System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Unexpected " + e.GetType().Name + " trying to initialize custom prefabs: " + e.Message + "\n" + e.StackTrace + "\n");
+#endif
+            }
+        }
 
         //IEnumerator Print()
         //{
@@ -202,6 +417,7 @@ namespace CSL_Traffic
 
         void ReplaceTransportManager()
         {
+
             // Change TransportManager to CustomTransportManager
             FieldInfo sInstance = typeof(ColossalFramework.Singleton<TransportManager>).GetFieldByName("sInstance");
             TransportManager originalTransportManager = ColossalFramework.Singleton<TransportManager>.instance;
@@ -217,10 +433,37 @@ namespace CSL_Traffic
             managers.Add(customTransportManager);
 
             // add to renderable managers
-            RenderManager.RegisterRenderableManager(customTransportManager);
-
+            IRenderableManager[] renderables;
+            int count;
+            RenderManager.GetManagers(out renderables, out count);
+            if (renderables != null && count != 0)
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    TransportManager temp = renderables[i] as TransportManager;
+                    if (temp != null && temp == originalTransportManager)
+                    {
+                        renderables[i] = customTransportManager;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                RenderManager.RegisterRenderableManager(customTransportManager);
+            }
+                
             // Destroy in 10 seconds to give time to all references to update to the new manager without crashing
             GameObject.Destroy(originalTransportManager, 10f);
+        }
+
+        T TryGetComponent<T>(string name)
+        {
+            GameObject go = GameObject.Find(name);
+            if (go == null)
+                return default(T);
+
+            return go.GetComponent<T>();
         }
 
 		void UpdateLocalization()

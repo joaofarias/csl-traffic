@@ -209,6 +209,10 @@ namespace CSL_Traffic
             if (sm_initialized)
                 return;
 
+#if DEBUG
+            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Initializing Transport Tool.\n");
+#endif
+
             TransportTool originalTransportTool = toolController.GetComponent<TransportTool>();
             CustomTransportTool customTransportTool = toolController.gameObject.AddComponent<CustomTransportTool>();
 
@@ -222,6 +226,10 @@ namespace CSL_Traffic
                 }
             }
             GameObject.Destroy(originalTransportTool);
+
+#if DEBUG
+            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Transport Tool successfully initialized.\n");
+#endif
 
             sm_initialized = true;
         }

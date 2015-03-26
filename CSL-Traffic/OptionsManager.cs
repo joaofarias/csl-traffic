@@ -19,7 +19,9 @@ namespace CSL_Traffic
             AllowResidentsInPedestrianRoads = 2,
             DisableCentralLaneOnPedestrianRoads = 4,
 
-            All = 7,
+            FixMissingArrows = 8,
+
+            All = 15,
 
             GhostMode = long.MaxValue
         }
@@ -30,6 +32,7 @@ namespace CSL_Traffic
         UICheckBox m_allowTrucksCheckBox;
         //UICheckBox m_allowTrucksCheckBox;
         UICheckBox m_disableCentralLaneCheckBox;
+        UICheckBox m_LoadCheckBox;
         UICheckBox m_ghostModeCheckBox;
         
         bool m_initialized;
@@ -42,6 +45,9 @@ namespace CSL_Traffic
         void Start()
         {
             GameObject modsList = GameObject.Find("ModsList");
+            if (modsList == null)
+                return;
+
             GameObject mod = null;
             foreach (var item in modsList.GetComponentsInChildren<UILabel>().Where(l => l.name == "Name"))
             {
@@ -53,12 +59,7 @@ namespace CSL_Traffic
             }
 
             if (mod == null)
-            {
-#if DEBUG
-                System.IO.File.AppendAllText("Debug.txt", "Can't find mod.\n");
-#endif
                 return;
-            }
             
             // Options Button
 
@@ -103,7 +104,7 @@ namespace CSL_Traffic
             UIButton closeButton = caption.transform.FindChild("Close").GetComponent<UIButton>();
             GameObject.Destroy(closeButton.GetComponent<BindEvent>());
             closeButton.eventClick += CloseOptionsPanel;
-            caption.transform.FindChild("Label").GetComponent<UILabel>().text = "Zonable Pedestrian Paths - Options";
+            caption.transform.FindChild("Label").GetComponent<UILabel>().text = "Traffic++ - Options";
 
             // set options list
             GameObject optionsList = GameObject.Instantiate<GameObject>(modsList);
@@ -143,8 +144,12 @@ namespace CSL_Traffic
             this.m_disableCentralLaneCheckBox.text = "Disable Central Lane on Pedestrian Roads";
             this.m_disableCentralLaneCheckBox.isVisible = true;
 
-
-
+            GameObject load = GameObject.Instantiate<GameObject>(allowTrucks);
+            load.transform.SetParent(allowTrucks.transform.parent);
+            this.m_LoadCheckBox = load.GetComponent<UICheckBox>();
+            this.m_LoadCheckBox.isChecked = false;
+            this.m_LoadCheckBox.text = "Fix for missing arrows";
+            this.m_LoadCheckBox.isVisible = true;
 
 
             GameObject ghostMode = GameObject.Instantiate<GameObject>(allowTrucks);
@@ -195,6 +200,11 @@ namespace CSL_Traffic
                 options.disableCentralLane = true;
                 CSLTraffic.Options |= ModOptions.DisableCentralLaneOnPedestrianRoads;
             }
+            if (this.m_LoadCheckBox.isChecked)
+            {
+                options.disableTrafficPP = true;
+                CSLTraffic.Options |= ModOptions.FixMissingArrows;
+            }
             if (this.m_ghostModeCheckBox.isChecked)
             {
                 options.ghostMode = true;
@@ -234,6 +244,11 @@ namespace CSL_Traffic
                 this.m_disableCentralLaneCheckBox.isChecked = true;
                 CSLTraffic.Options |= ModOptions.DisableCentralLaneOnPedestrianRoads;
             }
+            if (options.disableTrafficPP)
+            {
+                this.m_LoadCheckBox.isChecked = true;
+                CSLTraffic.Options |= ModOptions.FixMissingArrows;
+            }
             if (options.ghostMode)
             {
                 this.m_ghostModeCheckBox.isChecked = true;
@@ -265,7 +280,13 @@ namespace CSL_Traffic
             //public bool allowResidents;
             public bool disableCentralLane;
             
+
             public bool ghostMode;
+
+
+
+            // Legacy
+            public bool disableTrafficPP;
         }
 
     }

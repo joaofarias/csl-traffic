@@ -16,11 +16,15 @@ namespace CSL_Traffic
 			if (ZonablePedestrianBridgeAI.sm_initialized)
 				return;
 
+#if DEBUG
+            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Initializing Zonable Pedestrian Bridge AI.\n");
+#endif
+
             NetInfo originalPedestrianBridge = collection.m_prefabs.Where(p => p.name == "Pedestrian Elevated").FirstOrDefault();
 			if (originalPedestrianBridge == null)
 				throw new KeyNotFoundException("Pedestrian Elevated was not found on " + collection.name);
 
-            GameObject instance = GameObject.Instantiate<GameObject>(originalPedestrianBridge.gameObject); ;
+            GameObject instance = GameObject.Instantiate<GameObject>(originalPedestrianBridge.gameObject);
 			instance.name = "Zonable Pedestrian Elevated";
             
             MethodInfo initMethod = typeof(NetCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
@@ -112,13 +116,23 @@ namespace CSL_Traffic
                 if (pillarPrefab == null)
                     throw new KeyNotFoundException("Can't find Pedestrian Elevated Pillar.");
                 this.m_bridgePillarInfo = pillarPrefab.GetComponent<BuildingInfo>();
+
+#if DEBUG
+                System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Zonable Pedestrian Bridge AI successfully initialized.\n");
+#endif
 			}
 			catch (KeyNotFoundException knf)
 			{
 #if DEBUG
-                System.IO.File.AppendAllText("Debug.txt", "Error initializing Zonable Pedestrian Bridge AI: " + knf.Message + "\n");
+                System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Error initializing Zonable Pedestrian Bridge AI: " + knf.Message + "\n");
 #endif
 			}
+            catch (Exception e)
+            {
+#if DEBUG
+                System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Unexpected " + e.GetType().Name + " initializing Zonable Pedestrian Bridge AI: " + e.Message + "\n" + e.StackTrace + "\n");
+#endif
+            }
 		}
 	}
 }

@@ -15,6 +15,11 @@ namespace CSL_Traffic
 		{
 			if (sm_initialized)
 				return;
+
+#if DEBUG
+            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Initializing Bus AI.\n");
+#endif
+
 			VehicleInfo originalBus = collection.m_prefabs.Where(p => p.name.Contains("Bus")).FirstOrDefault();
 			if (originalBus == null)
 				throw new KeyNotFoundException("Bus was not found on " + collection.name);
@@ -42,10 +47,10 @@ namespace CSL_Traffic
 
 		public override void InitializeAI()
 		{
-			base.InitializeAI();            
+			base.InitializeAI();
 
 #if DEBUG
-			System.IO.File.AppendAllText("Debug.txt", "Initializing Bus AI.\n");
+            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Bus AI successfully initialized.\n");
 #endif
 		}
 

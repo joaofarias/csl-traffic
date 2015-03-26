@@ -15,6 +15,11 @@ namespace CSL_Traffic
 		{
 			if (sm_initialized)
 				return;
+
+#if DEBUG
+            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Initializing Hearse AI.\n");
+#endif
+
 			VehicleInfo originalHearse = collection.m_prefabs.Where(p => p.name == "Hearse").FirstOrDefault();
 			if (originalHearse == null)
 				throw new KeyNotFoundException("Hearse was not found on " + collection.name);
@@ -39,8 +44,9 @@ namespace CSL_Traffic
 		{
 			base.InitializeAI();
 			this.m_corpseCapacity = 10;
+
 #if DEBUG
-			System.IO.File.AppendAllText("Debug.txt", "Initializing Hearse AI.\n");
+            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Hearse AI successfully initialized.\n");
 #endif
 		}
 
