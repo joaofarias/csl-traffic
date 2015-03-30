@@ -1,14 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UnityEngine;
-using CSL_Traffic.Extensions;
-using System.Collections;
-using System.Reflection;
-using ColossalFramework;
-using ColossalFramework.Math;
+﻿using ColossalFramework;
 using ColossalFramework.Globalization;
+using ColossalFramework.Math;
+using CSL_Traffic.Extensions;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Reflection;
+using UnityEngine;
 
 namespace CSL_Traffic
 {
@@ -216,16 +214,27 @@ namespace CSL_Traffic
             TransportTool originalTransportTool = toolController.GetComponent<TransportTool>();
             CustomTransportTool customTransportTool = toolController.gameObject.AddComponent<CustomTransportTool>();
 
-            ToolBase[] tools = toolController.Tools;
-            for (int i = 0; i < tools.Length; i++)
-            {
-                if (tools[i] == originalTransportTool)
-                {
-                    tools[i] = customTransportTool;
-                    break;
-                }
-            }
-            GameObject.Destroy(originalTransportTool);
+            //Rather than replace the the old transport tool entirely, we just add it to the list.
+            //And then force a re-initialization of ToolsModifierControl.
+            FieldInfo toolControllerField = typeof(ToolController).GetField("m_tools", BindingFlags.Instance | BindingFlags.NonPublic);
+            if (toolControllerField != null)
+                toolControllerField.SetValue(toolController, toolController.GetComponents<ToolBase>());
+            FieldInfo toolModifierDictionary = typeof(ToolsModifierControl).GetField("m_Tools", BindingFlags.Static | BindingFlags.NonPublic);
+            if (toolModifierDictionary != null)
+                toolModifierDictionary.SetValue(null, null);
+
+            AddToolReplacer();
+
+            //ToolBase[] tools = toolController.Tools;
+            //for (int i = 0; i < tools.Length; i++)
+            //{
+            //    if (tools[i] == originalTransportTool)
+            //    {
+            //        tools[i] = customTransportTool;
+            //        break;
+            //    }
+            //}
+            //GameObject.Destroy(originalTransportTool);
 
 #if DEBUG
             System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Transport Tool successfully initialized.\n");
@@ -238,7 +247,8 @@ namespace CSL_Traffic
         {
             base.Awake();
 
-            StartCoroutine(AddToToolsModifier(this));
+            //StartCoroutine(AddToToolsModifier(this));
+            
 
             Type transportToolType = typeof(TransportTool);
             this.fi_mode = transportToolType.GetFieldByName("m_mode");
@@ -256,6 +266,13 @@ namespace CSL_Traffic
             this.fi_hoverStopIndex = transportToolType.GetFieldByName("m_hoverStopIndex");
             this.fi_hoverSegmentIndex = transportToolType.GetFieldByName("m_hoverSegmentIndex");
             this.fi_errors = transportToolType.GetFieldByName("m_errors");
+        }
+
+        static void AddToolReplacer()
+        {
+            GameObject toolReplacer = UnityEngine.Object.Instantiate(new GameObject());
+            toolReplacer.AddComponent<TransportToolReplacer>();
+            toolReplacer.name = "TransportToolReplacer";
         }
 
         IEnumerator AddToToolsModifier(CustomTransportTool transportTool)
