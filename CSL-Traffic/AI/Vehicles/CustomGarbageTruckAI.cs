@@ -15,36 +15,30 @@ namespace CSL_Traffic
 	public class CustomGarbageTruckAI : GarbageTruckAI, IVehicle
 	{
 		public static bool sm_initialized;
-		//static MethodInfo sm_tryCollectGarbage = typeof(FireTruckAI).GetMethod("TryCollectGarbage", BindingFlags.Instance | BindingFlags.NonPublic, Type.DefaultBinder, new[] { typeof(ushort), typeof(Vehicle), typeof(Vehicle.Frame) }, null);
-		//static MethodInfo sm_tryCollectGarbageBig = typeof(FireTruckAI).GetMethod("TryCollectGarbage", BindingFlags.Instance | BindingFlags.NonPublic, Type.DefaultBinder, new[] { typeof(ushort), typeof(Vehicle), typeof(Vehicle.Frame), typeof(ushort), typeof(Building)  }, null);
-		//static MethodInfo sm_arriveAtTarget = typeof(FireTruckAI).GetMethod("ArriveAtTarget", BindingFlags.Instance | BindingFlags.NonPublic);
-		//static MethodInfo sm_shouldReturnToSource = typeof(FireTruckAI).GetMethod("ShouldReturnToSource", BindingFlags.Instance | BindingFlags.NonPublic);
 
 		public static void Initialize(VehicleCollection collection, Transform customPrefabs)
 		{
 			if (sm_initialized)
 				return;
 
-#if DEBUG
-            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Initializing Garbage Truck AI.\n");
-#endif
+            Debug.Log("Traffic++: Initializing Garbage Truck.\n");
 
-			VehicleInfo originalGarbageTruck = collection.m_prefabs.Where(p => p.name == "Garbage Truck").FirstOrDefault();
-			if (originalGarbageTruck == null)
-				throw new KeyNotFoundException("Garbage Truck was not found on " + collection.name);
+            VehicleInfo originalGarbageTruck = collection.m_prefabs.Where(p => p.name == "Garbage Truck").FirstOrDefault();
+            if (originalGarbageTruck == null)
+                throw new KeyNotFoundException("Garbage Truck was not found on " + collection.name);
 
-			GameObject instance = GameObject.Instantiate<GameObject>(originalGarbageTruck.gameObject);
-			instance.name = "Garbage Truck";
-			instance.transform.SetParent(customPrefabs);
-			GameObject.Destroy(instance.GetComponent<GarbageTruckAI>());
-			instance.AddComponent<CustomGarbageTruckAI>();
+            GameObject instance = GameObject.Instantiate<GameObject>(originalGarbageTruck.gameObject);
+            instance.name = "Garbage Truck";
+            instance.transform.SetParent(customPrefabs);
+            GameObject.Destroy(instance.GetComponent<GarbageTruckAI>());
+            instance.AddComponent<CustomGarbageTruckAI>();
 
-			VehicleInfo garbageTruck = instance.GetComponent<VehicleInfo>();
-			garbageTruck.m_prefabInitialized = false;
-			garbageTruck.m_vehicleAI = null;
+            VehicleInfo garbageTruck = instance.GetComponent<VehicleInfo>();
+            garbageTruck.m_prefabInitialized = false;
+            garbageTruck.m_vehicleAI = null;
 
-			MethodInfo initMethod = typeof(VehicleCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
-			Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { garbageTruck }, new string[] { "Garbage Truck" } }));
+            MethodInfo initMethod = typeof(VehicleCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
+            Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { garbageTruck }, new string[] { "Garbage Truck" } }));
 			
 			sm_initialized = true;
 		}
@@ -54,10 +48,7 @@ namespace CSL_Traffic
 			base.InitializeAI();
 			this.m_cargoCapacity = 20000;
 
-#if DEBUG
-            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Garbage Truck AI successfully initialized.\n");
-#endif
-      
+            Debug.Log("Traffic++: Garbage Truck initialized.\n");
 		}
 
 		public override void SimulationStep(ushort vehicleID, ref Vehicle vehicleData, ref Vehicle.Frame frameData, ushort leaderID, ref Vehicle leaderData, int lodPhysics)
@@ -88,7 +79,6 @@ namespace CSL_Traffic
 		{
             return CustomCarAI.StartPathFind(this, vehicleID, ref vehicleData, startPos, endPos, startBothWays, endBothWays, true);
 		}
-
 
 		/*
 		 * Private unmodified methods

@@ -50,7 +50,11 @@ namespace CSL_Traffic
                 m_initializer = new GameObject("CSL-Traffic Custom Prefabs");
                 m_initializer.AddComponent<Initializer>();
             }
+
+            System.IO.File.AppendAllText("Thread.txt", "OnCreated Thread: " + System.Threading.Thread.CurrentThread.ManagedThreadId + "\n");
 		}
+
+        
 
 		public override void OnReleased()
 		{

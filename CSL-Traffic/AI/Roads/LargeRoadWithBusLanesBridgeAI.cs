@@ -18,10 +18,6 @@ namespace CSL_Traffic
             if (sm_initialized)
                 return;
 
-#if DEBUG
-            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Initializing Large Road Bridge AI.\n");
-#endif
-
             Initialize(collection, customPrefabs, "Large Road Bridge", "Large Road Bridge With Bus Lanes");
             Initialize(collection, customPrefabs, "Large Road Elevated", "Large Road Elevated With Bus Lanes");
 
@@ -30,6 +26,8 @@ namespace CSL_Traffic
 
         static void Initialize(NetCollection collection, Transform customPrefabs, string prefabName, string instanceName)
         {
+            Debug.Log("Traffic++: Initializing " + instanceName);
+
             NetInfo originalRoadBridge = collection.m_prefabs.Where(p => p.name == prefabName).FirstOrDefault();
             if (originalRoadBridge == null)
                 throw new KeyNotFoundException(prefabName + " was not found on " + collection.name);
@@ -41,7 +39,7 @@ namespace CSL_Traffic
             if ((CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) == OptionsManager.ModOptions.GhostMode)
             {
                 instance.transform.SetParent(originalRoadBridge.transform.parent);
-                Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new NetInfo[] { instance.GetComponent<NetInfo>() }, new string[0] }));
+                Initializer.QueuePrioritizedLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new NetInfo[] { instance.GetComponent<NetInfo>() }, new string[] { } }));
                 sm_initialized = true;
                 return;
             }
@@ -54,10 +52,20 @@ namespace CSL_Traffic
             largeRoadBridge.m_prefabInitialized = false;
             largeRoadBridge.m_netAI = null;
 
-            largeRoadBridge.m_lanes[2].m_laneType = (NetInfo.LaneType)((byte)64);
-            largeRoadBridge.m_lanes[3].m_laneType = (NetInfo.LaneType)((byte)64);
+            Initializer.QueuePrioritizedLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { largeRoadBridge }, new string[] { } }));
 
-            ColossalFramework.Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { largeRoadBridge }, new string[] { } }));
+            Initializer.QueueLoadingAction(() =>
+            {
+                largeRoadBridge.m_lanes[2].m_laneType = (NetInfo.LaneType)((byte)64);
+                largeRoadBridge.m_lanes[3].m_laneType = (NetInfo.LaneType)((byte)64);
+
+                if (Singleton<SimulationManager>.instance.m_metaData.m_invertTraffic == SimulationMetaData.MetaBool.True)
+                {
+                    largeRoadBridge.m_lanes[2].m_direction = NetInfo.Direction.Forward;
+                    largeRoadBridge.m_lanes[3].m_direction = NetInfo.Direction.Backward;
+                }
+            });
+            
         }
 
         public override void InitializePrefab()
@@ -97,7 +105,8 @@ namespace CSL_Traffic
                 else
                     largeRoadWithBusLanes.m_elevatedInfo = this.m_info;
 
-                if (name == "Large Road Bridge With Bus Lanes") {
+                if (name == "Large Road Bridge With Bus Lanes")
+                {
                     GameObject pillarPrefab = Resources.FindObjectsOfTypeAll<GameObject>().Where(g => g.name == "LargeRoadBridgeSuspensionPillar").FirstOrDefault();
                     if (pillarPrefab == null)
                         throw new KeyNotFoundException("Can't find LargeRoadBridgeSuspensionPillar.");
@@ -109,26 +118,19 @@ namespace CSL_Traffic
                     GameObject pillarPrefab = Resources.FindObjectsOfTypeAll<GameObject>().Where(g => g.name == "HighwayBridgePillar").FirstOrDefault();
                     if (pillarPrefab == null)
                         throw new KeyNotFoundException("Can't find HighwayBridgePillar.");
-                    
+
                     this.m_bridgePillarInfo = pillarPrefab.GetComponent<BuildingInfo>();
                 }
 
-#if DEBUG
-                System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Large Road Bridge AI successfully initialized (" + name + ").\n");
-#endif
-                    
+                Debug.Log("Traffic++: " + name + " initialized.");
             }
             catch (KeyNotFoundException knf)
             {
-#if DEBUG
-                System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Error initializing Large Road Bridge AI: " + knf.Message + "\n");
-#endif
+                Debug.Log("Traffic++: Error initializing Large Road Bridge AI: " + knf.Message + "\n");
             }
             catch (Exception e)
             {
-#if DEBUG
-                System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Unexpected " + e.GetType().Name + " initializing Large Road Bridge AI: " + e.Message + "\n" + e.StackTrace + "\n");
-#endif
+                Debug.Log("Traffic++: Unexpected " + e.GetType().Name + " initializing Large Road Bridge AI: " + e.Message + "\n" + e.StackTrace + "\n");
             }
         }
     }

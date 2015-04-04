@@ -15,34 +15,32 @@ namespace CSL_Traffic
 			if (sm_initialized)
 				return;
 
-#if DEBUG
-            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Initializing Cargo Truck AI.\n");
-#endif
+            Debug.Log("Traffic++: Initializing Cargo Trucks.");
 
-			int length = collection.m_prefabs.Length;
-			VehicleInfo[] vehicles = new VehicleInfo[length];
-			string[] vehicleNames = new string[length];
-			for (int i = 0; i < length; i++)
-			{
-				VehicleInfo vehicleInfo = collection.m_prefabs[i];
-				if (vehicleInfo == null)
-					throw new KeyNotFoundException("Null prefab in the collection " + collection.name);
+            int length = collection.m_prefabs.Length;
+            VehicleInfo[] vehicles = new VehicleInfo[length];
+            string[] vehicleNames = new string[length];
+            for (int i = 0; i < length; i++)
+            {
+                VehicleInfo vehicleInfo = collection.m_prefabs[i];
+                if (vehicleInfo == null)
+                    throw new KeyNotFoundException("Null prefab in the collection " + collection.name);
 
-				vehicleNames[i] = vehicleInfo.name;
+                vehicleNames[i] = vehicleInfo.name;
 
-				GameObject gameObject = GameObject.Instantiate<GameObject>(vehicleInfo.gameObject);
-				gameObject.name = vehicleNames[i];
-				gameObject.transform.SetParent(customPrefabs);
-				GameObject.Destroy(gameObject.GetComponent<CargoTruckAI>());
-				gameObject.AddComponent<CustomCargoTruckAI>();
-				vehicles[i] = gameObject.GetComponent<VehicleInfo>();
-				vehicles[i].m_prefabInitialized = false;
-				vehicles[i].m_vehicleAI = null;
-			}
+                GameObject gameObject = GameObject.Instantiate<GameObject>(vehicleInfo.gameObject);
+                gameObject.name = vehicleNames[i];
+                gameObject.transform.SetParent(customPrefabs);
+                GameObject.Destroy(gameObject.GetComponent<CargoTruckAI>());
+                gameObject.AddComponent<CustomCargoTruckAI>();
+                vehicles[i] = gameObject.GetComponent<VehicleInfo>();
+                vehicles[i].m_prefabInitialized = false;
+                vehicles[i].m_vehicleAI = null;
+            }
 
 
-			MethodInfo method = typeof(VehicleCollection).GetMethod("InitializePrefabs", BindingFlags.NonPublic | BindingFlags.Static);
-			Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)method.Invoke(null, new object[]{ collection.name, vehicles, vehicleNames }));
+            MethodInfo method = typeof(VehicleCollection).GetMethod("InitializePrefabs", BindingFlags.NonPublic | BindingFlags.Static);
+            Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)method.Invoke(null, new object[] { collection.name, vehicles, vehicleNames }));
 			
             CustomCargoTruckAI.sm_initialized = true;
 		}
@@ -51,10 +49,9 @@ namespace CSL_Traffic
 			base.InitializeAI();
 			this.m_cargoCapacity = ((name == "Lorry") ? 8000 : 6000);
 
-#if DEBUG
-            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Cargo Truck AI successfully initialized (" + name + ").\n");
-#endif
+            Debug.Log("Traffic++: Cargo Truck initialized (" + name + ").");
 		}
+
 		public override void SimulationStep(ushort vehicleID, ref Vehicle vehicleData, ushort leaderID, ref Vehicle leaderData, int lodPhysics)
 		{
             if ((vehicleData.m_flags & Vehicle.Flags.Spawned) != Vehicle.Flags.None)

@@ -16,43 +16,39 @@ namespace CSL_Traffic
 			if (sm_initialized)
 				return;
 
-#if DEBUG
-            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Initializing Bus AI.\n");
-#endif
+            Debug.Log("Traffic++: Initializing Bus.\n");
 
-			VehicleInfo originalBus = collection.m_prefabs.Where(p => p.name.Contains("Bus")).FirstOrDefault();
-			if (originalBus == null)
-				throw new KeyNotFoundException("Bus was not found on " + collection.name);
+            VehicleInfo originalBus = collection.m_prefabs.Where(p => p.name.Contains("Bus")).FirstOrDefault();
+            if (originalBus == null)
+                throw new KeyNotFoundException("Bus was not found on " + collection.name);
 
-			GameObject instance = GameObject.Instantiate<GameObject>(originalBus.gameObject);
-			instance.name = "Bus";
-			instance.transform.SetParent(customPrefabs);
-			
+            GameObject instance = GameObject.Instantiate<GameObject>(originalBus.gameObject);
+            instance.name = "Bus";
+            instance.transform.SetParent(customPrefabs);
+
             BusAI busAI = instance.GetComponent<BusAI>();
             TransportInfo transportInfo = busAI.m_transportInfo;
-            
-			GameObject.Destroy(instance.GetComponent<BusAI>());
-			CustomBusAI customBusAI = instance.AddComponent<CustomBusAI>();
+
+            GameObject.Destroy(instance.GetComponent<BusAI>());
+            CustomBusAI customBusAI = instance.AddComponent<CustomBusAI>();
             customBusAI.m_transportInfo = transportInfo;
 
-			VehicleInfo bus = instance.GetComponent<VehicleInfo>();
-			bus.m_prefabInitialized = false;
-			bus.m_vehicleAI = null;
+            VehicleInfo bus = instance.GetComponent<VehicleInfo>();
+            bus.m_prefabInitialized = false;
+            bus.m_vehicleAI = null;
 
-			MethodInfo initMethod = typeof(VehicleCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
-			Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { bus }, new string[] { "Bus" } }));
+            MethodInfo initMethod = typeof(VehicleCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
+            Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { bus }, new string[] { "Bus" } }));
 
 			sm_initialized = true;
 		}
 
-		public override void InitializeAI()
-		{
-			base.InitializeAI();
+        public override void InitializeAI()
+        {
+            base.InitializeAI();
 
-#if DEBUG
-            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Bus AI successfully initialized.\n");
-#endif
-		}
+            Debug.Log("Traffic++: Bus initialized.\n");
+        }
 
         public override void SimulationStep(ushort vehicleID, ref Vehicle vehicleData, ref Vehicle.Frame frameData, ushort leaderID, ref Vehicle leaderData, int lodPhysics)
         {

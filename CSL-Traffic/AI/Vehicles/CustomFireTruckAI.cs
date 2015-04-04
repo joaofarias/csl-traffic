@@ -11,47 +11,41 @@ namespace CSL_Traffic
 	class CustomFireTruckAI : FireTruckAI, IVehicle
 	{
 		public static bool sm_initialized;
-		// TODO: check performance on these and compare with transcribed methods
-		//static MethodInfo sm_arriveAtTarget = typeof(FireTruckAI).GetMethod("ArriveAtTarget", BindingFlags.Instance | BindingFlags.NonPublic);
-		//static MethodInfo sm_extinguishFire = typeof(FireTruckAI).GetMethod("ExtinguishFire", BindingFlags.Instance | BindingFlags.NonPublic);
-		//static MethodInfo sm_shouldReturnToSource = typeof(FireTruckAI).GetMethod("ShouldReturnToSource", BindingFlags.Instance | BindingFlags.NonPublic);
 
 		public static void Initialize(VehicleCollection collection, Transform customPrefabs)
 		{
 			if (sm_initialized)
 				return;
 
-#if DEBUG
-            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Initializing Fire Truck AI.\n");
-#endif
+            Debug.Log("Traffic++: Initializing Fire Truck.\n");
 
-			VehicleInfo originalFireTruck = collection.m_prefabs.Where(p => p.name == "Fire Truck").FirstOrDefault();
-			if (originalFireTruck == null)
-				throw new KeyNotFoundException("Fire Truck was not found on " + collection.name);
+            VehicleInfo originalFireTruck = collection.m_prefabs.Where(p => p.name == "Fire Truck").FirstOrDefault();
+            if (originalFireTruck == null)
+                throw new KeyNotFoundException("Fire Truck was not found on " + collection.name);
 
-			GameObject instance = GameObject.Instantiate<GameObject>(originalFireTruck.gameObject);
-			instance.name = "Fire Truck";
-			instance.transform.SetParent(customPrefabs);
-			GameObject.Destroy(instance.GetComponent<FireTruckAI>());
-			instance.AddComponent<CustomFireTruckAI>();
+            GameObject instance = GameObject.Instantiate<GameObject>(originalFireTruck.gameObject);
+            instance.name = "Fire Truck";
+            instance.transform.SetParent(customPrefabs);
+            GameObject.Destroy(instance.GetComponent<FireTruckAI>());
+            instance.AddComponent<CustomFireTruckAI>();
 
-			VehicleInfo fireTruck = instance.GetComponent<VehicleInfo>();
-			fireTruck.m_prefabInitialized = false;
-			fireTruck.m_vehicleAI = null;
+            VehicleInfo fireTruck = instance.GetComponent<VehicleInfo>();
+            fireTruck.m_prefabInitialized = false;
+            fireTruck.m_vehicleAI = null;
 
-			MethodInfo initMethod = typeof(VehicleCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
-			Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { fireTruck }, new string[] { "Fire Truck" } }));
+            MethodInfo initMethod = typeof(VehicleCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
+            Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { fireTruck }, new string[] { "Fire Truck" } }));
 
 			sm_initialized = true;
+
 		}
 
 		public override void InitializeAI()
 		{
 			base.InitializeAI();
 			this.m_fireFightingRate = 75;
-#if DEBUG
-            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Fire Truck AI successfully initialized.\n");
-#endif
+
+            Debug.Log("Traffic++: Fire Truck initialized.\n");
 		}
 
 		public override void SimulationStep(ushort vehicleID, ref Vehicle vehicleData, ref Vehicle.Frame frameData, ushort leaderID, ref Vehicle leaderData, int lodPhysics)

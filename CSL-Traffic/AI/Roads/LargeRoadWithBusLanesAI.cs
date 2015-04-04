@@ -18,44 +18,58 @@ namespace CSL_Traffic
         {
             if (sm_initialized)
                 return;
+            
+            Initialize(collection, customPrefabs, "Large Road", "Large Road With Bus Lanes");
+            //Initialize(collection, customPrefabs, "Large Road Decoration Trees", "Large Road Decoration Trees With Bus Lanes");
+            //Initialize(collection, customPrefabs, "Large Road Decoration Grass", "Large Road Decoration Grass With Bus Lanes");
+            
+            sm_initialized = true;
+        }
 
-#if DEBUG
-            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Initializing Large Road With Bus Lanes AI.\n");
-#endif
+        static void Initialize(NetCollection collection, Transform customPrefabs, string prefabName, string instanceName)
+        {
+            Debug.Log("Traffic++: Initializing " + instanceName);
 
-            NetInfo originalLargeRoad = collection.m_prefabs.Where(p => p.name == "Large Road").FirstOrDefault();
+            NetInfo originalLargeRoad = collection.m_prefabs.Where(p => p.name == prefabName).FirstOrDefault();
             if (originalLargeRoad == null)
-                throw new KeyNotFoundException("Large Road was not found on " + collection.name);
+                throw new KeyNotFoundException(prefabName + " was not found on " + collection.name);
 
             GameObject instance = GameObject.Instantiate<GameObject>(originalLargeRoad.gameObject);
-            instance.name = "Large Road With Bus Lanes";
+            instance.name = instanceName;
 
             MethodInfo initMethod = typeof(NetCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
             if ((CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) == OptionsManager.ModOptions.GhostMode)
             {
                 instance.transform.SetParent(originalLargeRoad.transform.parent);
-                Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { instance.GetComponent<NetInfo>() }, new string[] { } }));
+                Initializer.QueuePrioritizedLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { instance.GetComponent<NetInfo>() }, new string[] { } }));
                 sm_initialized = true;
                 return;
             }
 
             instance.transform.SetParent(customPrefabs);
             GameObject.Destroy(instance.GetComponent<RoadAI>());
-            LargeRoadWithBusLanesAI largeRoad = instance.AddComponent<LargeRoadWithBusLanesAI>();
-
-            largeRoad.m_outsideConnection = originalLargeRoad.GetComponent<RoadAI>().m_outsideConnection;
+            instance.AddComponent<LargeRoadWithBusLanesAI>();
 
             NetInfo largeRoadWithBusLanes = instance.GetComponent<NetInfo>();
             largeRoadWithBusLanes.m_prefabInitialized = false;
             largeRoadWithBusLanes.m_netAI = null;
-            largeRoadWithBusLanes.m_UIPriority = 20;
 
-            largeRoadWithBusLanes.m_lanes[4].m_laneType = (NetInfo.LaneType)((byte)64);
-            largeRoadWithBusLanes.m_lanes[5].m_laneType = (NetInfo.LaneType)((byte)64);
+            Initializer.QueuePrioritizedLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { largeRoadWithBusLanes }, new string[] { } }));
 
-            Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { largeRoadWithBusLanes }, new string[] { } }));
+            Initializer.QueueLoadingAction(() =>
+            {
+                largeRoadWithBusLanes.m_UIPriority = 20;
 
-            sm_initialized = true;
+                largeRoadWithBusLanes.m_lanes[4].m_laneType = (NetInfo.LaneType)((byte)64);
+                largeRoadWithBusLanes.m_lanes[5].m_laneType = (NetInfo.LaneType)((byte)64);
+
+                if (Singleton<SimulationManager>.instance.m_metaData.m_invertTraffic == SimulationMetaData.MetaBool.True)
+                {
+                    largeRoadWithBusLanes.m_lanes[4].m_direction = NetInfo.Direction.Forward;
+                    largeRoadWithBusLanes.m_lanes[5].m_direction = NetInfo.Direction.Backward;
+                }
+            });
+
         }
 
         public override void InitializePrefab()
@@ -69,9 +83,7 @@ namespace CSL_Traffic
             this.m_maintenanceCost = 662;
             this.m_enableZoning = true;
 
-#if DEBUG
-            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Large Road With Bus Lanes AI successfully initialized.\n");
-#endif
+            Debug.Log("Traffic++: " + name + " initialized.");
         }
     }
 }

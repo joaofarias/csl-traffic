@@ -16,26 +16,24 @@ namespace CSL_Traffic
 			if (sm_initialized)
 				return;
 
-#if DEBUG
-            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Initializing Hearse AI.\n");
-#endif
+            Debug.Log("Traffic++: Initializing Hearse.\n");
 
-			VehicleInfo originalHearse = collection.m_prefabs.Where(p => p.name == "Hearse").FirstOrDefault();
-			if (originalHearse == null)
-				throw new KeyNotFoundException("Hearse was not found on " + collection.name);
+            VehicleInfo originalHearse = collection.m_prefabs.Where(p => p.name == "Hearse").FirstOrDefault();
+            if (originalHearse == null)
+                throw new KeyNotFoundException("Hearse was not found on " + collection.name);
 
-			GameObject instance = GameObject.Instantiate<GameObject>(originalHearse.gameObject);
-			instance.name = "Hearse";
-			instance.transform.SetParent(customPrefabs);
-			GameObject.Destroy(instance.GetComponent<HearseAI>());
-			instance.AddComponent<CustomHearseAI>();
+            GameObject instance = GameObject.Instantiate<GameObject>(originalHearse.gameObject);
+            instance.name = "Hearse";
+            instance.transform.SetParent(customPrefabs);
+            GameObject.Destroy(instance.GetComponent<HearseAI>());
+            instance.AddComponent<CustomHearseAI>();
 
-			VehicleInfo hearse = instance.GetComponent<VehicleInfo>();
-			hearse.m_prefabInitialized = false;
-			hearse.m_vehicleAI = null;
+            VehicleInfo hearse = instance.GetComponent<VehicleInfo>();
+            hearse.m_prefabInitialized = false;
+            hearse.m_vehicleAI = null;
 
-			MethodInfo initMethod = typeof(VehicleCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
-			Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { hearse }, new string[] { "Hearse" } }));
+            MethodInfo initMethod = typeof(VehicleCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
+            Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { hearse }, new string[] { "Hearse" } }));
 
 			sm_initialized = true;
 		}
@@ -45,9 +43,7 @@ namespace CSL_Traffic
 			base.InitializeAI();
 			this.m_corpseCapacity = 10;
 
-#if DEBUG
-            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Hearse AI successfully initialized.\n");
-#endif
+            Debug.Log("Traffic++: Hearse initialized.\n");
 		}
 
 		public override void SimulationStep(ushort vehicleID, ref Vehicle vehicleData, ref Vehicle.Frame frameData, ushort leaderID, ref Vehicle leaderData, int lodPhysics)

@@ -17,38 +17,34 @@ namespace CSL_Traffic
 			if (sm_initialized)
 				return;
 
-#if DEBUG
-            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Initializing Police Car AI.\n");
-#endif
+            Debug.Log("Traffic++: Initializing Police Car.\n");
 
-			VehicleInfo originalPoliceCar = collection.m_prefabs.Where(p => p.name == "Police Car").FirstOrDefault();
-			if (originalPoliceCar == null)
-				throw new KeyNotFoundException("Police Car was not found on " + collection.name);
+            VehicleInfo originalPoliceCar = collection.m_prefabs.Where(p => p.name == "Police Car").FirstOrDefault();
+            if (originalPoliceCar == null)
+                throw new KeyNotFoundException("Police Car was not found on " + collection.name);
 
-			GameObject instance = GameObject.Instantiate<GameObject>(originalPoliceCar.gameObject);
-			instance.name = "Police Car";
-			instance.transform.SetParent(customPrefabs);
-			GameObject.Destroy(instance.GetComponent<PoliceCarAI>());
-			instance.AddComponent<CustomPoliceCarAI>();
+            GameObject instance = GameObject.Instantiate<GameObject>(originalPoliceCar.gameObject);
+            instance.name = "Police Car";
+            instance.transform.SetParent(customPrefabs);
+            GameObject.Destroy(instance.GetComponent<PoliceCarAI>());
+            instance.AddComponent<CustomPoliceCarAI>();
 
-			VehicleInfo policeCar = instance.GetComponent<VehicleInfo>();
-			policeCar.m_prefabInitialized = false;
-			policeCar.m_vehicleAI = null;
+            VehicleInfo policeCar = instance.GetComponent<VehicleInfo>();
+            policeCar.m_prefabInitialized = false;
+            policeCar.m_vehicleAI = null;
 
-			MethodInfo initMethod = typeof(VehicleCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
-			Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { policeCar }, new string[] { "Police Car" } }));
+            MethodInfo initMethod = typeof(VehicleCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
+            Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { policeCar }, new string[] { "Police Car" } }));
 
 			sm_initialized = true;
 		}
 
-		public override void InitializeAI()
-		{
-			base.InitializeAI();
+        public override void InitializeAI()
+        {
+            base.InitializeAI();
 
-#if DEBUG
-            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Police Car AI successfully initialized.\n");
-#endif
-		}
+            Debug.Log("Traffic++: Police Car initialized.\n");
+        }
 
 		public override void SimulationStep(ushort vehicleID, ref Vehicle vehicleData, ref Vehicle.Frame frameData, ushort leaderID, ref Vehicle leaderData, int lodPhysics)
 		{

@@ -16,14 +16,12 @@ namespace CSL_Traffic
         {
             None = 0,
             AllowTrucksInPedestrianRoads = 1,
-            AllowResidentsInPedestrianRoads = 2,
+            AllowResidentsInPedestrianRoads = 2, // TODO
             DisableCentralLaneOnPedestrianRoads = 4,
+            UseRealisticSpeeds = 8, // TODO
 
-            FixMissingArrows = 8,
 
-            All = 15,
-
-            GhostMode = long.MaxValue
+            GhostMode = 1L << 62
         }
 
         GameObject m_optionsButtonGo;
@@ -32,7 +30,6 @@ namespace CSL_Traffic
         UICheckBox m_allowTrucksCheckBox;
         //UICheckBox m_allowTrucksCheckBox;
         UICheckBox m_disableCentralLaneCheckBox;
-        UICheckBox m_LoadCheckBox;
         UICheckBox m_ghostModeCheckBox;
         
         bool m_initialized;
@@ -82,6 +79,7 @@ namespace CSL_Traffic
             GameObject.Destroy(this.m_optionsPanel.GetComponent<OptionsPanel>());
 
             GameObject checkboxTemplate = this.m_optionsPanel.GetComponentsInChildren<UICheckBox>().Where(c => c.name == "EdgeScrolling").FirstOrDefault().gameObject;
+            GameObject.Destroy(checkboxTemplate.GetComponent<BindProperty>());
             Vector3 localPosition = checkboxTemplate.transform.localPosition;
             
             GameObject caption = null;
@@ -116,17 +114,16 @@ namespace CSL_Traffic
             optionsList.GetComponent<UIScrollablePanel>().AlignTo(this.m_optionsPanel.GetComponent<UIPanel>(), UIAlignAnchor.TopLeft);
             optionsList.GetComponent<UIScrollablePanel>().position += new Vector3(caption.transform.FindChild("Label").GetComponent<UILabel>().height, -caption.transform.FindChild("Label").GetComponent<UILabel>().height * 2f);
             
-
+            // allow trucks
             GameObject allowTrucks = GameObject.Instantiate<GameObject>(checkboxTemplate);
-            GameObject.Destroy(allowTrucks.GetComponent<BindProperty>());
             allowTrucks.transform.SetParent(optionsList.transform);
-            //allowTrucks.transform.localPosition = localPosition + new Vector3(0.05f, -0.1f, 0f);
             this.m_allowTrucksCheckBox = allowTrucks.GetComponent<UICheckBox>();
             this.m_allowTrucksCheckBox.isChecked = false;
             this.m_allowTrucksCheckBox.text = "Allow Trucks in Pedestrian Roads";
             this.m_allowTrucksCheckBox.isVisible = true;
+            this.m_allowTrucksCheckBox.zOrder = 0;
 
-            // allow residents
+            //TODO: allow residents
             //GameObject allowTrucks = GameObject.Instantiate<GameObject>(checkboxTemplate);
             //GameObject.Destroy(allowTrucks.GetComponent<BindProperty>());
             //allowTrucks.transform.SetParent(optionsList.transform);
@@ -135,6 +132,7 @@ namespace CSL_Traffic
             //this.m_allowTrucksCheckBox.isChecked = false;
             //this.m_allowTrucksCheckBox.text = "Allow Trucks in Pedestrian Roads";
             //this.m_allowTrucksCheckBox.isVisible = true;
+            //this.m_allowTrucksCheckBox.zOrder = 0;
 
             // disable central lane
             GameObject disableCentralLane = GameObject.Instantiate<GameObject>(allowTrucks);
@@ -143,13 +141,9 @@ namespace CSL_Traffic
             this.m_disableCentralLaneCheckBox.isChecked = false;
             this.m_disableCentralLaneCheckBox.text = "Disable Central Lane on Pedestrian Roads";
             this.m_disableCentralLaneCheckBox.isVisible = true;
+            this.m_disableCentralLaneCheckBox.zOrder = 2;
 
-            GameObject load = GameObject.Instantiate<GameObject>(allowTrucks);
-            load.transform.SetParent(allowTrucks.transform.parent);
-            this.m_LoadCheckBox = load.GetComponent<UICheckBox>();
-            this.m_LoadCheckBox.isChecked = false;
-            this.m_LoadCheckBox.text = "Fix for missing arrows";
-            this.m_LoadCheckBox.isVisible = true;
+            
 
 
             GameObject ghostMode = GameObject.Instantiate<GameObject>(allowTrucks);
@@ -160,6 +154,7 @@ namespace CSL_Traffic
             this.m_ghostModeCheckBox.isVisible = true;
             this.m_ghostModeCheckBox.AlignTo(m_optionsPanel.GetComponent<UIPanel>(), UIAlignAnchor.BottomLeft);
 
+            // save button
             GameObject save = GameObject.Instantiate<GameObject>(this.m_optionsButtonGo);
             save.transform.SetParent(this.m_optionsPanel.transform);
             
@@ -180,10 +175,12 @@ namespace CSL_Traffic
             this.m_optionsPanel.GetComponent<UIPanel>().isVisible = true;
             this.m_optionsPanel.GetComponent<UIPanel>().BringToFront();
         }
+
         private void CloseOptionsPanel(UIComponent component, UIMouseEventParameter eventParam)
         {
             this.m_optionsPanel.GetComponent<UIPanel>().isVisible = false;
         }
+
         private void OnSave(UIComponent component, UIMouseEventParameter eventParam)
         {
             this.m_optionsPanel.GetComponent<UIPanel>().isVisible = false;
@@ -200,40 +197,50 @@ namespace CSL_Traffic
                 options.disableCentralLane = true;
                 CSLTraffic.Options |= ModOptions.DisableCentralLaneOnPedestrianRoads;
             }
-            if (this.m_LoadCheckBox.isChecked)
-            {
-                options.disableTrafficPP = true;
-                CSLTraffic.Options |= ModOptions.FixMissingArrows;
-            }
+            
             if (this.m_ghostModeCheckBox.isChecked)
             {
                 options.ghostMode = true;
                 CSLTraffic.Options |= ModOptions.GhostMode;
             }
 
-            XmlSerializer xmlSerializer = new XmlSerializer(typeof(Options));
-            using (StreamWriter streamWriter = new StreamWriter("CSL-TrafficOptions.xml"))
+            try
             {
-                xmlSerializer.Serialize(streamWriter, options);
+                XmlSerializer xmlSerializer = new XmlSerializer(typeof(Options));
+                using (StreamWriter streamWriter = new StreamWriter("CSL-TrafficOptions.xml"))
+                {
+                    xmlSerializer.Serialize(streamWriter, options);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.Log("Traffic++: Unexpected " + e.GetType().Name + " saving options: " + e.Message + "\n" + e.StackTrace);
             }
         }
 
         public void Load()
         {
-            XmlSerializer xmlSerializer = new XmlSerializer(typeof(Options));
+            CSLTraffic.Options = ModOptions.None;
             Options options = new Options();
             try
             {
+                XmlSerializer xmlSerializer = new XmlSerializer(typeof(Options));
                 using (StreamReader streamReader = new StreamReader("CSL-TrafficOptions.xml"))
                 {
                     options = (Options)xmlSerializer.Deserialize(streamReader);
                 }
             }
-            catch (Exception)
+            catch (FileNotFoundException)
             {
+                // No options file yet
+                return;
+            }
+            catch (Exception e )
+            {
+                Debug.Log("Traffic++: Unexpected " + e.GetType().Name + " loading options: " + e.Message + "\n" + e.StackTrace);
+                return;
             }
 
-            CSLTraffic.Options = ModOptions.None;
             if (options.allowTrucks)
             {
                 this.m_allowTrucksCheckBox.isChecked = true;
@@ -244,11 +251,7 @@ namespace CSL_Traffic
                 this.m_disableCentralLaneCheckBox.isChecked = true;
                 CSLTraffic.Options |= ModOptions.DisableCentralLaneOnPedestrianRoads;
             }
-            if (options.disableTrafficPP)
-            {
-                this.m_LoadCheckBox.isChecked = true;
-                CSLTraffic.Options |= ModOptions.FixMissingArrows;
-            }
+            
             if (options.ghostMode)
             {
                 this.m_ghostModeCheckBox.isChecked = true;
@@ -264,7 +267,7 @@ namespace CSL_Traffic
 
         void Update()
         {
-            if (!m_initialized || (Application.loadedLevel == 5 && m_optionsButtonGo == null))
+            if (Application.loadedLevel == 5 && (!m_initialized || m_optionsButtonGo == null))
             {
                 try
                 {
@@ -279,14 +282,8 @@ namespace CSL_Traffic
             public bool allowTrucks;
             //public bool allowResidents;
             public bool disableCentralLane;
-            
 
             public bool ghostMode;
-
-
-
-            // Legacy
-            public bool disableTrafficPP;
         }
 
     }

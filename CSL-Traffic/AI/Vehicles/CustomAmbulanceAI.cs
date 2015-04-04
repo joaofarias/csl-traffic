@@ -16,26 +16,24 @@ namespace CSL_Traffic
 			if (sm_initialized)
 				return;
 
-#if DEBUG
-            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Initializing Ambulance AI.\n");
-#endif
+            Debug.Log("Traffic++: Initializing Ambulance.\n");
 
-			VehicleInfo originalAmbulance = collection.m_prefabs.Where(p => p.name == "Ambulance").FirstOrDefault();
-			if (originalAmbulance == null)
-				throw new KeyNotFoundException("Ambulance was not found on " + collection.name);
+            VehicleInfo originalAmbulance = collection.m_prefabs.Where(p => p.name == "Ambulance").FirstOrDefault();
+            if (originalAmbulance == null)
+                throw new KeyNotFoundException("Ambulance was not found on " + collection.name);
 
-			GameObject instance = GameObject.Instantiate<GameObject>(originalAmbulance.gameObject);
-			instance.name = "Ambulance";
-			instance.transform.SetParent(customPrefabs);
-			GameObject.Destroy(instance.GetComponent<AmbulanceAI>());
-			instance.AddComponent<CustomAmbulanceAI>();
+            GameObject instance = GameObject.Instantiate<GameObject>(originalAmbulance.gameObject);
+            instance.name = "Ambulance";
+            instance.transform.SetParent(customPrefabs);
+            GameObject.Destroy(instance.GetComponent<AmbulanceAI>());
+            instance.AddComponent<CustomAmbulanceAI>();
 
-			VehicleInfo ambulance = instance.GetComponent<VehicleInfo>();
-			ambulance.m_prefabInitialized = false;
-			ambulance.m_vehicleAI = null;
+            VehicleInfo ambulance = instance.GetComponent<VehicleInfo>();
+            ambulance.m_prefabInitialized = false;
+            ambulance.m_vehicleAI = null;
 
-			MethodInfo initMethod = typeof(VehicleCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
-			Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { ambulance }, new string[] { "Ambulance" } }));
+            MethodInfo initMethod = typeof(VehicleCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
+            Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { ambulance }, new string[] { "Ambulance" } }));
 
 			sm_initialized = true;
 		}
@@ -45,9 +43,7 @@ namespace CSL_Traffic
 			base.InitializeAI();
 			this.m_patientCapacity = 1;
 
-#if DEBUG
-            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Ambulance AI successfully initialized.\n");
-#endif
+            Debug.Log("Traffic++: Ambulance initialized.\n");
 		}
 
 		public override void SimulationStep(ushort vehicleID, ref Vehicle vehicleData, ref Vehicle.Frame frameData, ushort leaderID, ref Vehicle leaderData, int lodPhysics)

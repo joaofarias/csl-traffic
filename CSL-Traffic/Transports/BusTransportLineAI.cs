@@ -21,9 +21,6 @@ namespace CSL_Traffic
             if (sm_initialized)
                 return;
 
-#if DEBUG
-            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Initializing Bus Transport Line AI.\n");
-#endif
             Initialize(collection, transportCollection, customPrefabs, "Bus Line", "Bus");
             //Initialize(collection, transportCollection, customPrefabs, "Metro Line", "Metro");
            
@@ -33,29 +30,35 @@ namespace CSL_Traffic
 
         static void Initialize(NetCollection netCollection, TransportCollection transportCollection, Transform customPrefabs, string prefabName, string transportName)
         {
-            NetInfo originalBusLine = netCollection.m_prefabs.Where(p => p.name == prefabName).FirstOrDefault();
-            if (originalBusLine == null)
-                throw new KeyNotFoundException(prefabName + " was not found on " + netCollection.name);
+            Debug.Log("Traffic++: Initializing " + prefabName);
+            //Initializer.QueueLoadingAction(() =>
+            //{
+                NetInfo originalBusLine = netCollection.m_prefabs.Where(p => p.name == prefabName).FirstOrDefault();
+                if (originalBusLine == null)
+                    throw new KeyNotFoundException(prefabName + " was not found on " + netCollection.name);
 
-            GameObject instance = GameObject.Instantiate<GameObject>(originalBusLine.gameObject); ;
-            instance.name = prefabName;
-            instance.transform.SetParent(customPrefabs);
-            GameObject.Destroy(instance.GetComponent<TransportLineAI>());
-            instance.AddComponent<BusTransportLineAI>();
+                GameObject instance = GameObject.Instantiate<GameObject>(originalBusLine.gameObject); ;
+                instance.name = prefabName;
+                instance.transform.SetParent(customPrefabs);
+                GameObject.Destroy(instance.GetComponent<TransportLineAI>());
+                instance.AddComponent<BusTransportLineAI>();
 
-            NetInfo busLine = instance.GetComponent<NetInfo>();
-            busLine.m_prefabInitialized = false;
-            busLine.m_netAI = null;
+                NetInfo busLine = instance.GetComponent<NetInfo>();
+                busLine.m_prefabInitialized = false;
+                busLine.m_netAI = null;
 
-            MethodInfo initMethod = typeof(NetCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
-            Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { netCollection.name, new[] { busLine }, new string[] { prefabName } }));
+                MethodInfo initMethod = typeof(NetCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
+                Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { netCollection.name, new[] { busLine }, new string[] { prefabName } }));
 
-            // transport
-            TransportInfo originalTransportInfo = transportCollection.m_prefabs.Where(p => p.name.Contains(transportName)).FirstOrDefault();
-            if (originalTransportInfo == null)
-                throw new KeyNotFoundException(transportName + " Transport Info not found on " + transportCollection.name);
+                // transport
+                TransportInfo originalTransportInfo = transportCollection.m_prefabs.Where(p => p.name.Contains(transportName)).FirstOrDefault();
+                if (originalTransportInfo == null)
+                    throw new KeyNotFoundException(transportName + " Transport Info not found on " + transportCollection.name);
 
-            originalTransportInfo.m_netInfo = busLine;
+                originalTransportInfo.m_netInfo = busLine;
+            //});
+
+                Debug.Log("Traffic++: " + prefabName + " initialized.");
         }
 
         public override void InitializePrefab()
@@ -75,10 +78,6 @@ namespace CSL_Traffic
             }
 
             base.InitializePrefab();
-
-#if DEBUG
-            System.IO.File.AppendAllText("TrafficPP_Debug.txt", "Transport Line AI successfully initialized (" + name + ").\n");
-#endif
         }
 
         public override void SimulationStep(ushort segmentID, ref NetSegment data)
