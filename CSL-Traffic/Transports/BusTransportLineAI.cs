@@ -31,34 +31,30 @@ namespace CSL_Traffic
         static void Initialize(NetCollection netCollection, TransportCollection transportCollection, Transform customPrefabs, string prefabName, string transportName)
         {
             Debug.Log("Traffic++: Initializing " + prefabName);
-            //Initializer.QueueLoadingAction(() =>
-            //{
-                NetInfo originalBusLine = netCollection.m_prefabs.Where(p => p.name == prefabName).FirstOrDefault();
-                if (originalBusLine == null)
-                    throw new KeyNotFoundException(prefabName + " was not found on " + netCollection.name);
 
-                GameObject instance = GameObject.Instantiate<GameObject>(originalBusLine.gameObject); ;
-                instance.name = prefabName;
-                instance.transform.SetParent(customPrefabs);
-                GameObject.Destroy(instance.GetComponent<TransportLineAI>());
-                instance.AddComponent<BusTransportLineAI>();
+            NetInfo originalBusLine = netCollection.m_prefabs.Where(p => p.name == prefabName).FirstOrDefault();
+            if (originalBusLine == null)
+                throw new KeyNotFoundException(prefabName + " was not found on " + netCollection.name);
 
-                NetInfo busLine = instance.GetComponent<NetInfo>();
-                busLine.m_prefabInitialized = false;
-                busLine.m_netAI = null;
+            GameObject instance = GameObject.Instantiate<GameObject>(originalBusLine.gameObject); ;
+            instance.name = prefabName;
+            instance.transform.SetParent(customPrefabs);
+            GameObject.Destroy(instance.GetComponent<TransportLineAI>());
+            instance.AddComponent<BusTransportLineAI>();
 
-                MethodInfo initMethod = typeof(NetCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
-                Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { netCollection.name, new[] { busLine }, new string[] { prefabName } }));
+            NetInfo busLine = instance.GetComponent<NetInfo>();
+            busLine.m_prefabInitialized = false;
+            busLine.m_netAI = null;
 
-                // transport
-                TransportInfo originalTransportInfo = transportCollection.m_prefabs.Where(p => p.name.Contains(transportName)).FirstOrDefault();
-                if (originalTransportInfo == null)
-                    throw new KeyNotFoundException(transportName + " Transport Info not found on " + transportCollection.name);
+            MethodInfo initMethod = typeof(NetCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
+            Initializer.QueuePrioritizedLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { netCollection.name, new[] { busLine }, new string[] { prefabName } }));
 
-                originalTransportInfo.m_netInfo = busLine;
-            //});
+            // transport
+            TransportInfo originalTransportInfo = transportCollection.m_prefabs.Where(p => p.name.Contains(transportName)).FirstOrDefault();
+            if (originalTransportInfo == null)
+                throw new KeyNotFoundException(transportName + " Transport Info not found on " + transportCollection.name);
 
-                Debug.Log("Traffic++: " + prefabName + " initialized.");
+            originalTransportInfo.m_netInfo = busLine;
         }
 
         public override void InitializePrefab()
@@ -78,6 +74,8 @@ namespace CSL_Traffic
             }
 
             base.InitializePrefab();
+
+            Debug.Log("Traffic++: " + name + " initialized.");
         }
 
         public override void SimulationStep(ushort segmentID, ref NetSegment data)

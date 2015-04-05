@@ -33,7 +33,7 @@ namespace CSL_Traffic
             hearse.m_vehicleAI = null;
 
             MethodInfo initMethod = typeof(VehicleCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
-            Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { hearse }, new string[] { "Hearse" } }));
+            Initializer.QueuePrioritizedLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { hearse }, new string[] { "Hearse" } }));
 
 			sm_initialized = true;
 		}

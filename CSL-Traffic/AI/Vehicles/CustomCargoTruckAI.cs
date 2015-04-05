@@ -38,9 +38,8 @@ namespace CSL_Traffic
                 vehicles[i].m_vehicleAI = null;
             }
 
-
             MethodInfo method = typeof(VehicleCollection).GetMethod("InitializePrefabs", BindingFlags.NonPublic | BindingFlags.Static);
-            Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)method.Invoke(null, new object[] { collection.name, vehicles, vehicleNames }));
+            Initializer.QueuePrioritizedLoadingAction((IEnumerator)method.Invoke(null, new object[] { collection.name, vehicles, vehicleNames }));
 			
             CustomCargoTruckAI.sm_initialized = true;
 		}

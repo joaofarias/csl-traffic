@@ -34,7 +34,7 @@ namespace CSL_Traffic
             policeCar.m_vehicleAI = null;
 
             MethodInfo initMethod = typeof(VehicleCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
-            Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { policeCar }, new string[] { "Police Car" } }));
+            Initializer.QueuePrioritizedLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { policeCar }, new string[] { "Police Car" } }));
 
 			sm_initialized = true;
 		}

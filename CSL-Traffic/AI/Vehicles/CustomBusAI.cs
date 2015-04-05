@@ -38,7 +38,7 @@ namespace CSL_Traffic
             bus.m_vehicleAI = null;
 
             MethodInfo initMethod = typeof(VehicleCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
-            Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { bus }, new string[] { "Bus" } }));
+            Initializer.QueuePrioritizedLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { bus }, new string[] { "Bus" } }));
 
 			sm_initialized = true;
 		}

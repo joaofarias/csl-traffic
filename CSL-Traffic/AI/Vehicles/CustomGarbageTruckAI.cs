@@ -38,7 +38,7 @@ namespace CSL_Traffic
             garbageTruck.m_vehicleAI = null;
 
             MethodInfo initMethod = typeof(VehicleCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
-            Singleton<LoadingManager>.instance.QueueLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { garbageTruck }, new string[] { "Garbage Truck" } }));
+            Initializer.QueuePrioritizedLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { garbageTruck }, new string[] { "Garbage Truck" } }));
 			
 			sm_initialized = true;
 		}

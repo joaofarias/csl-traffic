@@ -102,7 +102,7 @@ namespace CSL_Traffic
             UIButton closeButton = caption.transform.FindChild("Close").GetComponent<UIButton>();
             GameObject.Destroy(closeButton.GetComponent<BindEvent>());
             closeButton.eventClick += CloseOptionsPanel;
-            caption.transform.FindChild("Label").GetComponent<UILabel>().text = "Traffic++ - Options";
+            caption.transform.FindChild("Label").GetComponent<UILabel>().text = "Traffic++ Options";
 
             // set options list
             GameObject optionsList = GameObject.Instantiate<GameObject>(modsList);

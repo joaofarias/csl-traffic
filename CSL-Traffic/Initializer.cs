@@ -184,10 +184,10 @@ namespace CSL_Traffic
                 try
                 {
                     // roads
-                    LargeRoadWithBusLanesBridgeAI.Initialize(roadsNetCollection, transform);
-                    LargeRoadWithBusLanesAI.Initialize(roadsNetCollection, transform);
-                    ZonablePedestrianBridgeAI.Initialize(beautificationNetCollection, transform);
                     ZonablePedestrianPathAI.Initialize(beautificationNetCollection, transform);
+                    ZonablePedestrianBridgeAI.Initialize(beautificationNetCollection, transform);
+                    LargeRoadWithBusLanesAI.Initialize(roadsNetCollection, transform);
+                    LargeRoadWithBusLanesBridgeAI.Initialize(roadsNetCollection, transform);
 
                     if ((CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) != OptionsManager.ModOptions.GhostMode)
                     {
@@ -210,7 +210,7 @@ namespace CSL_Traffic
                     // Localization
                     UpdateLocalization();
 
-                    ExecuteQueuedActions();
+                    AddQueuedActionsToLoadingQueue();
 
                 }
                 catch (KeyNotFoundException knf)
@@ -363,12 +363,12 @@ namespace CSL_Traffic
             return go.GetComponent<T>();
         }
 
-        public static void QueueLoadingAction(Action action)
+        public static void QueuePrioritizedLoadingAction(Action action)
         {
-            QueueLoadingAction(ActionWrapper(action));
+            QueuePrioritizedLoadingAction(ActionWrapper(action));
         }
 
-        public static void QueueLoadingAction(IEnumerator action)
+        public static void QueuePrioritizedLoadingAction(IEnumerator action)
         {
             while (!Monitor.TryEnter(sm_queueLock, SimulationManager.SYNCHRONIZE_TIMEOUT)) { }
             try
@@ -378,39 +378,7 @@ namespace CSL_Traffic
             finally { Monitor.Exit(sm_queueLock); }
         }
 
-        static void ExecuteQueuedActions()
-        {
-            IEnumerator action;
-            do
-            {
-                while (!Monitor.TryEnter(sm_queueLock, SimulationManager.SYNCHRONIZE_TIMEOUT)) { }
-                try
-                {
-                    action = sm_actionQueue.Count > 0 ? sm_actionQueue.Dequeue() : null;
-                }
-                finally
-                {
-                    Monitor.Exit(sm_queueLock);
-                }
-
-                if (action != null)
-                    Singleton<LoadingManager>.instance.QueueLoadingAction(action);
-
-            } while (action != null);
-        }
-
-        static IEnumerator ActionWrapper(Action a)
-        {
-            a.Invoke();
-            yield break;
-        }
-
-        public static void QueuePrioritizedLoadingAction(Action action)
-        {
-            QueuePrioritizedLoadingAction(ActionWrapper(action));
-        }
-
-        public static void QueuePrioritizedLoadingAction(IEnumerator action)
+        static void AddQueuedActionsToLoadingQueue()
         {
             LoadingManager loadingManager = Singleton<LoadingManager>.instance;
             object loadingLock = typeof(LoadingManager).GetFieldByName("m_loadingLock").GetValue(loadingManager);
@@ -419,12 +387,24 @@ namespace CSL_Traffic
             try
             {
                 FieldInfo mainThreadQueueField = typeof(LoadingManager).GetFieldByName("m_mainThreadQueue");
-                Queue<IEnumerator> mainThreadQueue = (Queue<IEnumerator>) mainThreadQueueField.GetValue(loadingManager);
+                Queue<IEnumerator> mainThreadQueue = (Queue<IEnumerator>)mainThreadQueueField.GetValue(loadingManager);
                 if (mainThreadQueue != null)
                 {
                     Queue<IEnumerator> newQueue = new Queue<IEnumerator>(mainThreadQueue.Count + 1);
                     newQueue.Enqueue(mainThreadQueue.Dequeue()); // currently running action must continue to be the first in the queue
-                    newQueue.Enqueue(action);
+
+                    while (!Monitor.TryEnter(sm_queueLock, SimulationManager.SYNCHRONIZE_TIMEOUT)) { }
+                    try
+                    {
+                        while (sm_actionQueue.Count > 0)
+                            newQueue.Enqueue(sm_actionQueue.Dequeue());
+                    }
+                    finally
+                    {
+                        Monitor.Exit(sm_queueLock);
+                    }
+
+
                     while (mainThreadQueue.Count > 0)
                         newQueue.Enqueue(mainThreadQueue.Dequeue());
 
@@ -435,6 +415,22 @@ namespace CSL_Traffic
             {
                 Monitor.Exit(loadingLock);
             }
+        }
+
+        static IEnumerator ActionWrapper(Action a)
+        {
+            a.Invoke();
+            yield break;
+        }
+
+        public static void QueueLoadingAction(Action action)
+        {
+            Singleton<LoadingManager>.instance.QueueLoadingAction(ActionWrapper(action));
+        }
+
+        public static void QueueLoadingAction(IEnumerator action)
+        {
+            Singleton<LoadingManager>.instance.QueueLoadingAction(action);
         }
 
         // TODO: Put this in its own class
