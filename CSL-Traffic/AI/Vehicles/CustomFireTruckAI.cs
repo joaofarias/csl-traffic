@@ -10,46 +10,44 @@ namespace CSL_Traffic
 {
 	class CustomFireTruckAI : FireTruckAI, IVehicle
 	{
-		public static bool sm_initialized;
-
-		public static void Initialize(VehicleCollection collection, Transform customPrefabs)
-		{
-			if (sm_initialized)
-				return;
-
-            Debug.Log("Traffic++: Initializing Fire Truck.\n");
-
-            VehicleInfo originalFireTruck = collection.m_prefabs.Where(p => p.name == "Fire Truck").FirstOrDefault();
-            if (originalFireTruck == null)
-                throw new KeyNotFoundException("Fire Truck was not found on " + collection.name);
-
-            GameObject instance = GameObject.Instantiate<GameObject>(originalFireTruck.gameObject);
-            instance.name = "Fire Truck";
-            instance.transform.SetParent(customPrefabs);
-            GameObject.Destroy(instance.GetComponent<FireTruckAI>());
-            instance.AddComponent<CustomFireTruckAI>();
-
-            VehicleInfo fireTruck = instance.GetComponent<VehicleInfo>();
-            fireTruck.m_prefabInitialized = false;
-            fireTruck.m_vehicleAI = null;
-
-            MethodInfo initMethod = typeof(VehicleCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
-            Initializer.QueuePrioritizedLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { fireTruck }, new string[] { "Fire Truck" } }));
-
-			sm_initialized = true;
-
-		}
+        CustomCarAI.SpeedData m_speedData;
 
 		public override void InitializeAI()
 		{
 			base.InitializeAI();
-			this.m_fireFightingRate = 75;
+
+            if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
+            {
+                m_speedData = new CustomCarAI.SpeedData()
+                {
+                    currentPath = uint.MaxValue,
+                    speedMultiplier = 1f
+                    //acceleration = this.m_info.m_acceleration *= 0.2f,
+                    //braking = this.m_info.m_braking *= 0.45f,
+                    //turning = this.m_info.m_turning *= 0.35f,
+                    //maxSpeed = this.m_info.m_maxSpeed *= 1f
+                };
+            }
 
             Debug.Log("Traffic++: Fire Truck initialized.\n");
 		}
 
 		public override void SimulationStep(ushort vehicleID, ref Vehicle vehicleData, ref Vehicle.Frame frameData, ushort leaderID, ref Vehicle leaderData, int lodPhysics)
 		{
+            if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
+            {
+                if (m_speedData.currentPath != vehicleData.m_path)
+                {
+                    m_speedData.currentPath = vehicleData.m_path;
+                    if ((vehicleData.m_flags & Vehicle.Flags.Emergency2) == Vehicle.Flags.Emergency2)
+                        m_speedData.SetRandomSpeedMultiplier(1f, 1.75f);
+                    else
+                        m_speedData.SetRandomSpeedMultiplier(0.65f, 1f);
+                }
+                m_speedData.ApplySpeedMultiplier(this.m_info);
+            }
+            
+
 			frameData.m_blinkState = (((vehicleData.m_flags & (Vehicle.Flags.Emergency1 | Vehicle.Flags.Emergency2)) == Vehicle.Flags.None) ? 0f : 10f);
 			CustomCarAI.SimulationStep(this, vehicleID, ref vehicleData, ref frameData, leaderID, ref leaderData, lodPhysics);
 			bool flag = false;
@@ -111,6 +109,11 @@ namespace CSL_Traffic
 					Singleton<TransferManager>.instance.AddIncomingOffer((TransferManager.TransferReason)vehicleData.m_transferType, offer);
 				}
 			}
+
+            if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
+            {
+                m_speedData.RestoreVehicleSpeed(this.m_info);
+            }
 		}
 
 		protected override bool StartPathFind(ushort vehicleID, ref Vehicle vehicleData, Vector3 startPos, Vector3 endPos, bool startBothWays, bool endBothWays)

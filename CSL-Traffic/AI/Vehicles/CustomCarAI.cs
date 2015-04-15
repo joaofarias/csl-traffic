@@ -649,5 +649,32 @@ namespace CSL_Traffic
 			}
 			return otherData.m_nextGridInstance;
 		}
-	}
+
+        public struct SpeedData
+        {
+            public uint currentPath;
+            public float speedMultiplier;
+
+            public void SetRandomSpeedMultiplier(float rangeMin = 0.75f, float rangeMax = 1.25f)
+            {
+                speedMultiplier = UnityEngine.Random.Range(rangeMin, rangeMax);
+            }
+
+            public void ApplySpeedMultiplier(VehicleInfo vehicle)
+            {
+                vehicle.m_acceleration *= speedMultiplier;
+                //vehicle.m_braking *= speedMultiplier;
+                //vehicle.m_turning *= speedMultiplier;
+                vehicle.m_maxSpeed *= speedMultiplier;
+            }
+
+            public void RestoreVehicleSpeed(VehicleInfo vehicle)
+            {
+                vehicle.m_acceleration /= speedMultiplier;
+                //vehicle.m_braking /= speedMultiplier;
+                //vehicle.m_turning /= speedMultiplier;
+                vehicle.m_maxSpeed /= speedMultiplier;
+            }
+        }
+    }
 }

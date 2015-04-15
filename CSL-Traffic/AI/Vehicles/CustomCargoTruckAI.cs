@@ -8,51 +8,41 @@ namespace CSL_Traffic
 {
 	class CustomCargoTruckAI : CargoTruckAI, IVehicle
 	{
-		public static bool sm_initialized;
+        CustomCarAI.SpeedData m_speedData;
 
-		public static void Initialize(VehicleCollection collection, Transform customPrefabs)
-		{
-			if (sm_initialized)
-				return;
-
-            Debug.Log("Traffic++: Initializing Cargo Trucks.");
-
-            int length = collection.m_prefabs.Length;
-            VehicleInfo[] vehicles = new VehicleInfo[length];
-            string[] vehicleNames = new string[length];
-            for (int i = 0; i < length; i++)
-            {
-                VehicleInfo vehicleInfo = collection.m_prefabs[i];
-                if (vehicleInfo == null)
-                    throw new KeyNotFoundException("Null prefab in the collection " + collection.name);
-
-                vehicleNames[i] = vehicleInfo.name;
-
-                GameObject gameObject = GameObject.Instantiate<GameObject>(vehicleInfo.gameObject);
-                gameObject.name = vehicleNames[i];
-                gameObject.transform.SetParent(customPrefabs);
-                GameObject.Destroy(gameObject.GetComponent<CargoTruckAI>());
-                gameObject.AddComponent<CustomCargoTruckAI>();
-                vehicles[i] = gameObject.GetComponent<VehicleInfo>();
-                vehicles[i].m_prefabInitialized = false;
-                vehicles[i].m_vehicleAI = null;
-            }
-
-            MethodInfo method = typeof(VehicleCollection).GetMethod("InitializePrefabs", BindingFlags.NonPublic | BindingFlags.Static);
-            Initializer.QueuePrioritizedLoadingAction((IEnumerator)method.Invoke(null, new object[] { collection.name, vehicles, vehicleNames }));
-			
-            CustomCargoTruckAI.sm_initialized = true;
-		}
 		public override void InitializeAI()
 		{
 			base.InitializeAI();
-			this.m_cargoCapacity = ((name == "Lorry") ? 8000 : 6000);
+
+            if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
+            {
+                m_speedData = new CustomCarAI.SpeedData()
+                {
+                    currentPath = uint.MaxValue,
+                    speedMultiplier = 1f
+                    //acceleration = this.m_info.m_acceleration *= 0.2f,
+                    //braking = this.m_info.m_braking *= 0.45f,
+                    //turning = this.m_info.m_turning *= 0.35f,
+                    //maxSpeed = this.m_info.m_maxSpeed *= 1f
+                };
+            }
 
             Debug.Log("Traffic++: Cargo Truck initialized (" + name + ").");
 		}
 
 		public override void SimulationStep(ushort vehicleID, ref Vehicle vehicleData, ushort leaderID, ref Vehicle leaderData, int lodPhysics)
 		{
+            if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
+            {
+                if (m_speedData.currentPath != vehicleData.m_path)
+                {
+                    m_speedData.currentPath = vehicleData.m_path;
+                    m_speedData.SetRandomSpeedMultiplier(0.7f, 1.1f);
+                }
+                m_speedData.ApplySpeedMultiplier(this.m_info);
+            }
+            
+
             if ((vehicleData.m_flags & Vehicle.Flags.Spawned) != Vehicle.Flags.None)
             {
                 Vehicle.Frame lastFrameData = vehicleData.GetLastFrameData();
@@ -88,7 +78,13 @@ namespace CSL_Traffic
                     vehicleData.SetFrameData(Singleton<SimulationManager>.instance.m_currentFrameIndex, lastFrameData);
                 }
             }
+
+            if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
+            {
+                m_speedData.RestoreVehicleSpeed(this.m_info);
+            }
 		}
+
 		protected override bool StartPathFind(ushort vehicleID, ref Vehicle vehicleData, Vector3 startPos, Vector3 endPos, bool startBothWays, bool endBothWays)
 		{
             if ((vehicleData.m_flags & (Vehicle.Flags.TransferToSource | Vehicle.Flags.GoingBack)) != Vehicle.Flags.None)

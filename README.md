@@ -8,12 +8,14 @@ You don't need to start a new game to use this mod but you should backup your sa
 # Objective
 The goal of this mod is to improve traffic in Cities: Skylines by adding new roads, vehicles, tools and behaviours.
 
-# Current State
-- Adds zonable pedestrian paths that can be used by public service vehicles, public transports and (optionally) commercial trucks;
-- Adds a six-lane road with bus lanes
+# Current Features
+- Realistic Speeds (optional)
+- New types of roads:
+	- Six-lane road with bus lanes
+	- Two-lane busway
+	- Zonable pedestrian roads
 
 # Roadmap
-- Different randomized vehicle speeds (already developed but not yet included)
 - Allow info overlays to be active while building roads
 - Add new types of roads and vehicles
 - Many more...

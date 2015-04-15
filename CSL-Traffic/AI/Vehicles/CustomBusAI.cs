@@ -9,49 +9,41 @@ namespace CSL_Traffic
 {
 	class CustomBusAI : BusAI, IVehicle
 	{
-		public static bool sm_initialized;
-
-		public static void Initialize(VehicleCollection collection, Transform customPrefabs)
-		{
-			if (sm_initialized)
-				return;
-
-            Debug.Log("Traffic++: Initializing Bus.\n");
-
-            VehicleInfo originalBus = collection.m_prefabs.Where(p => p.name.Contains("Bus")).FirstOrDefault();
-            if (originalBus == null)
-                throw new KeyNotFoundException("Bus was not found on " + collection.name);
-
-            GameObject instance = GameObject.Instantiate<GameObject>(originalBus.gameObject);
-            instance.name = "Bus";
-            instance.transform.SetParent(customPrefabs);
-
-            BusAI busAI = instance.GetComponent<BusAI>();
-            TransportInfo transportInfo = busAI.m_transportInfo;
-
-            GameObject.Destroy(instance.GetComponent<BusAI>());
-            CustomBusAI customBusAI = instance.AddComponent<CustomBusAI>();
-            customBusAI.m_transportInfo = transportInfo;
-
-            VehicleInfo bus = instance.GetComponent<VehicleInfo>();
-            bus.m_prefabInitialized = false;
-            bus.m_vehicleAI = null;
-
-            MethodInfo initMethod = typeof(VehicleCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
-            Initializer.QueuePrioritizedLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { bus }, new string[] { "Bus" } }));
-
-			sm_initialized = true;
-		}
+        CustomCarAI.SpeedData m_speedData;
 
         public override void InitializeAI()
         {
             base.InitializeAI();
+
+            if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
+            {
+                m_speedData = new CustomCarAI.SpeedData()
+                {
+                    currentPath = uint.MaxValue,
+                    speedMultiplier = 1f
+                    //acceleration = this.m_info.m_acceleration *= 0.2f,
+                    //braking = this.m_info.m_braking *= 0.45f,
+                    //turning = this.m_info.m_turning *= 0.35f,
+                    //maxSpeed = this.m_info.m_maxSpeed *= 1f
+                };
+            }
 
             Debug.Log("Traffic++: Bus initialized.\n");
         }
 
         public override void SimulationStep(ushort vehicleID, ref Vehicle vehicleData, ref Vehicle.Frame frameData, ushort leaderID, ref Vehicle leaderData, int lodPhysics)
         {
+            if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
+            {
+                if (m_speedData.currentPath != vehicleData.m_path)
+                {
+                    m_speedData.currentPath = vehicleData.m_path;
+                    m_speedData.SetRandomSpeedMultiplier(0.65f, 1.05f);
+                }
+                m_speedData.ApplySpeedMultiplier(this.m_info);
+            }
+            
+
             if ((vehicleData.m_flags & Vehicle.Flags.Stopped) != Vehicle.Flags.None)
             {
                 vehicleData.m_waitCounter += 1;
@@ -66,6 +58,11 @@ namespace CSL_Traffic
             if ((vehicleData.m_flags & Vehicle.Flags.GoingBack) == Vehicle.Flags.None && this.ShouldReturnToSource(vehicleID, ref vehicleData))
             {
                 this.SetTransportLine(vehicleID, ref vehicleData, 0);
+            }
+
+            if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
+            {
+                m_speedData.RestoreVehicleSpeed(this.m_info);
             }
         }
 

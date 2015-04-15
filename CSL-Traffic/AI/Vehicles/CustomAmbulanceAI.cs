@@ -9,45 +9,44 @@ namespace CSL_Traffic
 {
 	class CustomAmbulanceAI : AmbulanceAI, IVehicle
 	{
-		public static bool sm_initialized;
-
-		public static void Initialize(VehicleCollection collection, Transform customPrefabs)
-		{
-			if (sm_initialized)
-				return;
-
-            Debug.Log("Traffic++: Initializing Ambulance.\n");
-
-            VehicleInfo originalAmbulance = collection.m_prefabs.Where(p => p.name == "Ambulance").FirstOrDefault();
-            if (originalAmbulance == null)
-                throw new KeyNotFoundException("Ambulance was not found on " + collection.name);
-
-            GameObject instance = GameObject.Instantiate<GameObject>(originalAmbulance.gameObject);
-            instance.name = "Ambulance";
-            instance.transform.SetParent(customPrefabs);
-            GameObject.Destroy(instance.GetComponent<AmbulanceAI>());
-            instance.AddComponent<CustomAmbulanceAI>();
-
-            VehicleInfo ambulance = instance.GetComponent<VehicleInfo>();
-            ambulance.m_prefabInitialized = false;
-            ambulance.m_vehicleAI = null;
-
-            MethodInfo initMethod = typeof(VehicleCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
-            Initializer.QueuePrioritizedLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { ambulance }, new string[] { "Ambulance" } }));
-
-			sm_initialized = true;
-		}
+        CustomCarAI.SpeedData m_speedData;
 
 		public override void InitializeAI()
 		{
 			base.InitializeAI();
-			this.m_patientCapacity = 1;
+
+            if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
+            {
+                m_speedData = new CustomCarAI.SpeedData()
+                {
+                    currentPath  = uint.MaxValue,
+                    speedMultiplier = 1f
+                    //acceleration = this.m_info.m_acceleration *= 0.25f,
+                    //braking = this.m_info.m_braking *= 0.5f,
+                    //turning = this.m_info.m_turning *= 0.4f,
+                    //maxSpeed = this.m_info.m_maxSpeed *= 1f
+                };
+            }
 
             Debug.Log("Traffic++: Ambulance initialized.\n");
 		}
 
 		public override void SimulationStep(ushort vehicleID, ref Vehicle vehicleData, ref Vehicle.Frame frameData, ushort leaderID, ref Vehicle leaderData, int lodPhysics)
 		{
+            if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
+            {
+                if (m_speedData.currentPath != vehicleData.m_path)
+                {
+                    m_speedData.currentPath = vehicleData.m_path;
+                    if ((vehicleData.m_flags & Vehicle.Flags.Emergency2) == Vehicle.Flags.Emergency2)
+                        m_speedData.SetRandomSpeedMultiplier(1f, 1.5f);
+                    else
+                        m_speedData.SetRandomSpeedMultiplier(0.7f, 1.05f);
+                }
+                m_speedData.ApplySpeedMultiplier(this.m_info);
+            }
+            
+
 			frameData.m_blinkState = (((vehicleData.m_flags & Vehicle.Flags.Emergency2) == Vehicle.Flags.None) ? 0f : 10f);
 			CustomCarAI.SimulationStep(this, vehicleID, ref vehicleData, ref frameData, leaderID, ref leaderData, lodPhysics);
 			if ((vehicleData.m_flags & Vehicle.Flags.Stopped) != Vehicle.Flags.None && this.CanLeave(vehicleID, ref vehicleData))
@@ -59,6 +58,11 @@ namespace CSL_Traffic
 			{
 				this.SetTarget(vehicleID, ref vehicleData, 0);
 			}
+
+            if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
+            {
+                m_speedData.RestoreVehicleSpeed(this.m_info);
+            }
 		}
 
 		protected override bool StartPathFind(ushort vehicleID, ref Vehicle vehicleData, Vector3 startPos, Vector3 endPos, bool startBothWays, bool endBothWays)
@@ -105,6 +109,25 @@ namespace CSL_Traffic
             }
 		}
 
+        //protected override float CalculateTargetSpeed(ushort vehicleID, ref Vehicle data, float speedLimit, float curve)
+        //{
+        //    float targetSpeed = base.CalculateTargetSpeed(vehicleID, ref data, speedLimit, curve);
+
+        //    if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.None)
+        //        return targetSpeed;
+
+        //    if (m_currentPath != data.m_path)
+        //    {
+        //        m_currentPath = data.m_path;
+
+        //        if ((data.m_flags & Vehicle.Flags.Emergency2) == Vehicle.Flags.Emergency2)
+        //            m_speedMutliplier = Random.Range(1f, 1.25f);
+        //        else
+        //            m_speedMutliplier = Random.Range(0.75f, 1f);
+        //    }
+
+        //    return targetSpeed * m_speedMutliplier;
+        //}
 
 		/*
 		 * Private unmodified methods
@@ -168,10 +191,10 @@ namespace CSL_Traffic
 			base.ArrivingToDestination(vehicleID, ref vehicleData);
 		}
 
-		public new float CalculateTargetSpeed(ushort vehicleID, ref Vehicle data, float speedLimit, float curve)
-		{
-			return base.CalculateTargetSpeed(vehicleID, ref data, speedLimit, curve);
-		}
+        public new float CalculateTargetSpeed(ushort vehicleID, ref Vehicle data, float speedLimit, float curve)
+        {
+            return base.CalculateTargetSpeed(vehicleID, ref data, speedLimit, curve);
+        }
 
 		public new void InvalidPath(ushort vehicleID, ref Vehicle vehicleData, ushort leaderID, ref Vehicle leaderData)
 		{

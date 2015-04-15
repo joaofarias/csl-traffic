@@ -14,45 +14,41 @@ namespace CSL_Traffic
 	 */
 	public class CustomGarbageTruckAI : GarbageTruckAI, IVehicle
 	{
-		public static bool sm_initialized;
-
-		public static void Initialize(VehicleCollection collection, Transform customPrefabs)
-		{
-			if (sm_initialized)
-				return;
-
-            Debug.Log("Traffic++: Initializing Garbage Truck.\n");
-
-            VehicleInfo originalGarbageTruck = collection.m_prefabs.Where(p => p.name == "Garbage Truck").FirstOrDefault();
-            if (originalGarbageTruck == null)
-                throw new KeyNotFoundException("Garbage Truck was not found on " + collection.name);
-
-            GameObject instance = GameObject.Instantiate<GameObject>(originalGarbageTruck.gameObject);
-            instance.name = "Garbage Truck";
-            instance.transform.SetParent(customPrefabs);
-            GameObject.Destroy(instance.GetComponent<GarbageTruckAI>());
-            instance.AddComponent<CustomGarbageTruckAI>();
-
-            VehicleInfo garbageTruck = instance.GetComponent<VehicleInfo>();
-            garbageTruck.m_prefabInitialized = false;
-            garbageTruck.m_vehicleAI = null;
-
-            MethodInfo initMethod = typeof(VehicleCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
-            Initializer.QueuePrioritizedLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { garbageTruck }, new string[] { "Garbage Truck" } }));
-			
-			sm_initialized = true;
-		}
+        CustomCarAI.SpeedData m_speedData;
 
 		public override void InitializeAI()
 		{
 			base.InitializeAI();
-			this.m_cargoCapacity = 20000;
+
+            if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
+            {
+                m_speedData = new CustomCarAI.SpeedData()
+                {
+                    currentPath = uint.MaxValue,
+                    speedMultiplier = 1f
+                    //acceleration = this.m_info.m_acceleration *= 0.2f,
+                    //braking = this.m_info.m_braking *= 0.45f,
+                    //turning = this.m_info.m_turning *= 0.35f,
+                    //maxSpeed = this.m_info.m_maxSpeed *= 1f
+                };
+            }
 
             Debug.Log("Traffic++: Garbage Truck initialized.\n");
 		}
 
 		public override void SimulationStep(ushort vehicleID, ref Vehicle vehicleData, ref Vehicle.Frame frameData, ushort leaderID, ref Vehicle leaderData, int lodPhysics)
 		{
+            if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
+            {
+                if (m_speedData.currentPath != vehicleData.m_path)
+                {
+                    m_speedData.currentPath = vehicleData.m_path;
+                    m_speedData.SetRandomSpeedMultiplier(0.75f, 0.95f);
+                }
+                m_speedData.ApplySpeedMultiplier(this.m_info);
+            }
+            
+
 			if ((vehicleData.m_flags & Vehicle.Flags.TransferToSource) != Vehicle.Flags.None)
 			{
 				if ((int)vehicleData.m_transferSize < this.m_cargoCapacity)
@@ -73,6 +69,11 @@ namespace CSL_Traffic
 			{
 				this.SetTarget(vehicleID, ref vehicleData, 0);
 			}
+
+            if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
+            {
+                m_speedData.RestoreVehicleSpeed(this.m_info);
+            }
 		}
 
 		protected override bool StartPathFind(ushort vehicleID, ref Vehicle vehicleData, Vector3 startPos, Vector3 endPos, bool startBothWays, bool endBothWays)

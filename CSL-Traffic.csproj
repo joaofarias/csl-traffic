@@ -70,10 +70,8 @@
     <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CSL-Traffic\AI\Roads\LargeRoadWithBusLanesAI.cs" />
-    <Compile Include="CSL-Traffic\AI\Roads\LargeRoadWithBusLanesBridgeAI.cs" />
-    <Compile Include="CSL-Traffic\AI\Roads\ZonablePedestrianBridgeAI.cs" />
-    <Compile Include="CSL-Traffic\AI\Roads\ZonablePedestrianPathAI.cs" />
+    <Compile Include="CSL-Traffic\AI\Vehicles\CustomPassengerCarAI.cs" />
+    <Compile Include="CSL-Traffic\FileManager.cs" />
     <Compile Include="CSL-Traffic\Transports\BusTransportLineAI.cs" />
     <Compile Include="CSL-Traffic\AI\Vehicles\CustomAmbulanceAI.cs" />
     <Compile Include="CSL-Traffic\AI\Vehicles\CustomBusAI.cs" />

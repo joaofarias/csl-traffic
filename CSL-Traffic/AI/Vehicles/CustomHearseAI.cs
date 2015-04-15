@@ -9,45 +9,40 @@ namespace CSL_Traffic
 {
 	class CustomHearseAI : HearseAI, IVehicle
 	{
-		public static bool sm_initialized;
-
-		public static void Initialize(VehicleCollection collection, Transform customPrefabs)
-		{
-			if (sm_initialized)
-				return;
-
-            Debug.Log("Traffic++: Initializing Hearse.\n");
-
-            VehicleInfo originalHearse = collection.m_prefabs.Where(p => p.name == "Hearse").FirstOrDefault();
-            if (originalHearse == null)
-                throw new KeyNotFoundException("Hearse was not found on " + collection.name);
-
-            GameObject instance = GameObject.Instantiate<GameObject>(originalHearse.gameObject);
-            instance.name = "Hearse";
-            instance.transform.SetParent(customPrefabs);
-            GameObject.Destroy(instance.GetComponent<HearseAI>());
-            instance.AddComponent<CustomHearseAI>();
-
-            VehicleInfo hearse = instance.GetComponent<VehicleInfo>();
-            hearse.m_prefabInitialized = false;
-            hearse.m_vehicleAI = null;
-
-            MethodInfo initMethod = typeof(VehicleCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
-            Initializer.QueuePrioritizedLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { collection.name, new[] { hearse }, new string[] { "Hearse" } }));
-
-			sm_initialized = true;
-		}
+        CustomCarAI.SpeedData m_speedData;
 
 		public override void InitializeAI()
 		{
 			base.InitializeAI();
-			this.m_corpseCapacity = 10;
+
+            if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
+            {
+                m_speedData = new CustomCarAI.SpeedData()
+                {
+                    currentPath = uint.MaxValue,
+                    speedMultiplier = 1f
+                    //acceleration = this.m_info.m_acceleration *= 0.3f,
+                    //braking = this.m_info.m_braking *= 0.5f,
+                    //turning = this.m_info.m_turning *= 0.4f,
+                    //maxSpeed = this.m_info.m_maxSpeed *= 1f
+                };
+            }
 
             Debug.Log("Traffic++: Hearse initialized.\n");
 		}
 
 		public override void SimulationStep(ushort vehicleID, ref Vehicle vehicleData, ref Vehicle.Frame frameData, ushort leaderID, ref Vehicle leaderData, int lodPhysics)
 		{
+            if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
+            {
+                if (m_speedData.currentPath != vehicleData.m_path)
+                {
+                    m_speedData.currentPath = vehicleData.m_path;
+                    m_speedData.SetRandomSpeedMultiplier(0.7f, 1.15f);
+                }
+                m_speedData.ApplySpeedMultiplier(this.m_info);
+            }
+            
 			CustomCarAI.SimulationStep(this, vehicleID, ref vehicleData, ref frameData, leaderID, ref leaderData, lodPhysics);
 			if ((vehicleData.m_flags & Vehicle.Flags.Stopped) != Vehicle.Flags.None && this.CanLeave(vehicleID, ref vehicleData))
 			{
@@ -58,6 +53,11 @@ namespace CSL_Traffic
 			{
 				this.SetTarget(vehicleID, ref vehicleData, 0);
 			}
+
+            if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
+            {
+                m_speedData.RestoreVehicleSpeed(this.m_info);
+            }
 		}
 
 		protected override bool StartPathFind(ushort vehicleID, ref Vehicle vehicleData, Vector3 startPos, Vector3 endPos, bool startBothWays, bool endBothWays)

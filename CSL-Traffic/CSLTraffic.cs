@@ -12,6 +12,8 @@ namespace CSL_Traffic
 {
 	public class CSLTraffic : LoadingExtensionBase, IUserMod
 	{
+        public const ulong WORKSHOP_ID = 409184143ul;
+
         public static OptionsManager.ModOptions Options = OptionsManager.ModOptions.None;
         static GameObject sm_optionsManager;
         
@@ -42,7 +44,7 @@ namespace CSL_Traffic
 
             if (sm_optionsManager != null)
             {
-                sm_optionsManager.GetComponent<OptionsManager>().Load();
+                sm_optionsManager.GetComponent<OptionsManager>().LoadOptions();
             }
 
             if (m_initializer == null)
@@ -50,11 +52,15 @@ namespace CSL_Traffic
                 m_initializer = new GameObject("CSL-Traffic Custom Prefabs");
                 m_initializer.AddComponent<Initializer>();
             }
-
-            System.IO.File.AppendAllText("Thread.txt", "OnCreated Thread: " + System.Threading.Thread.CurrentThread.ManagedThreadId + "\n");
 		}
 
-        
+        public override void OnLevelUnloading()
+        {
+            base.OnLevelUnloading();
+
+            if (m_initializer != null)
+                m_initializer.GetComponent<Initializer>().OnLevelUnloading();
+        }
 
 		public override void OnReleased()
 		{

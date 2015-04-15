@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using ColossalFramework.UI;
@@ -18,19 +17,33 @@ namespace CSL_Traffic
             AllowTrucksInPedestrianRoads = 1,
             AllowResidentsInPedestrianRoads = 2, // TODO
             DisableCentralLaneOnPedestrianRoads = 4,
-            UseRealisticSpeeds = 8, // TODO
+            UseRealisticSpeeds = 8,
 
+            // bits 55 to 62 reserved for beta tests
+            BetaTestNewRoads = 1L << 54,
+            //BetaTest2 = 1L << 55,
+            //BetaTest3 = 1L << 56,
+            //BetaTest4 = 1L << 57,
+            //BetaTest5 = 1L << 58,
+            //BetaTest6 = 1L << 59,
+            //BetaTest7 = 1L << 60,
+            //BetaTest8 = 1L << 61,
 
             GhostMode = 1L << 62
         }
 
         GameObject m_optionsButtonGo;
         GameObject m_optionsPanel;
+        GameObject m_optionsList;
+        GameObject m_checkboxTemplate;
 
-        UICheckBox m_allowTrucksCheckBox;
+
+        UICheckBox m_allowTrucksCheckBox = null;
         //UICheckBox m_allowTrucksCheckBox;
-        UICheckBox m_disableCentralLaneCheckBox;
-        UICheckBox m_ghostModeCheckBox;
+        UICheckBox m_disableCentralLaneCheckBox = null;
+        UICheckBox m_realisticSpeedsCheckBox = null;
+        UICheckBox m_betaTestRoadsCheckBox = null;
+        UICheckBox m_ghostModeCheckBox = null;
         
         bool m_initialized;
 
@@ -59,9 +72,9 @@ namespace CSL_Traffic
                 return;
             
             // Options Button
-
             UIButton shareButton = mod.transform.FindChild("Share").GetComponent<UIButton>();
-            this.m_optionsButtonGo = GameObject.Instantiate<GameObject>(shareButton.gameObject);
+            this.m_optionsButtonGo = Instantiate<GameObject>(shareButton.gameObject);
+            this.m_optionsButtonGo.name = "Options";
             this.m_optionsButtonGo.transform.SetParent(shareButton.transform.parent);
             this.m_optionsButtonGo.transform.localPosition = shareButton.transform.localPosition;
 
@@ -69,109 +82,101 @@ namespace CSL_Traffic
             optionsButton.isVisible = true;
             optionsButton.text = "Options";
             optionsButton.eventClick += OpenOptionsPanel;
-            optionsButton.position += Vector3.left * shareButton.width * 2.1f; 
+            optionsButton.position += Vector3.left * shareButton.width * 2.1f;
 
             // Options Panel
-
             GameObject optionsPanel = GameObject.Find("(Library) OptionsPanel");
-            this.m_optionsPanel = GameObject.Instantiate<GameObject>(optionsPanel);
+            this.m_optionsPanel = Instantiate<GameObject>(optionsPanel);
             this.m_optionsPanel.transform.SetParent(modsList.transform.parent.transform);
             GameObject.Destroy(this.m_optionsPanel.GetComponent<OptionsPanel>());
 
-            GameObject checkboxTemplate = this.m_optionsPanel.GetComponentsInChildren<UICheckBox>().Where(c => c.name == "EdgeScrolling").FirstOrDefault().gameObject;
-            GameObject.Destroy(checkboxTemplate.GetComponent<BindProperty>());
-            Vector3 localPosition = checkboxTemplate.transform.localPosition;
+            m_checkboxTemplate = this.m_optionsPanel.GetComponentsInChildren<UICheckBox>().FirstOrDefault(c => c.name == "EdgeScrolling").gameObject;
+            GameObject.Destroy(m_checkboxTemplate.GetComponent<BindProperty>());
             
+            // clear panel but keep title
             GameObject caption = null;
             foreach (Transform transform in m_optionsPanel.transform)
             {
                 if (transform.name == "Caption")
-                {
                     caption = transform.gameObject;
-                }
                 else
-                {
                     GameObject.Destroy(transform.gameObject);
-                }
             }
 
             this.m_optionsPanel.GetComponent<UIPanel>().autoFitChildrenVertically = true;
             this.m_optionsPanel.GetComponent<UIPanel>().autoFitChildrenHorizontally = true;
 
             // set caption
+            caption.transform.FindChild("Label").GetComponent<UILabel>().text = "Traffic++ Options";
+            
+            // clear close event
             UIButton closeButton = caption.transform.FindChild("Close").GetComponent<UIButton>();
             GameObject.Destroy(closeButton.GetComponent<BindEvent>());
             closeButton.eventClick += CloseOptionsPanel;
-            caption.transform.FindChild("Label").GetComponent<UILabel>().text = "Traffic++ Options";
 
             // set options list
-            GameObject optionsList = GameObject.Instantiate<GameObject>(modsList);
-            for (int i = optionsList.transform.childCount - 1; i >= 0; i--)
+            m_optionsList = Instantiate<GameObject>(modsList);
+            for (int i = m_optionsList.transform.childCount - 1; i >= 0; i--)
             {
-                Destroy(optionsList.transform.GetChild(i).gameObject);
+                Destroy(m_optionsList.transform.GetChild(i).gameObject);
             }
-            optionsList.transform.SetParent(this.m_optionsPanel.transform);
-            optionsList.GetComponent<UIScrollablePanel>().AlignTo(this.m_optionsPanel.GetComponent<UIPanel>(), UIAlignAnchor.TopLeft);
-            optionsList.GetComponent<UIScrollablePanel>().position += new Vector3(caption.transform.FindChild("Label").GetComponent<UILabel>().height, -caption.transform.FindChild("Label").GetComponent<UILabel>().height * 2f);
-            
-            // allow trucks
-            GameObject allowTrucks = GameObject.Instantiate<GameObject>(checkboxTemplate);
-            allowTrucks.transform.SetParent(optionsList.transform);
-            this.m_allowTrucksCheckBox = allowTrucks.GetComponent<UICheckBox>();
-            this.m_allowTrucksCheckBox.isChecked = false;
-            this.m_allowTrucksCheckBox.text = "Allow Trucks in Pedestrian Roads";
-            this.m_allowTrucksCheckBox.isVisible = true;
-            this.m_allowTrucksCheckBox.zOrder = 0;
-
-            //TODO: allow residents
-            //GameObject allowTrucks = GameObject.Instantiate<GameObject>(checkboxTemplate);
-            //GameObject.Destroy(allowTrucks.GetComponent<BindProperty>());
-            //allowTrucks.transform.SetParent(optionsList.transform);
-            ////allowTrucks.transform.localPosition = localPosition + new Vector3(0.05f, -0.1f, 0f);
-            //this.m_allowTrucksCheckBox = allowTrucks.GetComponent<UICheckBox>();
-            //this.m_allowTrucksCheckBox.isChecked = false;
-            //this.m_allowTrucksCheckBox.text = "Allow Trucks in Pedestrian Roads";
-            //this.m_allowTrucksCheckBox.isVisible = true;
-            //this.m_allowTrucksCheckBox.zOrder = 0;
-
-            // disable central lane
-            GameObject disableCentralLane = GameObject.Instantiate<GameObject>(allowTrucks);
-            disableCentralLane.transform.SetParent(allowTrucks.transform.parent);
-            this.m_disableCentralLaneCheckBox = disableCentralLane.GetComponent<UICheckBox>();
-            this.m_disableCentralLaneCheckBox.isChecked = false;
-            this.m_disableCentralLaneCheckBox.text = "Disable Central Lane on Pedestrian Roads";
-            this.m_disableCentralLaneCheckBox.isVisible = true;
-            this.m_disableCentralLaneCheckBox.zOrder = 2;
-
-            
-
-
-            GameObject ghostMode = GameObject.Instantiate<GameObject>(allowTrucks);
-            ghostMode.transform.SetParent(this.m_optionsPanel.transform);
-            this.m_ghostModeCheckBox = ghostMode.GetComponent<UICheckBox>();
-            this.m_ghostModeCheckBox.isChecked = false;
-            this.m_ghostModeCheckBox.text = "Enable Ghost Mode (disables all mod functionality leaving only enough logic to load the map)";
-            this.m_ghostModeCheckBox.isVisible = true;
-            this.m_ghostModeCheckBox.AlignTo(m_optionsPanel.GetComponent<UIPanel>(), UIAlignAnchor.BottomLeft);
+            m_optionsList.transform.SetParent(this.m_optionsPanel.transform);
+            m_optionsList.GetComponent<UIScrollablePanel>().AlignTo(this.m_optionsPanel.GetComponent<UIPanel>(), UIAlignAnchor.TopLeft);
+            m_optionsList.GetComponent<UIScrollablePanel>().position += new Vector3(caption.transform.FindChild("Label").GetComponent<UILabel>().height, -caption.transform.FindChild("Label").GetComponent<UILabel>().height * 2f);
 
             // save button
-            GameObject save = GameObject.Instantiate<GameObject>(this.m_optionsButtonGo);
+            GameObject save = Instantiate<GameObject>(this.m_optionsButtonGo);
             save.transform.SetParent(this.m_optionsPanel.transform);
-            
+
             UIButton saveButton = save.GetComponent<UIButton>();
             saveButton.isVisible = true;
             saveButton.eventClick += OnSave;
             saveButton.color = Color.green;
             saveButton.text = "Save";
-            saveButton.AlignTo(m_optionsPanel.GetComponent<UIPanel>(), UIAlignAnchor.BottomRight);            
+            saveButton.AlignTo(m_optionsPanel.GetComponent<UIPanel>(), UIAlignAnchor.BottomRight);
+            Vector3 cornerOffset = new Vector3(saveButton.width * -0.1f, saveButton.height * 0.3f);
+            saveButton.position += cornerOffset;
 
-            this.Load();
+            // add options
+            m_allowTrucksCheckBox = AddOptionCheckbox("Allow Trucks in Pedestrian Roads", 0);
+            //AddOptionCheckbox(m_allowResidentsCheckBox, "Allow Residents in Pedestrian Roads", 1);
+            m_disableCentralLaneCheckBox = AddOptionCheckbox("Disable Central Lane on Pedestrian Roads", 2);
+            m_realisticSpeedsCheckBox = AddOptionCheckbox("Beta Test: Realistic Speeds", 3);
+            m_betaTestRoadsCheckBox = AddOptionCheckbox("Beta Test: New Road Types and Textures", 4);
 
-            this.m_initialized = true;
+            m_ghostModeCheckBox = AddOptionCheckbox("Ghost Mode (disables all mod functionality leaving only enough logic to load the map)");
+            m_ghostModeCheckBox.gameObject.transform.SetParent(m_optionsPanel.transform);
+            m_ghostModeCheckBox.AlignTo(m_optionsPanel.GetComponent<UIPanel>(), UIAlignAnchor.BottomLeft);
+            m_ghostModeCheckBox.position += new Vector3(-cornerOffset.x, cornerOffset.y);
+            m_ghostModeCheckBox.width -= saveButton.width;
+
+            
+
+            HandleImprovedModsPanel(mod);
+
+            LoadOptions();
+
+            m_initialized = true;
+        }
+
+        UICheckBox AddOptionCheckbox(string text, int zOrder = -1)
+        {
+            GameObject newCheckbox = Instantiate<GameObject>(m_checkboxTemplate);
+            newCheckbox.transform.SetParent(m_optionsList.transform);
+            
+            UICheckBox checkBox = newCheckbox.GetComponent<UICheckBox>();
+            checkBox.isChecked = false;
+            checkBox.text = text;
+            checkBox.isVisible = true;
+            if (zOrder != -1)
+                checkBox.zOrder = zOrder;
+
+            return checkBox;
         }
 
         private void OpenOptionsPanel(UIComponent component, UIMouseEventParameter eventParam)
         {
+            LoadOptions();
             this.m_optionsPanel.GetComponent<UIPanel>().isVisible = true;
             this.m_optionsPanel.GetComponent<UIPanel>().BringToFront();
         }
@@ -197,7 +202,17 @@ namespace CSL_Traffic
                 options.disableCentralLane = true;
                 CSLTraffic.Options |= ModOptions.DisableCentralLaneOnPedestrianRoads;
             }
-            
+            if (this.m_realisticSpeedsCheckBox.isChecked)
+            {
+                options.realisticSpeeds = true;
+                CSLTraffic.Options |= ModOptions.UseRealisticSpeeds;
+            }
+
+            if (this.m_betaTestRoadsCheckBox.isChecked)
+            {
+                options.betaTestRoads = true;
+                CSLTraffic.Options |= ModOptions.BetaTestNewRoads;
+            }
             if (this.m_ghostModeCheckBox.isChecked)
             {
                 options.ghostMode = true;
@@ -218,7 +233,7 @@ namespace CSL_Traffic
             }
         }
 
-        public void Load()
+        public void LoadOptions()
         {
             CSLTraffic.Options = ModOptions.None;
             Options options = new Options();
@@ -241,22 +256,27 @@ namespace CSL_Traffic
                 return;
             }
 
+            this.m_allowTrucksCheckBox.isChecked = options.allowTrucks;
+            this.m_disableCentralLaneCheckBox.isChecked = options.disableCentralLane;
+            this.m_realisticSpeedsCheckBox.isChecked = options.realisticSpeeds;
+            this.m_betaTestRoadsCheckBox.isChecked = options.betaTestRoads;
+            this.m_ghostModeCheckBox.isChecked = options.ghostMode;
+
+
             if (options.allowTrucks)
-            {
-                this.m_allowTrucksCheckBox.isChecked = true;
                 CSLTraffic.Options |= ModOptions.AllowTrucksInPedestrianRoads;
-            }
-            if (options.disableCentralLane)
-            {
-                this.m_disableCentralLaneCheckBox.isChecked = true;
-                CSLTraffic.Options |= ModOptions.DisableCentralLaneOnPedestrianRoads;
-            }
             
-            if (options.ghostMode)
-            {
-                this.m_ghostModeCheckBox.isChecked = true;
+            if (options.disableCentralLane)
+                CSLTraffic.Options |= ModOptions.DisableCentralLaneOnPedestrianRoads;
+
+            if (options.realisticSpeeds)
+                CSLTraffic.Options |= ModOptions.UseRealisticSpeeds;
+
+            if (options.betaTestRoads)
+                CSLTraffic.Options |= ModOptions.BetaTestNewRoads;
+
+            if (options.ghostMode)   
                 CSLTraffic.Options |= ModOptions.GhostMode;
-            }
         }
 
         void OnLevelWasLoaded(int level)
@@ -267,13 +287,12 @@ namespace CSL_Traffic
 
         void Update()
         {
-            if (Application.loadedLevel == 5 && (!m_initialized || m_optionsButtonGo == null))
+            if (Application.loadedLevel == 3 || Application.loadedLevel == 5) // both are the main menu!?
             {
-                try
-                {
+                if (!m_initialized || m_optionsButtonGo == null)
                     Start();
-                }
-                catch { }
+                else if (m_optionsButtonGo.GetComponent<UIButton>().isVisible == false)
+                    m_optionsButtonGo.GetComponent<UIButton>().isVisible = true;
             }
         }
 
@@ -282,8 +301,24 @@ namespace CSL_Traffic
             public bool allowTrucks;
             //public bool allowResidents;
             public bool disableCentralLane;
+            public bool realisticSpeeds;
+
+            public bool betaTestRoads;
 
             public bool ghostMode;
+        }
+
+        void HandleImprovedModsPanel(GameObject modBar)
+        {
+            Transform lastUpdated = modBar.transform.FindChild("LastUpdated");
+            if (lastUpdated == null)
+                return;
+
+            UILabel lastUpdatedLabel = lastUpdated.GetComponent<UILabel>();
+            if (lastUpdatedLabel == null)
+                return;
+
+            lastUpdatedLabel.position += Vector3.left * m_optionsButtonGo.GetComponent<UIButton>().width;
         }
 
     }

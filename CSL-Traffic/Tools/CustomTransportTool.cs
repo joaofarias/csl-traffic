@@ -21,8 +21,6 @@ namespace CSL_Traffic
             MoveStops
         }
 
-        public static bool sm_initialized;
-
         private FieldInfo fi_mode;
         private FieldInfo fi_line;
         private FieldInfo fi_mouseRay;
@@ -202,29 +200,6 @@ namespace CSL_Traffic
             {
                 this.fi_errors.SetValue(this, value);
             }
-        }
-
-        public static void Initialize(ToolController toolController)
-        {
-            if (sm_initialized)
-                return;
-
-            Debug.Log("Traffic++: Initializing Transport Tool.\n");
-
-            TransportTool originalTransportTool = toolController.GetComponent<TransportTool>();
-            CustomTransportTool customTransportTool = toolController.gameObject.AddComponent<CustomTransportTool>();
-
-            // contributed by Japa
-            FieldInfo toolControllerField = typeof(ToolController).GetField("m_tools", BindingFlags.Instance | BindingFlags.NonPublic);
-            if (toolControllerField != null)
-                toolControllerField.SetValue(toolController, toolController.GetComponents<ToolBase>());
-            FieldInfo toolModifierDictionary = typeof(ToolsModifierControl).GetField("m_Tools", BindingFlags.Static | BindingFlags.NonPublic);
-            if (toolModifierDictionary != null)
-                toolModifierDictionary.SetValue(null, null);
-
-            sm_initialized = true;
-
-            Debug.Log("Traffic++: Transport Tool initialized.\n");
         }
 
         protected override void Awake()

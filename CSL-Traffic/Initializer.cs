@@ -10,20 +10,75 @@ using System.Text;
 using System.Collections;
 using System.Linq;
 using System.Threading;
+using ColossalFramework.Plugins;
+using ColossalFramework.UI;
 
 namespace CSL_Traffic
 {
 	class Initializer : MonoBehaviour
 	{
+        enum RoadDecoration
+        {
+            None,
+            Grass,
+            Trees,
+            Elevated,
+            Bridge,
+            Pavement,
+            Gravel
+        }
+
+        [Flags]
+        enum TextureType
+        {
+            Main = 1,
+            XYS = 2,
+            ACI = 4,
+            APR = 8,
+            
+            All = 15
+        }
+
         static Queue<IEnumerator> sm_actionQueue = new Queue<IEnumerator>();
         static System.Object sm_queueLock = new System.Object();
 		static bool sm_localizationInitialized;
+        static readonly string[] sm_thumbnailStates = new string[] { "", "Disabled", "Focused", "Hovered", "Pressed" };
+        static readonly Dictionary<string, Vector2> sm_thumbnailCoords = new Dictionary<string, Vector2>()
+        {
+            {"RoadLargeBusLanes", new Vector2(0, 0)},
+            {"RoadSmallBusway", new Vector2(109, 0)},
+        };
+        static readonly Dictionary<string, string> sm_fileIndex = new Dictionary<string, string>()
+        {
+            {"RoadLargeBusLanesElevated",   "RoadLargeBusLanesBridge"},
+            {"RoadSmallBuswayElevated",     "RoadSmallBuswayBridge"},
+            {"RoadSmallBusway-bus",         "RoadSmallBusway"},
+            {"RoadSmallBusway-busBoth",     "RoadSmallBusway"},
+            {"PedestrianRoad-node",         "PedestrianRoad"},
+        };
+        static readonly Dictionary<string, string> sm_lodFileIndex = new Dictionary<string, string>()
+        {
+            {"RoadLargeBusLanes",           "RoadsWithBusLanes"},
+            {"RoadLargeBusLanesBridge",     "RoadsWithBusLanes"},
+            {"RoadLargeBusLanesElevated",   "RoadsWithBusLanes"},
+            {"RoadSmallBusway",             "RoadsWithBusLanes"},
+            {"RoadSmallBuswayBridge",       "RoadsWithBusLanes"},
+            {"RoadSmallBuswayElevated",     "RoadsWithBusLanes"},
+        };
 
+        Dictionary<string, NetLaneProps> m_customNetLaneProps;
+        Dictionary<string, PrefabInfo> m_customPrefabs;
+        Queue<Action> m_postLoadingActions;
+        UITextureAtlas m_thumbnailsTextureAtlas;
         bool m_initialized;
 
 		void Awake()
 		{
 			DontDestroyOnLoad(this);
+
+            m_customNetLaneProps = new Dictionary<string, NetLaneProps>();
+            m_customPrefabs = new Dictionary<string, PrefabInfo>();
+            m_postLoadingActions = new Queue<Action>();
 		}
 
 		void Start()
@@ -38,7 +93,7 @@ namespace CSL_Traffic
 		void OnLevelWasLoaded(int level) {
 			if (level == 6)
 			{
-                Debug.Log("Traffic++: Game level was loaded. Preparing initialization.");
+                Debug.Log("Traffic++: Game level was loaded. Options enabled: \n\t" + CSLTraffic.Options);
 
                 m_initialized = false;
 
@@ -52,28 +107,23 @@ namespace CSL_Traffic
                     Monitor.Exit(sm_queueLock);
                 }
 
-				// roads
-				ZonablePedestrianPathAI.sm_initialized = false;
-				ZonablePedestrianBridgeAI.sm_initialized = false;
-                LargeRoadWithBusLanesAI.sm_initialized = false;
-                LargeRoadWithBusLanesBridgeAI.sm_initialized = false;
-				
-				// vehicles
-				CustomAmbulanceAI.sm_initialized = false;
-                CustomBusAI.sm_initialized = false;
-                CustomCargoTruckAI.sm_initialized = false;
-				CustomFireTruckAI.sm_initialized = false;
-				CustomGarbageTruckAI.sm_initialized = false;
-				CustomHearseAI.sm_initialized = false;
-				CustomPoliceCarAI.sm_initialized = false;
-
-                // Tools
-                CustomTransportTool.sm_initialized = false;
-
-                // Transports
-                BusTransportLineAI.sm_initialized = false;
+                m_customNetLaneProps.Clear();
+                m_customPrefabs.Clear();
+                m_postLoadingActions.Clear();
 			}
 		}
+
+        public void OnLevelUnloading()
+        {
+            if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
+            {
+                for (uint i = 0; i < PrefabCollection<CitizenInfo>.LoadedCount(); i++)
+                {
+                    CitizenInfo cit = PrefabCollection<CitizenInfo>.GetLoaded(i);
+                    cit.m_walkSpeed /= 0.25f;
+                }
+            }
+        }
 
         void Update()
         {
@@ -83,23 +133,67 @@ namespace CSL_Traffic
                 return;
             }
 
+            if (!Singleton<LoadingManager>.instance.m_loadingComplete)
+                return;
+
+            while (m_postLoadingActions.Count > 0)
+                m_postLoadingActions.Dequeue().Invoke();
+
             // contributed by Japa
-            if (CustomTransportTool.sm_initialized && Singleton<LoadingManager>.instance.m_loadingComplete)
+            TransportTool transportTool = ToolsModifierControl.GetCurrentTool<TransportTool>();
+            if (transportTool != null)
             {
-                TransportTool transportTool = ToolsModifierControl.GetCurrentTool<TransportTool>();
-                if (transportTool != null)
+                CustomTransportTool customTransportTool = ToolsModifierControl.SetTool<CustomTransportTool>();
+                if (customTransportTool != null)
                 {
-                    CustomTransportTool customTransportTool = ToolsModifierControl.SetTool<CustomTransportTool>();
-                    if (customTransportTool != null)
-                    {
-                        customTransportTool.m_prefab = transportTool.m_prefab;
-                    }
+                    customTransportTool.m_prefab = transportTool.m_prefab;
                 }
             }
-
         }
 
-		/*
+#if DEBUG
+        void OnGUI()
+        {
+            if (Singleton<LoadingManager>.instance.m_loadingComplete && GUI.Button(new Rect(10, 900, 150, 30), "Update Textures"))
+            {
+                foreach (var item in m_customPrefabs.Values)
+                {
+                    NetInfo netInfo = item as NetInfo;
+                    if (netInfo.m_segments.Length == 0)
+                        continue;
+
+                    string fileName = netInfo.m_segments[0].m_material.mainTexture.name;
+                    string lodFileName = netInfo.m_segments[0].m_combinedMaterial.mainTexture.name;
+                    for (int i = 0; i < netInfo.m_segments.Length; i++)
+                    {
+                        if (i == 1) fileName += "-bus";
+                        if (i == 2) fileName += "Both";
+                        if (fileName.StartsWith("RoadLarge"))
+                        {
+                            ReplaceTextures(fileName, FileManager.Folder.LargeRoad, netInfo.m_segments[i].m_segmentMaterial);
+                            ReplaceLODTextures(lodFileName, FileManager.Folder.Roads, netInfo.m_segments[i].m_combinedMaterial);
+                        }
+                        else if (fileName.StartsWith("RoadSmall"))
+                        {
+                            ReplaceTextures(fileName, FileManager.Folder.SmallRoad, netInfo.m_segments[i].m_segmentMaterial);
+                            ReplaceLODTextures(lodFileName, FileManager.Folder.Roads, netInfo.m_segments[i].m_combinedMaterial);
+                        }
+                        else
+                        {
+                            ReplaceTextures(fileName, FileManager.Folder.PedestrianRoad, netInfo.m_segments[i].m_segmentMaterial);
+                            ReplaceLODTextures(lodFileName, FileManager.Folder.Roads, netInfo.m_segments[i].m_combinedMaterial);
+                        }
+                    }
+                }
+
+                FileManager.ClearCache();
+            }
+        }
+#endif
+
+        #region Initialization
+
+        /*
 		 * In here I'm changing the prefabs to have my classes. This way, every time the game instantiates
 		 * a prefab that I've changed, that object will run my code.
 		 * The prefabs aren't available at the moment of creation of this class, that's why I keep trying to
@@ -117,6 +211,11 @@ namespace CSL_Traffic
             VehicleCollection healthCareVehicleCollection = null;
             VehicleCollection fireDepartmentVehicleCollection = null;
             VehicleCollection industrialVehicleCollection = null;
+            VehicleCollection industrialFarmingVehicleCollection = null;
+            VehicleCollection industrialForestryVehicleCollection = null;
+            VehicleCollection industrialOilVehicleCollection = null;
+            VehicleCollection industrialOreVehicleCollection = null;
+            VehicleCollection residentialVehicleCollection = null;
             TransportCollection publicTransportTransportCollection = null;
             ToolController toolController = null;
 
@@ -160,6 +259,26 @@ namespace CSL_Traffic
                 if (industrialVehicleCollection == null)
                     return;
 
+                industrialFarmingVehicleCollection = TryGetComponent<VehicleCollection>("Industrial Farming");
+                if (industrialFarmingVehicleCollection == null)
+                    return;
+
+                industrialForestryVehicleCollection = TryGetComponent<VehicleCollection>("Industrial Forestry");
+                if (industrialForestryVehicleCollection == null)
+                    return;
+
+                industrialOilVehicleCollection = TryGetComponent<VehicleCollection>("Industrial Oil");
+                if (industrialOilVehicleCollection == null)
+                    return;
+
+                industrialOreVehicleCollection = TryGetComponent<VehicleCollection>("Industrial Ore");
+                if (industrialOreVehicleCollection == null)
+                    return;
+
+                residentialVehicleCollection = TryGetComponent<VehicleCollection>("Residential Low");
+                if (residentialVehicleCollection == null)
+                    return;
+
                 // Transports
                 publicTransportTransportCollection = TryGetComponent<TransportCollection>("Public Transport");
                 if (publicTransportTransportCollection == null)
@@ -183,34 +302,64 @@ namespace CSL_Traffic
             {
                 try
                 {
-                    // roads
-                    ZonablePedestrianPathAI.Initialize(beautificationNetCollection, transform);
-                    ZonablePedestrianBridgeAI.Initialize(beautificationNetCollection, transform);
-                    LargeRoadWithBusLanesAI.Initialize(roadsNetCollection, transform);
-                    LargeRoadWithBusLanesBridgeAI.Initialize(roadsNetCollection, transform);
+
+                    CreateLaneProps();
+                    LoadThumbnailsTextureAtlas();
+                    
+                    CreatePedestrianRoadBridge("Zonable Pedestrian Elevated", beautificationNetCollection);
+                    CreatePedestrianRoad("Zonable Pedestrian Pavement", RoadDecoration.Pavement, roadsNetCollection);
+                    CreatePedestrianRoad("Zonable Pedestrian Gravel", RoadDecoration.Gravel, roadsNetCollection);
+
+                    CreateSmallBuswayBridge("Small Busway Bridge", RoadDecoration.Bridge, roadsNetCollection);
+                    CreateSmallBuswayBridge("Small Busway Elevated", RoadDecoration.Elevated, roadsNetCollection);
+                    CreateSmallBusway("Small Busway", RoadDecoration.None, roadsNetCollection);
+
+                    CreateLargeRoadBridgeWithBusLanes("Large Road Bridge With Bus Lanes", RoadDecoration.Bridge, roadsNetCollection);
+                    CreateLargeRoadBridgeWithBusLanes("Large Road Elevated With Bus Lanes", RoadDecoration.Elevated, roadsNetCollection);
+                    CreateLargeRoadWithBusLanes("Large Road With Bus Lanes", RoadDecoration.None, roadsNetCollection);
+                    //CreateLargeRoadWithBusLanes("Large Road Decoration Trees With Bus Lanes", RoadDecoration.Trees, roadsNetCollection);
+                    //CreateLargeRoadWithBusLanes("Large Road Decoration Grass With Bus Lanes", RoadDecoration.Grass, roadsNetCollection);
+
+                    if ((CSLTraffic.Options & OptionsManager.ModOptions.BetaTestNewRoads) != OptionsManager.ModOptions.None)
+                    {
+                        // for new roads
+                    }
 
                     if ((CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) != OptionsManager.ModOptions.GhostMode)
                     {
-                        // Transports
-                        BusTransportLineAI.Initialize(publicTansportNetCollection, publicTansportVehicleCollection, publicTransportTransportCollection, transform);
+                        ReplaceVehicleAI<CustomAmbulanceAI>("Ambulance", healthCareVehicleCollection);
+                        ReplaceVehicleAI<CustomBusAI>("Bus", publicTansportVehicleCollection);
+                        ReplaceVehicleAI<CustomCargoTruckAI>(industrialVehicleCollection);
+                        ReplaceVehicleAI<CustomCargoTruckAI>(industrialFarmingVehicleCollection);
+                        ReplaceVehicleAI<CustomCargoTruckAI>(industrialForestryVehicleCollection);
+                        ReplaceVehicleAI<CustomCargoTruckAI>(industrialOilVehicleCollection);
+                        ReplaceVehicleAI<CustomCargoTruckAI>(industrialOreVehicleCollection);
+                        ReplaceVehicleAI<CustomFireTruckAI>("Fire Truck", fireDepartmentVehicleCollection);
+                        ReplaceVehicleAI<CustomGarbageTruckAI>("Garbage Truck", garbageVehicleCollection);
+                        ReplaceVehicleAI<CustomHearseAI>("Hearse", healthCareVehicleCollection);
+                        ReplaceVehicleAI<CustomPassengerCarAI>(residentialVehicleCollection);
+                        ReplaceVehicleAI<CustomPoliceCarAI>("Police Car", policeVehicleCollection);
 
-                        // vehicles
-                        CustomAmbulanceAI.Initialize(healthCareVehicleCollection, transform);
-                        CustomBusAI.Initialize(publicTansportVehicleCollection, transform);
-                        CustomCargoTruckAI.Initialize(industrialVehicleCollection, transform);
-                        CustomFireTruckAI.Initialize(fireDepartmentVehicleCollection, transform);
-                        CustomGarbageTruckAI.Initialize(garbageVehicleCollection, transform);
-                        CustomHearseAI.Initialize(healthCareVehicleCollection, transform);
-                        CustomPoliceCarAI.Initialize(policeVehicleCollection, transform);
+                        ReplaceTransportLineAI<BusTransportLineAI>("Bus Line", publicTansportNetCollection, "Bus", publicTransportTransportCollection);
 
-                        //Tools
-                        CustomTransportTool.Initialize(toolController);
+                        ReplaceTool<TransportTool, CustomTransportTool>(toolController);
+
+                        if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
+                        {
+                            for (uint i = 0; i < PrefabCollection<CitizenInfo>.LoadedCount(); i++)
+                            {
+                                CitizenInfo cit = PrefabCollection<CitizenInfo>.GetLoaded(i);
+                                cit.m_walkSpeed *= 0.25f;
+                            }
+                        }
                     }
 
                     // Localization
                     UpdateLocalization();
 
                     AddQueuedActionsToLoadingQueue();
+
+                    FileManager.ClearCache();
 
                 }
                 catch (KeyNotFoundException knf)
@@ -433,6 +582,876 @@ namespace CSL_Traffic
             Singleton<LoadingManager>.instance.QueueLoadingAction(action);
         }
 
+        #endregion
+
+        #region Clone Methods
+
+        static T ClonePrefab<T>(string prefabName, string newName, Transform customPrefabsHolder, bool replace = false, bool ghostMode = false) where T : PrefabInfo
+        {
+            T[] prefabs = Resources.FindObjectsOfTypeAll<T>();
+            return ClonePrefab<T>(prefabName, prefabs, newName, customPrefabsHolder, replace, ghostMode);
+        }
+
+        static T ClonePrefab<T>(string prefabName, T[] prefabs, string newName, Transform customPrefabsHolder, bool replace = false, bool ghostMode = false) where T : PrefabInfo 
+        {
+            T originalPrefab = prefabs.FirstOrDefault(p => p.name == prefabName);
+            if (originalPrefab == null)
+                return null;
+                //throw new KeyNotFoundException(prefabName + " was not found on " + collection.name);
+
+            GameObject instance = GameObject.Instantiate<GameObject>(originalPrefab.gameObject);
+            instance.name = newName;
+            instance.transform.SetParent(customPrefabsHolder);
+
+            MethodInfo initMethod = GetCollectionType(typeof(T).Name).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
+            if (ghostMode)
+            {
+                Initializer.QueuePrioritizedLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { newName, new[] { instance.GetComponent<T>() }, new string[] { replace ? prefabName : null } }));
+                return null;
+            }
+
+            T newPrefab = instance.GetComponent<T>();
+            newPrefab.m_prefabInitialized = false;
+
+            Initializer.QueuePrioritizedLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { newName, new[] { newPrefab }, new string[] { replace ? prefabName : null } }));
+
+            return newPrefab;
+        }
+
+        NetInfo CloneRoad(string prefabName, string newName, RoadDecoration decoration, NetCollection collection, string fileName = null, FileManager.Folder folder = FileManager.Folder.Roads)
+        {
+            bool ghostMode = (CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) == OptionsManager.ModOptions.GhostMode;
+            NetInfo road = ClonePrefab<NetInfo>(prefabName + GetDecorationName(decoration), collection.m_prefabs, newName, transform, false, ghostMode);
+            if (road == null)
+                return null;
+
+            // Replace textures
+
+            if (String.IsNullOrEmpty(fileName))
+                return road;
+
+            fileName += GetDecorationName(decoration, false);
+            
+            if (m_thumbnailsTextureAtlas != null && SetThumbnails(fileName))
+            {
+                road.m_Atlas = m_thumbnailsTextureAtlas;
+                road.m_Thumbnail = fileName;
+            }
+
+            string str;
+            if (sm_fileIndex.TryGetValue(fileName, out str))
+                fileName = str;
+
+            string lodFileName;
+            if (!sm_lodFileIndex.TryGetValue(fileName, out lodFileName))
+                lodFileName = fileName;
+
+            
+            for (int i = 0; i < road.m_segments.Length; i++)
+            {
+                string segFileName = fileName;
+                if (decoration != RoadDecoration.Bridge && decoration != RoadDecoration.Elevated)
+                {
+                    if (i == 1) segFileName += "-bus";
+                    if (i == 2) segFileName += "-busBoth";
+                }
+
+                if (sm_fileIndex.TryGetValue(segFileName, out str))
+                    segFileName = str;
+
+                road.m_segments[i].m_material = new Material(road.m_segments[i].m_material);
+                ReplaceTextures(segFileName, folder, road.m_segments[i].m_material);
+                int index = i;
+                m_postLoadingActions.Enqueue(() =>
+                {
+                    ReplaceLODTextures(lodFileName, FileManager.Folder.Roads, road.m_segments[index].m_combinedMaterial);
+                    road.m_segments[index].m_lodRenderDistance *= 2;
+                });
+            }
+
+            for (int i = 0; i < road.m_nodes.Length; i++)
+            {
+                string nodeFileName = fileName + "-node";
+                if (i != 0) nodeFileName += "" + i;
+
+                if (sm_fileIndex.TryGetValue(nodeFileName, out str))
+                    nodeFileName = str;
+
+                road.m_nodes[i].m_material = new Material(road.m_nodes[i].m_material);
+                ReplaceTextures(nodeFileName, folder, road.m_nodes[i].m_material);
+                int index = i;
+                m_postLoadingActions.Enqueue(() =>
+                {
+                    ReplaceLODTextures(lodFileName, FileManager.Folder.Roads, road.m_nodes[index].m_combinedMaterial);
+                    road.m_nodes[index].m_lodRenderDistance *= 2;
+                });
+            }
+
+            return road;
+        }
+
+        static NetLaneProps CloneNetLaneProps(string prefabName, int deltaSpace = 0)
+        {
+            NetLaneProps prefab = Resources.FindObjectsOfTypeAll<NetLaneProps>().FirstOrDefault(p => p.name == prefabName);
+            if (prefab == null)
+                return null;
+
+            NetLaneProps newLaneProps = ScriptableObject.CreateInstance<NetLaneProps>();
+            newLaneProps.m_props = new NetLaneProps.Prop[Mathf.Max(0, prefab.m_props.Length + deltaSpace)];
+            Array.Copy(prefab.m_props, newLaneProps.m_props, Mathf.Min(newLaneProps.m_props.Length, prefab.m_props.Length));
+
+            return newLaneProps;
+        }
+
+        static Type GetCollectionType(string prefabType)
+        {
+            switch (prefabType)
+            {
+                case "NetInfo":
+                    return typeof(NetCollection);
+                case "VehicleInfo":
+                    return typeof(VehicleCollection);
+                case "PropInfo":
+                    return typeof(PropCollection);
+                default:
+                    return null;
+            }
+        }
+
+        // whitespaces is for prefab names, no whitespaces is for texture file names
+        static string GetDecorationName(RoadDecoration decoration, bool whiteSpaces = true)
+        {
+            switch (decoration)
+            {
+                case RoadDecoration.Grass:
+                    return whiteSpaces ? " Decoration Grass" : "DecorationGrass";
+                case RoadDecoration.Trees:
+                    return whiteSpaces ? " Decoration Trees" : "DecorationTrees";
+                case RoadDecoration.Elevated:
+                    return whiteSpaces ? " Elevated" : "Elevated";
+                case RoadDecoration.Bridge:
+                    return whiteSpaces ? " Bridge" : "Bridge";
+                default:
+                    return "";
+            }
+        }
+
+        #endregion
+
+        #region Small Roads
+
+        void CreateSmallBusway(string newName, RoadDecoration decoration, NetCollection collection)
+        {
+            NetInfo smallRoad = CloneRoad("Basic Road", newName, decoration, collection, "RoadSmallBusway", FileManager.Folder.SmallRoad);
+
+            smallRoad.m_UIPriority = 20 + (int)decoration;
+
+            RoadAI roadAI = smallRoad.GetComponent<RoadAI>();
+            roadAI.m_maintenanceCost = CalculateMaintenanceCost(0.36f);
+            roadAI.m_enableZoning = false;
+            
+            NetInfo highway = collection.m_prefabs.FirstOrDefault(p => p.name == "Highway");
+            if (highway != null)
+                smallRoad.m_UnlockMilestone = highway.m_UnlockMilestone;
+            
+                
+            PrefabInfo bridge;
+            if (m_customPrefabs.TryGetValue("Small Busway Bridge", out bridge))
+                roadAI.m_bridgeInfo = bridge as NetInfo;
+            if (m_customPrefabs.TryGetValue("Small Busway Elevated", out bridge))
+                roadAI.m_elevatedInfo = bridge as NetInfo;
+
+            NetLaneProps laneProps = null;
+            m_customNetLaneProps.TryGetValue("BusLane", out laneProps);
+
+            NetInfo.Lane[] lanes = new NetInfo.Lane[4];
+            Array.Copy(smallRoad.m_lanes, lanes, 2);
+            Array.Copy(smallRoad.m_lanes, 4, lanes, 2, 2);
+            smallRoad.m_lanes = lanes;
+
+            smallRoad.m_lanes[2].m_position -= 1f;
+            smallRoad.m_lanes[2].m_stopOffset += 1f;
+            smallRoad.m_lanes[2].m_laneProps = laneProps;
+
+            smallRoad.m_lanes[3].m_position += 1f;
+            smallRoad.m_lanes[3].m_stopOffset -= 1f;
+            smallRoad.m_lanes[3].m_laneProps = laneProps;
+
+            if (Singleton<SimulationManager>.instance.m_metaData.m_invertTraffic == SimulationMetaData.MetaBool.True)
+            {
+                smallRoad.m_lanes[2].m_direction = NetInfo.Direction.Forward;
+                smallRoad.m_lanes[3].m_direction = NetInfo.Direction.Backward;
+            }
+
+            // Delay changing lane type to correctly calculate lane speeds
+            m_postLoadingActions.Enqueue(() =>
+            {
+                smallRoad.m_lanes[2].m_laneType = (NetInfo.LaneType)((byte)64);
+                smallRoad.m_lanes[3].m_laneType = (NetInfo.LaneType)((byte)64);
+            });
+
+            m_customPrefabs.Add(newName, smallRoad);
+        }
+
+        void CreateSmallBuswayBridge(string newName, RoadDecoration decoration, NetCollection collection)
+        {
+            NetInfo smallRoad = CloneRoad("Basic Road", newName, decoration, collection, "RoadSmallBusway", FileManager.Folder.SmallRoad);
+
+            RoadBridgeAI roadAI = smallRoad.GetComponent<RoadBridgeAI>();
+            roadAI.m_maintenanceCost = CalculateMaintenanceCost(roadAI.m_maintenanceCost / 625 + 0.06f);
+
+            NetLaneProps laneProps = null;
+            m_customNetLaneProps.TryGetValue("BusLane", out laneProps);
+
+            smallRoad.m_lanes[2].m_laneType = (NetInfo.LaneType)((byte)64);
+            smallRoad.m_lanes[2].m_laneProps = laneProps;
+
+            smallRoad.m_lanes[3].m_laneType = (NetInfo.LaneType)((byte)64);
+            smallRoad.m_lanes[3].m_laneProps = laneProps;
+
+            if (Singleton<SimulationManager>.instance.m_metaData.m_invertTraffic == SimulationMetaData.MetaBool.True)
+            {
+                smallRoad.m_lanes[2].m_direction = NetInfo.Direction.Forward;
+                smallRoad.m_lanes[3].m_direction = NetInfo.Direction.Backward;
+            }
+
+            m_customPrefabs.Add(newName, smallRoad);
+        }
+
+        #endregion
+
+        #region Large Roads
+
+        void CreateLargeRoadWithBusLanes(string newName, RoadDecoration decoration, NetCollection collection)
+        {
+            NetInfo largeRoad = CloneRoad("Large Road", newName, decoration, collection, "RoadLargeBusLanes", FileManager.Folder.LargeRoad);
+
+            largeRoad.m_UIPriority = 20 + (int)decoration;
+
+            RoadAI roadAI = largeRoad.GetComponent<RoadAI>();
+            roadAI.m_maintenanceCost = 662;
+
+            NetInfo highway = collection.m_prefabs.FirstOrDefault(p => p.name == "Highway");
+            if (highway != null)
+                largeRoad.m_UnlockMilestone = highway.m_UnlockMilestone;
+
+            PrefabInfo bridge;
+            if (m_customPrefabs.TryGetValue("Large Road Bridge With Bus Lanes", out bridge))
+                roadAI.m_bridgeInfo = bridge as NetInfo;
+            if (m_customPrefabs.TryGetValue("Large Road Elevated With Bus Lanes", out bridge))
+                roadAI.m_elevatedInfo = bridge as NetInfo;
+
+            NetLaneProps laneProps = null;
+            m_customNetLaneProps.TryGetValue("BusLane", out laneProps);
+
+            largeRoad.m_lanes[4].m_laneType = (NetInfo.LaneType)((byte)64);
+            largeRoad.m_lanes[4].m_laneProps = laneProps;
+
+            largeRoad.m_lanes[5].m_laneType = (NetInfo.LaneType)((byte)64);
+            largeRoad.m_lanes[5].m_laneProps = laneProps;
+
+            if (Singleton<SimulationManager>.instance.m_metaData.m_invertTraffic == SimulationMetaData.MetaBool.True)
+            {
+                largeRoad.m_lanes[4].m_direction = NetInfo.Direction.Forward;
+                largeRoad.m_lanes[5].m_direction = NetInfo.Direction.Backward;
+            }
+
+            m_customPrefabs.Add(newName, largeRoad);
+        }
+
+        void CreateLargeRoadBridgeWithBusLanes(string newName, RoadDecoration decoration, NetCollection collection)
+        {
+            NetInfo largeRoad = CloneRoad("Large Road", newName, decoration, collection, "RoadLargeBusLanes", FileManager.Folder.LargeRoad);
+
+            RoadBridgeAI roadAI = largeRoad.GetComponent<RoadBridgeAI>();
+            roadAI.m_maintenanceCost = 1980;
+
+            NetLaneProps laneProps = null;
+            m_customNetLaneProps.TryGetValue("BusLane", out laneProps);
+
+            largeRoad.m_lanes[2].m_laneType = (NetInfo.LaneType)((byte)64);
+            largeRoad.m_lanes[2].m_laneProps = laneProps;
+
+            largeRoad.m_lanes[3].m_laneType = (NetInfo.LaneType)((byte)64);
+            largeRoad.m_lanes[3].m_laneProps = laneProps;
+
+            if (Singleton<SimulationManager>.instance.m_metaData.m_invertTraffic == SimulationMetaData.MetaBool.True)
+            {
+                largeRoad.m_lanes[2].m_direction = NetInfo.Direction.Forward;
+                largeRoad.m_lanes[3].m_direction = NetInfo.Direction.Backward;
+            }
+
+            m_customPrefabs.Add(newName, largeRoad);
+        }
+
+        #endregion
+
+        #region Pedestrian Roads
+
+        void CreatePedestrianRoad(string newName, RoadDecoration decoration, NetCollection collection)
+        {
+            NetInfo pedestrianRoad = CloneRoad("Gravel Road", newName, decoration, collection, "PedestrianRoad", FileManager.Folder.PedestrianRoad);
+
+            RoadAI roadAI = pedestrianRoad.GetComponent<RoadAI>();
+
+            if (decoration == RoadDecoration.Pavement)
+            {
+                pedestrianRoad.m_createGravel = false;
+                pedestrianRoad.m_createPavement = true;
+                pedestrianRoad.m_setVehicleFlags = Vehicle.Flags.None;
+
+                PrefabInfo bridge;
+                if (m_customPrefabs.TryGetValue("Zonable Pedestrian Elevated", out bridge))
+                    roadAI.m_bridgeInfo = roadAI.m_elevatedInfo = bridge as NetInfo;
+
+                roadAI.m_constructionCost = 2000;
+                roadAI.m_maintenanceCost = 250;
+            }
+            else
+            {
+                roadAI.m_constructionCost = 1000;
+                roadAI.m_maintenanceCost = 150;
+            }
+
+            // TODO: set correct costs
+
+            NetInfo onewayRoad = collection.m_prefabs.FirstOrDefault(p => p.name == "Oneway Road");
+            if (onewayRoad != null)
+                pedestrianRoad.m_UnlockMilestone = onewayRoad.m_UnlockMilestone;
+
+
+            //NetLaneProps laneProps = null;
+            //m_customNetLaneProps.TryGetValue("BusLane", out laneProps);
+
+            int nLanes = 4;
+            if ((CSLTraffic.Options & OptionsManager.ModOptions.DisableCentralLaneOnPedestrianRoads) == OptionsManager.ModOptions.None)
+                nLanes++;
+
+            NetInfo.Lane[] lanes = new NetInfo.Lane[nLanes];
+            Array.Copy(pedestrianRoad.m_lanes, lanes, 2);
+            Array.Copy(pedestrianRoad.m_lanes, 4, lanes, 2, 2);
+            pedestrianRoad.m_lanes = lanes;
+
+            pedestrianRoad.m_lanes[0].m_position = -4f;
+            pedestrianRoad.m_lanes[0].m_width = 2f;
+            
+            pedestrianRoad.m_lanes[1].m_position = 4f;
+            pedestrianRoad.m_lanes[1].m_width = 2f;
+
+            pedestrianRoad.m_lanes[2].m_position = -1.25f;
+            pedestrianRoad.m_lanes[2].m_speedLimit = 0.3f;
+            //pedestrianRoad.m_lanes[2].m_laneProps = laneProps;
+
+            pedestrianRoad.m_lanes[3].m_position = 1.25f;
+            pedestrianRoad.m_lanes[3].m_speedLimit = 0.3f;
+            //pedestrianRoad.m_lanes[5].m_laneProps = laneProps;
+
+            if (nLanes == 5)
+            {
+                pedestrianRoad.m_lanes[4] = CloneLane(pedestrianRoad.m_lanes[0]);
+                pedestrianRoad.m_lanes[4].m_position = 0f;
+                pedestrianRoad.m_lanes[4].m_width = 5f;
+                pedestrianRoad.m_lanes[4].m_laneProps = null;
+            }
+
+            if (Singleton<SimulationManager>.instance.m_metaData.m_invertTraffic == SimulationMetaData.MetaBool.True)
+            {
+                pedestrianRoad.m_lanes[2].m_direction = NetInfo.Direction.Forward;
+                pedestrianRoad.m_lanes[3].m_direction = NetInfo.Direction.Backward;
+            }
+
+            // Delay changing lane type to correctly calculate lane speeds
+            m_postLoadingActions.Enqueue(() =>
+            {
+                pedestrianRoad.m_lanes[2].m_laneType = (NetInfo.LaneType)((byte)32);
+                pedestrianRoad.m_lanes[3].m_laneType = (NetInfo.LaneType)((byte)32);
+            });
+
+            m_customPrefabs.Add(newName, pedestrianRoad);
+        }
+
+        void CreatePedestrianRoadBridge(string newName, NetCollection collection)
+        {
+            NetInfo pedestrianBridge = CloneRoad("Pedestrian", newName, RoadDecoration.Elevated, collection);//, "RoadLargeBusLanes", FileManager.Folder.LargeRoad);
+
+            pedestrianBridge.m_class = ScriptableObject.CreateInstance<ItemClass>();
+            pedestrianBridge.m_class.m_service = ItemClass.Service.Road;
+            pedestrianBridge.m_class.m_level = ItemClass.Level.Level1;
+
+            RoadBridgeAI roadAI = pedestrianBridge.GetComponent<RoadBridgeAI>();
+            roadAI.m_maintenanceCost = 250;
+            roadAI.m_constructionCost = 2000;
+
+            //NetLaneProps laneProps = null;
+            //m_customNetLaneProps.TryGetValue("BusLane", out laneProps);
+
+            NetInfo.Lane[] lanes = new NetInfo.Lane[3];
+            lanes[0] = pedestrianBridge.m_lanes[0];
+            lanes[0].m_laneProps = null;
+
+            // Backward Lane
+            lanes[1] = new NetInfo.Lane();
+            lanes[1].m_position = -1.5f;
+            lanes[1].m_width = 2f;
+            lanes[1].m_speedLimit = 0.3f;
+            lanes[1].m_direction = NetInfo.Direction.Backward;
+            lanes[1].m_laneType = (NetInfo.LaneType)((byte)32);
+            lanes[1].m_vehicleType = VehicleInfo.VehicleType.Car;
+
+            // Forward Lane
+            lanes[2] = new NetInfo.Lane();
+            lanes[2].m_position = 1.5f;
+            lanes[2].m_width = 2f;
+            lanes[2].m_speedLimit = 0.3f;
+            lanes[2].m_laneType = (NetInfo.LaneType)((byte)32);
+            lanes[2].m_vehicleType = VehicleInfo.VehicleType.Car;
+
+            pedestrianBridge.m_lanes = lanes;
+
+            if (Singleton<SimulationManager>.instance.m_metaData.m_invertTraffic == SimulationMetaData.MetaBool.True)
+            {
+                pedestrianBridge.m_lanes[1].m_direction = NetInfo.Direction.Forward;
+                pedestrianBridge.m_lanes[2].m_direction = NetInfo.Direction.Backward;
+            }
+
+            m_customPrefabs.Add(newName, pedestrianBridge);
+        }
+
+        #endregion
+
+        #region Road Utils
+
+        static int CalculateMaintenanceCost(float target)
+        {
+            return Mathf.RoundToInt(target * 625);
+        }
+
+        static NetInfo.Lane CloneLane(NetInfo.Lane lane)
+        {
+            return new NetInfo.Lane()
+            {
+                m_position = lane.m_position,
+		        m_width = lane.m_width,
+		        m_verticalOffset = lane.m_verticalOffset,
+		        m_stopOffset = lane.m_stopOffset,
+		        m_speedLimit = lane.m_speedLimit,
+		        m_direction = lane.m_direction,
+		        m_laneType = lane.m_laneType,
+		        m_vehicleType = lane.m_vehicleType,
+		        m_laneProps = lane.m_laneProps,
+		        m_allowStop = lane.m_allowStop,
+		        m_useTerrainHeight = lane.m_useTerrainHeight
+            };
+        }
+
+        #endregion
+
+        #region Vehicles
+
+        void ReplaceVehicleAI<T>(VehicleCollection collection) where T : VehicleAI
+        {
+            foreach (VehicleInfo vehicle in collection.m_prefabs)
+            {
+                if (vehicle.GetComponent<VehicleAI>().GetType() == typeof(T).BaseType)
+                    ReplaceVehicleAI<T>(vehicle.name, collection);
+            }
+        }
+
+        void ReplaceVehicleAI<T>(string prefabName, VehicleCollection collection) where T : VehicleAI
+        {
+            VehicleInfo vehicle = ClonePrefab<VehicleInfo>(prefabName, collection.m_prefabs, prefabName, transform, true);
+            if (vehicle == null)
+                return;
+
+            VehicleAI originalAI = vehicle.GetComponent<VehicleAI>();
+            T newAI = vehicle.gameObject.AddComponent<T>();
+            CopyVehicleAIAttributes<T>(originalAI, newAI);
+            Destroy(originalAI);
+
+            if (vehicle.m_generatedInfo.m_vehicleInfo != null)// && vehicle.m_generatedInfo.m_vehicleInfo != vehicle)
+                vehicle.m_generatedInfo.m_vehicleInfo = null;
+
+            if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
+            {
+                // TODO: set correct values on vehicles for realistic speeds
+                switch (prefabName)
+                {
+                    case "Ambulance":
+                        vehicle.m_acceleration *= 0.2f;
+                        //vehicle.m_braking *= 0.3f;
+                        //vehicle.m_turning *= 0.25f;
+                        vehicle.m_maxSpeed *= 0.5f;
+                        break;
+                    case "Bus":
+                    case "Fire Truck":
+                    case "Garbage Truck":
+                        vehicle.m_acceleration *= 0.15f;
+                        //vehicle.m_braking *= 0.25f;
+                        //vehicle.m_turning *= 0.2f;
+                        vehicle.m_maxSpeed *= 0.5f;
+                        break;
+                    case "Hearse":
+                    case "Police Car":
+                        vehicle.m_acceleration *= 0.25f;
+                        //vehicle.m_braking *= 0.35f;
+                        //vehicle.m_turning *= 0.3f;
+                        vehicle.m_maxSpeed *= 0.5f;
+                        break;
+                    default:
+                        vehicle.m_acceleration *= 0.25f;
+                        //vehicle.m_braking *= 0.35f;
+                        //vehicle.m_turning *= 0.3f;
+                        vehicle.m_maxSpeed *= 0.5f;
+                        break;
+                }
+            }
+        }
+
+        void CopyVehicleAIAttributes<T>(VehicleAI from, T to)
+        {
+            foreach (FieldInfo fi in typeof(T).BaseType.GetFields())
+            {
+                    fi.SetValue(to, fi.GetValue(from));
+            }
+        }
+
+        #endregion
+
+        #region Props
+
+        void CreateLaneProps()
+        {
+            // bus lane
+            PropInfo busLaneText = CreateBusLaneTextProp("Road Arrow F", "BusLaneText");
+            if (busLaneText == null)
+                return;
+
+            NetLaneProps busLaneProps = CloneNetLaneProps("Props - Carlane", 1);
+            if (busLaneProps == null)
+                return;
+
+            busLaneProps.m_props[busLaneProps.m_props.Length - 1] = new NetLaneProps.Prop()
+            {
+                m_prop = busLaneText,
+                m_position = new Vector3(0f, 0f, 7.5f),
+                m_angle = 180f,
+                m_segmentOffset = -1f,
+                m_minLength = 8f,
+                m_startFlagsRequired = NetNode.Flags.Junction
+            };
+
+            m_customNetLaneProps.Add("BusLane", busLaneProps);
+        }
+
+        PropInfo CreateBusLaneTextProp(string prefabName, string newName)
+        {
+            PropInfo newProp = ClonePrefab<PropInfo>(prefabName, newName, transform);
+            if (newProp == null)
+                return null;
+
+            newProp.m_useColorVariations = false;
+
+            Material newMat = new Material(newProp.GetComponent<Renderer>().sharedMaterial);
+            ReplaceTextures(newName, FileManager.Folder.Props, newMat, TextureType.Main | TextureType.ACI | TextureType.XYS, 4);
+            newMat.color = new Color32(255, 255, 255, 100);
+            newProp.GetComponent<Renderer>().sharedMaterial = newMat;
+
+            newProp.InitializePrefab();
+            newProp.m_prefabInitialized = true;
+
+            return newProp;
+        }
+
+        #endregion
+
+        #region Transports
+
+        void ReplaceTransportLineAI<T>(string prefabName, NetCollection collection, string transportName, TransportCollection transportCollection)
+        {
+            NetInfo transportLine = ClonePrefab<NetInfo>(prefabName, collection.m_prefabs, prefabName, transform, true);
+            if (transportLine == null)
+                return;
+
+            Destroy(transportLine.GetComponent<TransportLineAI>());
+            transportLine.gameObject.AddComponent<BusTransportLineAI>();
+
+            TransportInfo transportInfo = transportCollection.m_prefabs.FirstOrDefault(p => p.name == transportName);
+            if (transportInfo == null)
+                return;
+                //throw new KeyNotFoundException(transportName + " Transport Info not found on " + transportCollection.name);
+
+            transportInfo.m_netInfo = transportLine;
+        }
+
+        #endregion
+
+        #region Tools
+
+        void ReplaceTool<TOriginal, TReplacement>(ToolController toolController)
+            where TReplacement : TOriginal
+            where TOriginal : ToolBase
+        {
+            TOriginal originalTool = toolController.GetComponent<TOriginal>();
+            TReplacement customTool = toolController.gameObject.AddComponent<TReplacement>();
+
+            // contributed by Japa
+            FieldInfo toolControllerField = typeof(ToolController).GetField("m_tools", BindingFlags.Instance | BindingFlags.NonPublic);
+            if (toolControllerField != null)
+                toolControllerField.SetValue(toolController, toolController.GetComponents<ToolBase>());
+            FieldInfo toolModifierDictionary = typeof(ToolsModifierControl).GetField("m_Tools", BindingFlags.Static | BindingFlags.NonPublic);
+            if (toolModifierDictionary != null)
+                toolModifierDictionary.SetValue(null, null); // to force a refresh
+        }
+
+        #endregion
+
+        #region Textures
+
+        static bool ReplaceLODTextures(string fileName, FileManager.Folder textureFolder, Material mat, TextureType textureTypes = TextureType.All, int anisoLevel = 8, FilterMode filterMode = FilterMode.Trilinear, bool skipCache = false)
+        {
+            return ReplaceTextures(fileName + "-lodAtlas", textureFolder, mat, textureTypes, anisoLevel, filterMode, skipCache);
+        }
+
+        static bool ReplaceTextures(string fileName, FileManager.Folder textureFolder, Material mat, TextureType textureTypes = TextureType.All, int anisoLevel = 8, FilterMode filterMode = FilterMode.Trilinear, bool skipCache = false)
+        {
+            bool success = false;
+            byte[] textureBytes;
+            Texture2D tex;
+
+            if ((textureTypes & TextureType.Main) == TextureType.Main)
+            {
+                if (FileManager.GetTextureBytes(fileName + ".png", textureFolder, skipCache, out textureBytes))
+                {
+                    tex = new Texture2D(1, 1);
+                    tex.name = fileName;
+                    tex.LoadImage(textureBytes);
+                    tex.anisoLevel = anisoLevel;
+                    tex.filterMode = filterMode;
+
+                    mat.mainTexture = tex;
+
+                    success = true;
+                }
+            }
+
+            if ((textureTypes & TextureType.XYS) == TextureType.XYS && mat.HasProperty("_XYSMap"))
+            {
+                if (FileManager.GetTextureBytes(fileName + "-xys.png", textureFolder, skipCache, out textureBytes))
+                {
+                    tex = new Texture2D(1, 1);
+                    tex.name = fileName + "-xys";
+                    tex.LoadImage(textureBytes);
+                    tex.anisoLevel = anisoLevel;
+                    tex.filterMode = filterMode;
+
+                    mat.SetTexture("_XYSMap", tex);
+
+                    success = true;
+                }
+            }
+
+            if ((textureTypes & TextureType.ACI) == TextureType.ACI && mat.HasProperty("_ACIMap"))
+            {
+                if (FileManager.GetTextureBytes(fileName + "-aci.png", textureFolder, skipCache, out textureBytes))
+                {
+                    tex = new Texture2D(1, 1);
+                    tex.name = fileName + "-aci";
+                    tex.LoadImage(textureBytes);
+                    tex.anisoLevel = anisoLevel;
+                    tex.filterMode = filterMode;
+
+                    mat.SetTexture("_ACIMap", tex);
+
+                    success = true;
+                }
+            }
+
+            if ((textureTypes & TextureType.APR) == TextureType.APR && mat.HasProperty("_APRMap"))
+            {
+                if (FileManager.GetTextureBytes(fileName + "-apr.png", textureFolder, skipCache, out textureBytes))
+                {
+                    tex = new Texture2D(1, 1);
+                    tex.name = fileName + "-apr";
+                    tex.LoadImage(textureBytes);
+                    tex.anisoLevel = anisoLevel;
+                    tex.filterMode = filterMode;
+
+                    mat.SetTexture("_APRMap", tex);
+
+                    success = true;
+                }
+            }
+
+            return success;
+        }
+
+        // based on method from "Some Roads" mod: https://gist.github.com/thatfool/0545ff2641ef46c2cf52
+        void LoadThumbnailsTextureAtlas()
+        {
+            if (m_thumbnailsTextureAtlas != null)
+                return;
+
+            Shader shader = Shader.Find("UI/Default UI Shader");
+            if (shader == null)
+            {
+                Debug.Log("Traffic++: Cannot find UI Shader. Using default thumbnails.");
+                return;
+            }
+
+            byte[] bytes;
+            if (!FileManager.GetTextureBytes("Thumbnails.png", FileManager.Folder.Roads, out bytes))
+            {
+                Debug.Log("Traffic++: Cannot find UI Atlas file. Using default thumbnails.");
+                return;
+            }
+
+            Texture2D atlas = new Texture2D(1, 1, TextureFormat.ARGB32, false);
+            atlas.LoadImage(bytes);
+            
+            Material atlasMaterial = new Material(shader);
+            atlasMaterial.mainTexture = atlas;
+
+            m_thumbnailsTextureAtlas = ScriptableObject.CreateInstance<UITextureAtlas>();
+            m_thumbnailsTextureAtlas.name = "Traffic++ Thumbnails";
+            m_thumbnailsTextureAtlas.material = atlasMaterial;
+        }
+
+        bool SetThumbnails(string name)
+        {
+            if (m_thumbnailsTextureAtlas == null || !sm_thumbnailCoords.ContainsKey(name))
+                return false;
+            
+            Vector2 startPosition = sm_thumbnailCoords[name];
+            if (startPosition == null) // sanity check
+                return false;
+
+            Texture2D atlasTex = m_thumbnailsTextureAtlas.texture;
+            float atlasWidth = atlasTex.width;
+            float atlasHeight = atlasTex.height;
+            float rectWidth = 109 / atlasWidth;
+            float rectHeight = 75 / atlasHeight;
+            int maxWidth = (int)atlasWidth / 109 * 109; // integer division
+            int maxHeight = (int)atlasHeight / 75 * 75; // integer division
+            int x = (int)startPosition.x;
+            int y = (int)startPosition.y;
+
+            for (int i = 0; i < 5; i++)
+            {
+                Texture2D spriteTex = new Texture2D(109, 75);
+                spriteTex.SetPixels(atlasTex.GetPixels(x, y, 109, 75));
+
+                UITextureAtlas.SpriteInfo sprite = new UITextureAtlas.SpriteInfo()
+                {
+                    name = name + sm_thumbnailStates[i],
+                    region = new Rect(x/atlasWidth, y/atlasHeight, rectWidth, rectHeight),
+                    texture = spriteTex
+                };
+                m_thumbnailsTextureAtlas.AddSprite(sprite);
+
+                y += 75;
+                if (y >= maxHeight)
+                {
+                    y = 0;
+                    x += 109;
+                    if (x >= maxWidth)
+                    {
+                        Debug.Log("Traffic++: Error setting thumbnail for " + name + ". Using default thumbnails.");
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        public static void DumpRenderTexture(RenderTexture rt, string pngOutPath)
+        {
+            var oldRT = RenderTexture.active;
+
+            var tex = new Texture2D(rt.width, rt.height);
+            RenderTexture.active = rt;
+            tex.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+            tex.Apply();
+
+            File.WriteAllBytes(pngOutPath, tex.EncodeToPNG());
+            RenderTexture.active = oldRT;
+        }
+
+        public static void DumpTextureToPNG(Texture previewTexture, string filename = null)
+        {
+            if (filename == null)
+            {
+                filename = "";
+                var filenamePrefix = String.Format("rt_dump_{0}", previewTexture.name);
+                if (!File.Exists(filenamePrefix + ".png"))
+                {
+                    filename = filenamePrefix + ".png";
+                }
+                else
+                {
+                    int i = 1;
+                    while (File.Exists(String.Format("{0}_{1}.png", filenamePrefix, i)))
+                    {
+                        i++;
+                    }
+
+                    filename = String.Format("{0}_{1}.png", filenamePrefix, i);
+                }
+            }
+
+            if (File.Exists(filename))
+            {
+                File.Delete(filename);
+            }
+
+            if (previewTexture is RenderTexture)
+            {
+                DumpRenderTexture((RenderTexture)previewTexture, filename);
+                //Log.Warning(String.Format("Texture dumped to \"{0}\"", filename));
+            }
+            else if (previewTexture is Texture2D)
+            {
+                var texture = previewTexture as Texture2D;
+                byte[] bytes = null;
+
+                try
+                {
+                    bytes = texture.EncodeToPNG();
+                }
+                catch (UnityException)
+                {
+                    //Log.Warning(String.Format("Texture \"{0}\" is marked as read-only, running workaround..", texture.name));
+                }
+
+                if (bytes == null)
+                {
+                    try
+                    {
+                        var rt = RenderTexture.GetTemporary(texture.width, texture.height, 0);
+                        Graphics.Blit(texture, rt);
+                        DumpRenderTexture(rt, filename);
+                        RenderTexture.ReleaseTemporary(rt);
+                        //Log.Warning(String.Format("Texture dumped to \"{0}\"", filename));
+                    }
+                    catch (Exception ex)
+                    {
+                        //Log.Error("There was an error while dumping the texture - " + ex.Message);
+                    }
+
+                    return;
+                }
+
+                File.WriteAllBytes(filename, bytes);
+                //Log.Warning(String.Format("Texture dumped to \"{0}\"", filename));
+            }
+            else
+            {
+                //Log.Error(String.Format("Don't know how to dump type \"{0}\"", previewTexture.GetType()));
+            }
+        }
+
+        #endregion
+
         // TODO: Put this in its own class
 		void UpdateLocalization()
 		{
@@ -492,6 +1511,21 @@ namespace CSL_Traffic
                     m_Key = "Large Road With Bus Lanes"
                 };
                 locale.AddLocalizedString(k, "A six-lane road with parking spaces and dedicated bus lanes. The bus lanes can be used by vehicles in emergency. Supports high-traffic.");
+
+                // Small road with bus
+                k = new Locale.Key()
+                {
+                    m_Identifier = "NET_TITLE",
+                    m_Key = "Small Busway"
+                };
+                locale.AddLocalizedString(k, "Small Busway");
+
+                k = new Locale.Key()
+                {
+                    m_Identifier = "NET_DESC",
+                    m_Key = "Small Busway"
+                };
+                locale.AddLocalizedString(k, "A two-lane busway to remove buses from common traffic and improve public transport coverage. It can also be used by vehicles in emergency.");
 
 				sm_localizationInitialized = true;
 			}

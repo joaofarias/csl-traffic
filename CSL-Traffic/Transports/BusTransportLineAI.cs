@@ -14,64 +14,11 @@ namespace CSL_Traffic
 {
     class BusTransportLineAI : TransportLineAI
     {
-        public static bool sm_initialized;
-
-        public static void Initialize(NetCollection collection, VehicleCollection vehicleCollection, TransportCollection transportCollection, Transform customPrefabs)
-        {
-            if (sm_initialized)
-                return;
-
-            Initialize(collection, transportCollection, customPrefabs, "Bus Line", "Bus");
-            //Initialize(collection, transportCollection, customPrefabs, "Metro Line", "Metro");
-           
-
-            sm_initialized = true;
-        }
-
-        static void Initialize(NetCollection netCollection, TransportCollection transportCollection, Transform customPrefabs, string prefabName, string transportName)
-        {
-            Debug.Log("Traffic++: Initializing " + prefabName);
-
-            NetInfo originalBusLine = netCollection.m_prefabs.Where(p => p.name == prefabName).FirstOrDefault();
-            if (originalBusLine == null)
-                throw new KeyNotFoundException(prefabName + " was not found on " + netCollection.name);
-
-            GameObject instance = GameObject.Instantiate<GameObject>(originalBusLine.gameObject); ;
-            instance.name = prefabName;
-            instance.transform.SetParent(customPrefabs);
-            GameObject.Destroy(instance.GetComponent<TransportLineAI>());
-            instance.AddComponent<BusTransportLineAI>();
-
-            NetInfo busLine = instance.GetComponent<NetInfo>();
-            busLine.m_prefabInitialized = false;
-            busLine.m_netAI = null;
-
-            MethodInfo initMethod = typeof(NetCollection).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
-            Initializer.QueuePrioritizedLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { netCollection.name, new[] { busLine }, new string[] { prefabName } }));
-
-            // transport
-            TransportInfo originalTransportInfo = transportCollection.m_prefabs.Where(p => p.name.Contains(transportName)).FirstOrDefault();
-            if (originalTransportInfo == null)
-                throw new KeyNotFoundException(transportName + " Transport Info not found on " + transportCollection.name);
-
-            originalTransportInfo.m_netInfo = busLine;
-        }
-
         public override void InitializePrefab()
         {
-            if (name.Contains("Bus"))
-            {
-                this.m_publicTransportAccumulation = 50;
-                this.m_netService = ItemClass.Service.Road;
-            }
-            else
-            {
-                this.m_maxPassengerWaitingDistance = 25;
-                this.m_publicTransportAccumulation = 75;
-                this.m_publicTransportRadius = 300;
-                this.m_netService = ItemClass.Service.PublicTransport;
-                this.m_vehicleType = VehicleInfo.VehicleType.Metro;
-            }
+            // CHECKME: is this needed?
+            this.m_publicTransportAccumulation = 50;
+            this.m_netService = ItemClass.Service.Road;
 
             base.InitializePrefab();
 
