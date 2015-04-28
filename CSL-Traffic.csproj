@@ -19,6 +19,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -71,7 +72,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CSL-Traffic\AI\Vehicles\CustomPassengerCarAI.cs" />
+    <Compile Include="CSL-Traffic\DataExtensions\NetInfoLane.cs" />
     <Compile Include="CSL-Traffic\FileManager.cs" />
+    <Compile Include="CSL-Traffic\RoadManager.cs" />
+    <Compile Include="CSL-Traffic\Tools\RoadCustomizerTool.cs" />
     <Compile Include="CSL-Traffic\Transports\BusTransportLineAI.cs" />
     <Compile Include="CSL-Traffic\AI\Vehicles\CustomAmbulanceAI.cs" />
     <Compile Include="CSL-Traffic\AI\Vehicles\CustomBusAI.cs" />
@@ -92,6 +96,8 @@
     <Compile Include="CSL-Traffic\Properties\AssemblyInfo.cs" />
     <Compile Include="CSL-Traffic\Tools\CustomTransportTool.cs" />
     <Compile Include="CSL-Traffic\Transports\CustomTransportManager.cs" />
+    <None Include="CSL-Traffic\UI\RoadCustomizerGroupPanel.cs" />
+    <None Include="CSL-Traffic\UI\RoadCustomizerPanel.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include=".git\objects\info\" />

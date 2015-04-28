@@ -15,13 +15,13 @@ namespace CSL_Traffic
         {
             None = 0,
             AllowTrucksInPedestrianRoads = 1,
-            AllowResidentsInPedestrianRoads = 2, // TODO
+            AllowResidentsInPedestrianRoads = 2,
             DisableCentralLaneOnPedestrianRoads = 4,
             UseRealisticSpeeds = 8,
 
             // bits 55 to 62 reserved for beta tests
             BetaTestNewRoads = 1L << 54,
-            //BetaTest2 = 1L << 55,
+            BetaTestRoadCustomizerTool = 1L << 55,
             //BetaTest3 = 1L << 56,
             //BetaTest4 = 1L << 57,
             //BetaTest5 = 1L << 58,
@@ -39,10 +39,11 @@ namespace CSL_Traffic
 
 
         UICheckBox m_allowTrucksCheckBox = null;
-        //UICheckBox m_allowTrucksCheckBox;
+        UICheckBox m_allowResidentsCheckBox = null;
         UICheckBox m_disableCentralLaneCheckBox = null;
         UICheckBox m_realisticSpeedsCheckBox = null;
         UICheckBox m_betaTestRoadsCheckBox = null;
+        UICheckBox m_betaTestRoadCustomizerCheckBox = null;
         UICheckBox m_ghostModeCheckBox = null;
         
         bool m_initialized;
@@ -139,10 +140,11 @@ namespace CSL_Traffic
 
             // add options
             m_allowTrucksCheckBox = AddOptionCheckbox("Allow Trucks in Pedestrian Roads", 0);
-            //AddOptionCheckbox(m_allowResidentsCheckBox, "Allow Residents in Pedestrian Roads", 1);
+            m_allowResidentsCheckBox = AddOptionCheckbox("Allow Residents in Pedestrian Roads", 1);
             m_disableCentralLaneCheckBox = AddOptionCheckbox("Disable Central Lane on Pedestrian Roads", 2);
             m_realisticSpeedsCheckBox = AddOptionCheckbox("Beta Test: Realistic Speeds", 3);
             m_betaTestRoadsCheckBox = AddOptionCheckbox("Beta Test: New Road Types and Textures", 4);
+            m_betaTestRoadCustomizerCheckBox = AddOptionCheckbox("Beta Test: Road Customizer Tool", 5);
 
             m_ghostModeCheckBox = AddOptionCheckbox("Ghost Mode (disables all mod functionality leaving only enough logic to load the map)");
             m_ghostModeCheckBox.gameObject.transform.SetParent(m_optionsPanel.transform);
@@ -197,6 +199,11 @@ namespace CSL_Traffic
                 options.allowTrucks = true;
                 CSLTraffic.Options |= ModOptions.AllowTrucksInPedestrianRoads;
             }
+            if (this.m_allowResidentsCheckBox.isChecked)
+            {
+                options.allowResidents = true;
+                CSLTraffic.Options |= ModOptions.AllowResidentsInPedestrianRoads;
+            }
             if (this.m_disableCentralLaneCheckBox.isChecked)
             {
                 options.disableCentralLane = true;
@@ -212,6 +219,11 @@ namespace CSL_Traffic
             {
                 options.betaTestRoads = true;
                 CSLTraffic.Options |= ModOptions.BetaTestNewRoads;
+            }
+            if (this.m_betaTestRoadCustomizerCheckBox.isChecked)
+            {
+                options.betaTestRoadCustomizer = true;
+                CSLTraffic.Options |= ModOptions.BetaTestRoadCustomizerTool;
             }
             if (this.m_ghostModeCheckBox.isChecked)
             {
@@ -257,14 +269,19 @@ namespace CSL_Traffic
             }
 
             this.m_allowTrucksCheckBox.isChecked = options.allowTrucks;
+            this.m_allowResidentsCheckBox.isChecked = options.allowResidents;
             this.m_disableCentralLaneCheckBox.isChecked = options.disableCentralLane;
             this.m_realisticSpeedsCheckBox.isChecked = options.realisticSpeeds;
             this.m_betaTestRoadsCheckBox.isChecked = options.betaTestRoads;
+            this.m_betaTestRoadCustomizerCheckBox.isChecked = options.betaTestRoadCustomizer;
             this.m_ghostModeCheckBox.isChecked = options.ghostMode;
 
 
             if (options.allowTrucks)
                 CSLTraffic.Options |= ModOptions.AllowTrucksInPedestrianRoads;
+
+            if (options.allowResidents)
+                CSLTraffic.Options |= ModOptions.AllowResidentsInPedestrianRoads;
             
             if (options.disableCentralLane)
                 CSLTraffic.Options |= ModOptions.DisableCentralLaneOnPedestrianRoads;
@@ -274,6 +291,9 @@ namespace CSL_Traffic
 
             if (options.betaTestRoads)
                 CSLTraffic.Options |= ModOptions.BetaTestNewRoads;
+
+            if (options.betaTestRoadCustomizer)
+                CSLTraffic.Options |= ModOptions.BetaTestRoadCustomizerTool;
 
             if (options.ghostMode)   
                 CSLTraffic.Options |= ModOptions.GhostMode;
@@ -299,11 +319,12 @@ namespace CSL_Traffic
         public struct Options
         {
             public bool allowTrucks;
-            //public bool allowResidents;
+            public bool allowResidents;
             public bool disableCentralLane;
             public bool realisticSpeeds;
 
             public bool betaTestRoads;
+            public bool betaTestRoadCustomizer;
 
             public bool ghostMode;
         }

@@ -319,14 +319,9 @@ namespace CSL_Traffic
 			}
 		}
 
-        public static bool StartPathFind(CarAI carAI, ushort vehicleID, ref Vehicle vehicleData, Vector3 startPos, Vector3 endPos, bool startBothWays, bool endBothWays, bool usePedestrianRoads)
+        public static bool StartPathFind(CarAI carAI, ushort vehicleID, ref Vehicle vehicleData, Vector3 startPos, Vector3 endPos, bool startBothWays, bool endBothWays, RoadManager.VehicleType vehicleType)
         {
             VehicleInfo info = carAI.m_info;
-            NetInfo.LaneType laneTypes = NetInfo.LaneType.Vehicle;
-            if (usePedestrianRoads)
-            {
-                laneTypes |= ((NetInfo.LaneType)((byte)32));
-            }
             PathUnit.Position startPosA;
             PathUnit.Position startPosB;
             float num;
@@ -335,7 +330,7 @@ namespace CSL_Traffic
             PathUnit.Position endPosB;
             float num3;
             float num4;
-            if (CustomPathManager.FindPathPosition(startPos, ItemClass.Service.Road, laneTypes, info.m_vehicleType, 32f, out startPosA, out startPosB, out num, out num2) && CustomPathManager.FindPathPosition(endPos, ItemClass.Service.Road, laneTypes, info.m_vehicleType, 32f, out endPosA, out endPosB, out num3, out num4))
+            if (CustomPathManager.FindPathPosition(startPos, ItemClass.Service.Road, NetInfo.LaneType.Vehicle, info.m_vehicleType, 32f, out startPosA, out startPosB, out num, out num2, vehicleType) && CustomPathManager.FindPathPosition(endPos, ItemClass.Service.Road, NetInfo.LaneType.Vehicle, info.m_vehicleType, 32f, out endPosA, out endPosB, out num3, out num4, vehicleType))
             {
                 if (!startBothWays || num < 10f)
                 {
@@ -346,7 +341,13 @@ namespace CSL_Traffic
                     endPosB = default(PathUnit.Position);
                 }
                 uint path;
-                if ((Singleton<PathManager>.instance as CustomPathManager).CreatePath(out path, ref Singleton<SimulationManager>.instance.m_randomizer, Singleton<SimulationManager>.instance.m_currentBuildIndex, startPosA, startPosB, endPosA, endPosB, laneTypes, info.m_vehicleType, 20000f, (carAI as IVehicle).IsHeavyVehicle(), (carAI as IVehicle).IgnoreBlocked(vehicleID, ref vehicleData), false, false, true))
+                bool createPathResult;
+                CustomPathManager customPathManager = Singleton<PathManager>.instance as CustomPathManager;
+                if (customPathManager != null)
+                    createPathResult = customPathManager.CreatePath(out path, ref Singleton<SimulationManager>.instance.m_randomizer, Singleton<SimulationManager>.instance.m_currentBuildIndex, startPosA, startPosB, endPosA, endPosB, NetInfo.LaneType.Vehicle, info.m_vehicleType, 20000f, (carAI as IVehicle).IsHeavyVehicle(), (carAI as IVehicle).IgnoreBlocked(vehicleID, ref vehicleData), false, false, vehicleType);
+                else
+                    createPathResult = Singleton<PathManager>.instance.CreatePath(out path, ref Singleton<SimulationManager>.instance.m_randomizer, Singleton<SimulationManager>.instance.m_currentBuildIndex, startPosA, startPosB, endPosA, endPosB, NetInfo.LaneType.Vehicle, info.m_vehicleType, 20000f, (carAI as IVehicle).IsHeavyVehicle(), (carAI as IVehicle).IgnoreBlocked(vehicleID, ref vehicleData), false, false);
+                if (createPathResult)
                 {
                     if (vehicleData.m_path != 0u)
                     {

@@ -67,46 +67,11 @@ namespace CSL_Traffic
 
 		protected override bool StartPathFind(ushort vehicleID, ref Vehicle vehicleData, Vector3 startPos, Vector3 endPos, bool startBothWays, bool endBothWays)
 		{
-            if ((vehicleData.m_flags & Vehicle.Flags.Emergency2) == Vehicle.Flags.None)
-            {
-                return CustomCarAI.StartPathFind(this, vehicleID, ref vehicleData, startPos, endPos, startBothWays, endBothWays, true);
-            }
-            else
-            {
-                VehicleInfo info = this.m_info;
-                NetInfo.LaneType laneTypes = NetInfo.LaneType.Vehicle | ((NetInfo.LaneType)((byte)32)) | ((NetInfo.LaneType)((byte)64));
-                PathUnit.Position startPosA;
-                PathUnit.Position startPosB;
-                float num;
-                float num2;
-                PathUnit.Position endPosA;
-                PathUnit.Position endPosB;
-                float num3;
-                float num4;
-                if (CustomPathManager.FindPathPosition(startPos, ItemClass.Service.Road, laneTypes, info.m_vehicleType, 32f, out startPosA, out startPosB, out num, out num2) && CustomPathManager.FindPathPosition(endPos, ItemClass.Service.Road, laneTypes, info.m_vehicleType, 32f, out endPosA, out endPosB, out num3, out num4))
-                {
-                    if (!startBothWays || num < 10f)
-                    {
-                        startPosB = default(PathUnit.Position);
-                    }
-                    if (!endBothWays || num3 < 10f)
-                    {
-                        endPosB = default(PathUnit.Position);
-                    }
-                    uint path;
-                    if ((Singleton<PathManager>.instance as CustomPathManager).CreatePath(out path, ref Singleton<SimulationManager>.instance.m_randomizer, Singleton<SimulationManager>.instance.m_currentBuildIndex, startPosA, startPosB, endPosA, endPosB, laneTypes, info.m_vehicleType, 20000f, this.IsHeavyVehicle(), this.IgnoreBlocked(vehicleID, ref vehicleData), false, false, true))
-                    {
-                        if (vehicleData.m_path != 0u)
-                        {
-                            Singleton<PathManager>.instance.ReleasePath(vehicleData.m_path);
-                        }
-                        vehicleData.m_path = path;
-                        vehicleData.m_flags |= Vehicle.Flags.WaitingPath;
-                        return true;
-                    }
-                }
-                return false;
-            }
+            RoadManager.VehicleType vehicleType = RoadManager.VehicleType.Ambulance;
+            if ((vehicleData.m_flags & Vehicle.Flags.Emergency2) != Vehicle.Flags.None)
+                vehicleType |= RoadManager.VehicleType.Emergency;
+            
+            return CustomCarAI.StartPathFind(this, vehicleID, ref vehicleData, startPos, endPos, startBothWays, endBothWays, vehicleType);
 		}
 
         //protected override float CalculateTargetSpeed(ushort vehicleID, ref Vehicle data, float speedLimit, float curve)
