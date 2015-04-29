@@ -6,6 +6,7 @@ using ICities;
 using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
 using System.IO;
+using System.Threading;
 
 namespace CSL_Traffic
 {
@@ -108,14 +109,29 @@ namespace CSL_Traffic
             private ushort m_nodeId;
             private List<uint> m_laneConnections = new List<uint>();
             public VehicleType m_vehicleTypes = VehicleType.All;
-            public float m_speed;
+            public float m_speed;            
 
             public bool AddConnection(uint laneId)
             {
-                if (m_laneConnections.Contains(laneId))
+                bool exists = false;
+                while (!Monitor.TryEnter(this.m_laneConnections, SimulationManager.SYNCHRONIZE_TIMEOUT))
+                {
+                }
+                try
+                {
+                    if (m_laneConnections.Contains(laneId))
+                        exists = true;
+                    else
+                        m_laneConnections.Add(laneId);
+                }
+                finally
+                {
+                    Monitor.Exit(this.m_laneConnections);
+                }
+
+                if (exists)
                     return false;
 
-                m_laneConnections.Add(laneId);
                 UpdateArrows();
 
                 return true;
@@ -123,38 +139,95 @@ namespace CSL_Traffic
 
             public bool RemoveConnection(uint laneId)
             {
-                if (m_laneConnections.Remove(laneId))
+                bool result = false;
+                while (!Monitor.TryEnter(this.m_laneConnections, SimulationManager.SYNCHRONIZE_TIMEOUT))
                 {
-                    UpdateArrows();
-                    return true;
+                }
+                try
+                {
+                    result = m_laneConnections.Remove(laneId);
+                }
+                finally
+                {
+                    Monitor.Exit(this.m_laneConnections);
                 }
 
-                return false;
+                if (result)
+                    UpdateArrows();
+
+                return result;
             }
 
             public uint[] GetConnectionsAsArray()
             {
-                return m_laneConnections.ToArray();
+                uint[] connections = null;
+                while (!Monitor.TryEnter(this.m_laneConnections, SimulationManager.SYNCHRONIZE_TIMEOUT))
+                {
+                }
+                try
+                {
+                    connections = m_laneConnections.ToArray();
+                }
+                finally
+                {
+                    Monitor.Exit(this.m_laneConnections);
+                }
+                return connections;
             }
 
             public int ConnectionCount()
             {
-                return m_laneConnections.Count();
+                int count = 0;
+                while (!Monitor.TryEnter(this.m_laneConnections, SimulationManager.SYNCHRONIZE_TIMEOUT))
+                {
+                }
+                try
+                {
+                    count = m_laneConnections.Count();
+                }
+                finally
+                {
+                    Monitor.Exit(this.m_laneConnections);
+                }
+                return count;
             }
 
             public bool ConnectsTo(uint laneId)
             {
-                return m_laneConnections.Count == 0 || m_laneConnections.Contains(laneId);
+                bool result = true;
+                while (!Monitor.TryEnter(this.m_laneConnections, SimulationManager.SYNCHRONIZE_TIMEOUT))
+                {
+                }
+                try
+                {
+                    result = m_laneConnections.Count == 0 || m_laneConnections.Contains(laneId);
+                }
+                finally
+                {
+                    Monitor.Exit(this.m_laneConnections);
+                }
+
+                return result;
             }
 
             void VerifyConnections()
             {
                 uint[] connections = GetConnectionsAsArray();
-                foreach (uint laneId in connections)
+                while (!Monitor.TryEnter(this.m_laneConnections, SimulationManager.SYNCHRONIZE_TIMEOUT))
                 {
-                    NetLane lane = NetManager.instance.m_lanes.m_buffer[laneId];
-                    if ((lane.m_flags & CONTROL_BIT) != CONTROL_BIT)
-                        m_laneConnections.Remove(laneId);
+                }
+                try
+                {
+                    foreach (uint laneId in connections)
+                    {
+                        NetLane lane = NetManager.instance.m_lanes.m_buffer[laneId];
+                        if ((lane.m_flags & CONTROL_BIT) != CONTROL_BIT)
+                            m_laneConnections.Remove(laneId);
+                    }
+                }
+                finally
+                {
+                    Monitor.Exit(this.m_laneConnections);
                 }
             }
 
@@ -167,7 +240,7 @@ namespace CSL_Traffic
                 if (m_nodeId == 0 && !FindNode(segment))
                     return;
 
-                if (m_laneConnections.Count == 0)
+                if (ConnectionCount() == 0)
                 {
                     SetDefaultArrows(lane.m_segment, ref NetManager.instance.m_segments.m_buffer[lane.m_segment]);
                     return;
@@ -177,7 +250,8 @@ namespace CSL_Traffic
                 flags &= ~(NetLane.Flags.LeftForwardRight);
 
                 Vector3 segDir = segment.GetDirection(m_nodeId);
-                foreach (uint connection in m_laneConnections)
+                uint[] connections = GetConnectionsAsArray();
+                foreach (uint connection in connections)
                 {
                     ushort seg = NetManager.instance.m_lanes.m_buffer[connection].m_segment;
                     Vector3 dir = NetManager.instance.m_segments.m_buffer[seg].GetDirection(m_nodeId);

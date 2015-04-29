@@ -4,6 +4,7 @@ using System.Threading;
 using CSL_Traffic.Extensions;
 using UnityEngine;
 using ColossalFramework;
+using ColossalFramework.IO;
 
 namespace CSL_Traffic
 {
@@ -15,17 +16,16 @@ namespace CSL_Traffic
 	{
 		CustomPathFind[] m_pathFinds;
 
-		new void Awake()
+		protected override void Awake()
 		{
 			PathFind[] originalPathFinds = GetComponents<PathFind>();
 			m_pathFinds = new CustomPathFind[originalPathFinds.Length];
 			for (int i = 0; i < originalPathFinds.Length; i++)
 			{
-				// CHECKME: I don't think this needs to be commented anymore. Need to test
 				Destroy(originalPathFinds[i]);
 				m_pathFinds[i] = gameObject.AddComponent<CustomPathFind>();
 			}
-			typeof(PathManager).GetFieldByName("m_pathfinds").SetValue(this, m_pathFinds);
+            typeof(PathManager).GetFieldByName("m_pathfinds").SetValue(this, m_pathFinds);
 		}
 
 		// copy values from original to new path manager
@@ -37,10 +37,10 @@ namespace CSL_Traffic
 			this.m_properties = originalPathManager.m_properties;
 			
 			// members of PathManager
-			this.m_pathUnitCount = originalPathManager.m_pathUnitCount;
-			this.m_renderPathGizmo = originalPathManager.m_renderPathGizmo;
-			this.m_pathUnits = originalPathManager.m_pathUnits;
-			this.m_bufferLock = originalPathManager.m_bufferLock;
+            this.m_pathUnitCount = originalPathManager.m_pathUnitCount;
+            this.m_renderPathGizmo = originalPathManager.m_renderPathGizmo;
+            this.m_pathUnits = originalPathManager.m_pathUnits;
+            this.m_bufferLock = originalPathManager.m_bufferLock;
 		}
 
         public bool CreatePath(out uint unit, ref Randomizer randomizer, uint buildIndex, PathUnit.Position startPos, PathUnit.Position endPos, NetInfo.LaneType laneTypes, VehicleInfo.VehicleType vehicleTypes, float maxLength, RoadManager.VehicleType vehicleType)

@@ -23,8 +23,9 @@ namespace CSL_Traffic
             public float m_methodDistance;
             public uint m_laneID;
             public NetInfo.Direction m_direction;
-            public NetInfo.LaneType m_lanesUsed;
+            public NetInfo.LaneType m_lanesUsed;        
         }
+
         FieldInfo fi_pathUnits;
         private Array32<PathUnit> m_pathUnits
         {
@@ -55,12 +56,7 @@ namespace CSL_Traffic
             get { return fi_queueLock.GetValue(this); }
             set { fi_queueLock.SetValue(this, value); }
         }
-        FieldInfo fi_bufferLock;
-        private object m_bufferLock
-        {
-            get { return fi_bufferLock.GetValue(this); }
-            set { fi_bufferLock.SetValue(this, value); }
-        }
+        private object m_bufferLock;
         FieldInfo fi_pathFindThread;
         private Thread m_pathFindThread
         {
@@ -73,182 +69,43 @@ namespace CSL_Traffic
             get { return (bool)fi_terminated.GetValue(this); }
             set { fi_terminated.SetValue(this, value); }
         }
-        FieldInfo fi_bufferMinPos;
-        private int m_bufferMinPos
-        {
-            get { return (int)fi_bufferMinPos.GetValue(this); }
-            set { fi_bufferMinPos.SetValue(this, value); }
-        }
-        FieldInfo fi_bufferMaxPos;
-        private int m_bufferMaxPos
-        {
-            get { return (int)fi_bufferMaxPos.GetValue(this); }
-            set { fi_bufferMaxPos.SetValue(this, value); }
-        }
-        FieldInfo fi_laneLocation;
-        private uint[] m_laneLocation
-        {
-            get { return (uint[])fi_laneLocation.GetValue(this); }
-            set { fi_laneLocation.SetValue(this, value); }
-        }
-        FieldInfo fi_laneTarget;
-        private PathUnit.Position[] m_laneTarget
-        {
-            get { return (PathUnit.Position[])fi_laneTarget.GetValue(this); }
-            set { fi_laneTarget.SetValue(this, value); }
-        }
-        
-        private CustomPathFind.BufferItem[] m_buffer { get; set; }
-        
-        FieldInfo fi_bufferMin;
-        private int[] m_bufferMin
-        {
-            get { return (int[])fi_bufferMin.GetValue(this); }
-            set { fi_bufferMin.SetValue(this, value); }
-        }
-        FieldInfo fi_bufferMax;
-        private int[] m_bufferMax
-        {
-            get { return (int[])fi_bufferMax.GetValue(this); }
-            set { fi_bufferMax.SetValue(this, value); }
-        }
-        FieldInfo fi_maxLength;
-        private float m_maxLength
-        {
-            get { return (float)fi_maxLength.GetValue(this); }
-            set { fi_maxLength.SetValue(this, value); }
-        }
-        FieldInfo fi_startLaneA;
-        private uint m_startLaneA
-        {
-            get { return (uint)fi_startLaneA.GetValue(this); }
-            set { fi_startLaneA.SetValue(this, value); }
-        }
-        FieldInfo fi_startLaneB;
-        private uint m_startLaneB
-        {
-            get { return (uint)fi_startLaneB.GetValue(this); }
-            set { fi_startLaneB.SetValue(this, value); }
-        }
-        FieldInfo fi_endLaneA;
-        private uint m_endLaneA
-        {
-            get { return (uint)fi_endLaneA.GetValue(this); }
-            set { fi_endLaneA.SetValue(this, value); }
-        }
-        FieldInfo fi_endLaneB;
-        private uint m_endLaneB
-        {
-            get { return (uint)fi_endLaneB.GetValue(this); }
-            set { fi_endLaneB.SetValue(this, value); }
-        }
-        FieldInfo fi_vehicleLane;
-        private uint m_vehicleLane
-        {
-            get { return (uint)fi_vehicleLane.GetValue(this); }
-            set { fi_vehicleLane.SetValue(this, value); }
-        }
-        FieldInfo fi_startOffsetA;
-        private byte m_startOffsetA
-        {
-            get { return (byte)fi_startOffsetA.GetValue(this); }
-            set { fi_startOffsetA.SetValue(this, value); }
-        }
-        FieldInfo fi_startOffsetB;
-        private byte m_startOffsetB
-        {
-            get { return (byte)fi_startOffsetB.GetValue(this); }
-            set { fi_startOffsetB.SetValue(this, value); }
-        }
-        FieldInfo fi_vehicleOffset;
-        private byte m_vehicleOffset
-        {
-            get { return (byte)fi_vehicleOffset.GetValue(this); }
-            set { fi_vehicleOffset.SetValue(this, value); }
-        }
-        FieldInfo fi_isHeavyVehicle;
 
-        private bool m_isHeavyVehicle
-        {
-            get { return (bool)fi_isHeavyVehicle.GetValue(this); }
-            set { fi_isHeavyVehicle.SetValue(this, value); }
-        }
-        FieldInfo fi_ignoreBlocked;
-        private bool m_ignoreBlocked
-        {
-            get { return (bool)fi_ignoreBlocked.GetValue(this); }
-            set { fi_ignoreBlocked.SetValue(this, value); }
-        }
-        FieldInfo fi_stablePath;
-        private bool m_stablePath
-        {
-            get { return (bool)fi_stablePath.GetValue(this); }
-            set { fi_stablePath.SetValue(this, value); }
-        }
-        FieldInfo fi_pathRandomizer;
-        private Randomizer m_pathRandomizer
-        {
-            get { return (Randomizer)fi_pathRandomizer.GetValue(this); }
-            set { fi_pathRandomizer.SetValue(this, value); }
-        }
-        FieldInfo fi_pathFindIndex;
-        private uint m_pathFindIndex
-        {
-            get { return (uint)fi_pathFindIndex.GetValue(this); }
-            set { fi_pathFindIndex.SetValue(this, value); }
-        }
-        FieldInfo fi_laneTypes;
-        private NetInfo.LaneType m_laneTypes
-        {
-            get { return (NetInfo.LaneType)fi_laneTypes.GetValue(this); }
-            set { fi_laneTypes.SetValue(this, value); }
-        }
-        FieldInfo fi_vehicleTypes;
-        private VehicleInfo.VehicleType m_vehicleTypes
-        {
-            get { return (VehicleInfo.VehicleType)fi_vehicleTypes.GetValue(this); }
-            set { fi_vehicleTypes.SetValue(this, value); }
-        }
-
+        private int m_bufferMinPos;
+        private int m_bufferMaxPos;
+        private uint[] m_laneLocation;
+        private PathUnit.Position[] m_laneTarget;
+        private CustomPathFind.BufferItem[] m_buffer;
+        private int[] m_bufferMin;
+        private int[] m_bufferMax;
+        private float m_maxLength;
+        private uint m_startLaneA;
+        private uint m_startLaneB;
+        private uint m_endLaneA;
+        private uint m_endLaneB;
+        private uint m_vehicleLane;
+        private byte m_startOffsetA;
+        private byte m_startOffsetB;
+        private byte m_vehicleOffset;
+        private bool m_isHeavyVehicle;
+        private bool m_ignoreBlocked;
+        private bool m_stablePath;
+        private Randomizer m_pathRandomizer;
+        private uint m_pathFindIndex;
+        private NetInfo.LaneType m_laneTypes;
+        private VehicleInfo.VehicleType m_vehicleTypes;
         private RoadManager.VehicleType m_vehicleType;
         private Dictionary<uint, RoadManager.VehicleType> m_pathVehicleType;
 
         private void Awake()
         {
             Type pathFindType = typeof(PathFind);
-            //pathFindType.GetMethod("Awake", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(this, null);
-
             fi_pathUnits = pathFindType.GetFieldByName("m_pathUnits");
             fi_queueFirst = pathFindType.GetFieldByName("m_queueFirst");
             fi_queueLast = pathFindType.GetFieldByName("m_queueLast");
             fi_calculating = pathFindType.GetFieldByName("m_calculating");
             fi_queueLock = pathFindType.GetFieldByName("m_queueLock");
-            fi_bufferLock = pathFindType.GetFieldByName("m_bufferLock");
             fi_pathFindThread = pathFindType.GetFieldByName("m_pathFindThread");
-            fi_terminated = pathFindType.GetFieldByName("m_terminated");
-            fi_bufferMinPos = pathFindType.GetFieldByName("m_bufferMinPos");
-            fi_bufferMaxPos = pathFindType.GetFieldByName("m_bufferMaxPos");
-            fi_laneLocation = pathFindType.GetFieldByName("m_laneLocation");
-            fi_laneTarget = pathFindType.GetFieldByName("m_laneTarget");
-            //fi_buffer = pathFindType.GetFieldByName("m_buffer");
-            fi_bufferMin = pathFindType.GetFieldByName("m_bufferMin");
-            fi_bufferMax = pathFindType.GetFieldByName("m_bufferMax");
-            fi_maxLength = pathFindType.GetFieldByName("m_maxLength");
-            fi_startLaneA = pathFindType.GetFieldByName("m_startLaneA");
-            fi_startLaneB = pathFindType.GetFieldByName("m_startLaneB");
-            fi_endLaneA = pathFindType.GetFieldByName("m_endLaneA");
-            fi_endLaneB = pathFindType.GetFieldByName("m_endLaneB");
-            fi_vehicleLane = pathFindType.GetFieldByName("m_vehicleLane");
-            fi_startOffsetA = pathFindType.GetFieldByName("m_startOffsetA");
-            fi_startOffsetB = pathFindType.GetFieldByName("m_startOffsetB");
-            fi_vehicleOffset = pathFindType.GetFieldByName("m_vehicleOffset");
-            fi_isHeavyVehicle = pathFindType.GetFieldByName("m_isHeavyVehicle");
-            fi_ignoreBlocked = pathFindType.GetFieldByName("m_ignoreBlocked");
-            fi_stablePath = pathFindType.GetFieldByName("m_stablePath");
-            fi_pathRandomizer = pathFindType.GetFieldByName("m_pathRandomizer");
-            fi_pathFindIndex = pathFindType.GetFieldByName("m_pathFindIndex");
-            fi_laneTypes = pathFindType.GetFieldByName("m_laneTypes");
-            fi_vehicleTypes = pathFindType.GetFieldByName("m_vehicleTypes");
+            fi_terminated = pathFindType.GetFieldByName("m_terminated");          
 
             this.m_pathfindProfiler = new ThreadProfiler();
             this.m_laneLocation = new uint[262144];
@@ -257,6 +114,7 @@ namespace CSL_Traffic
             this.m_bufferMin = new int[1024];
             this.m_bufferMax = new int[1024];
             this.m_queueLock = new object();
+            this.m_pathVehicleType = new Dictionary<uint, RoadManager.VehicleType>();
             this.m_bufferLock = Singleton<PathManager>.instance.m_bufferLock;
             this.m_pathUnits = Singleton<PathManager>.instance.m_pathUnits;
             this.m_pathFindThread = new Thread(new ThreadStart(this.PathFindThread));
@@ -267,8 +125,6 @@ namespace CSL_Traffic
             {
                 CODebugBase<LogChannel>.Error(LogChannel.Core, "Path find thread failed to start!");
             }
-
-            this.m_pathVehicleType = new Dictionary<uint, RoadManager.VehicleType>();
         }
 
         private void OnDestroy()
@@ -336,6 +192,7 @@ namespace CSL_Traffic
             }
             return false;
         }
+
         //public void WaitForAllPaths()
         //{
         //    while (!Monitor.TryEnter(this.m_queueLock, SimulationManager.SYNCHRONIZE_TIMEOUT))
@@ -353,6 +210,7 @@ namespace CSL_Traffic
         //        Monitor.Exit(this.m_queueLock);
         //    }
         //}
+
         private void PathFindImplementation(uint unit, ref PathUnit data)
         {
             NetManager instance = Singleton<NetManager>.instance;
@@ -625,15 +483,13 @@ namespace CSL_Traffic
                     uint num13;
                     try
                     {
-                        Randomizer temp = this.m_pathRandomizer;
-                        if (!this.m_pathUnits.CreateItem(out num13, ref temp))
+                        if (!this.m_pathUnits.CreateItem(out num13, ref this.m_pathRandomizer))
                         {
                             PathUnit[] expr_CE1_cp_0 = this.m_pathUnits.m_buffer;
                             UIntPtr expr_CE1_cp_1 = (UIntPtr)unit;
                             expr_CE1_cp_0[(int)expr_CE1_cp_1].m_pathFindFlags = (byte)(expr_CE1_cp_0[(int)expr_CE1_cp_1].m_pathFindFlags | 8);
                             return;
                         }
-                        this.m_pathRandomizer = temp;
                         this.m_pathUnits.m_buffer[(int)((UIntPtr)num13)] = this.m_pathUnits.m_buffer[(int)((UIntPtr)num9)];
                         this.m_pathUnits.m_buffer[(int)((UIntPtr)num13)].m_referenceCount = 1;
                         this.m_pathUnits.m_buffer[(int)((UIntPtr)num13)].m_pathFindFlags = 4;
@@ -1332,7 +1188,7 @@ namespace CSL_Traffic
                 catch (Exception ex)
                 {
                     UIView.ForwardException(ex);
-                    CODebugBase<LogChannel>.Error(LogChannel.Core, "Path find error: " + ex.Message + "\n" + ex.StackTrace);
+                    CODebugBase<LogChannel>.Error(LogChannel.Core, "Path find error: " + ex.Message + " - " + m_vehicleType + " - " + m_vehicleTypes + "\n" + ex.StackTrace);
                     PathUnit[] expr_1A0_cp_0 = this.m_pathUnits.m_buffer;
                     UIntPtr expr_1A0_cp_1 = (UIntPtr)this.m_calculating;
                     expr_1A0_cp_0[(int)expr_1A0_cp_1].m_pathFindFlags = (byte)(expr_1A0_cp_0[(int)expr_1A0_cp_1].m_pathFindFlags | 8);

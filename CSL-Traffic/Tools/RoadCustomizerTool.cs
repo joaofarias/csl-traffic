@@ -6,7 +6,7 @@ using ColossalFramework.UI;
 
 namespace CSL_Traffic
 {
-    class RoadCustomizerTool : DefaultTool
+    class RoadCustomizerTool : ToolBase
     {
         class NodeLaneMarker
         {
