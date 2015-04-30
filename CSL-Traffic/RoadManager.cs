@@ -368,6 +368,7 @@ namespace CSL_Traffic
         public static bool AddLaneConnection(uint laneId, uint connectionId)
         {
             Lane lane = GetLane(laneId);
+            GetLane(connectionId); // makes sure lane information is stored
 
             return lane.AddConnection(connectionId);
         }

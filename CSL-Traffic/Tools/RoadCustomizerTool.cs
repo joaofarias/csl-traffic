@@ -276,7 +276,7 @@ namespace CSL_Traffic
                     continue;
 
                 uint[] connections = RoadManager.GetLaneConnections(m_nodeLaneMarkers.m_buffer[i].m_lane);
-                if (connections == null)
+                if (connections == null || connections.Length == 0)
                     continue;
 
                 for (int j = 0; j < m_nodeLaneMarkers.m_size; j++)

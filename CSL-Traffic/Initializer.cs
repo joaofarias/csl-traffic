@@ -793,6 +793,9 @@ namespace CSL_Traffic
         {
             string prefabName = (roadType & RoadType.OneWay) == RoadType.OneWay ? "Oneway Road" : "Basic Road";
             string newName = "Small Busway" + GetDecoratedName(roadType);
+            if (m_customPrefabs.ContainsKey(newName))
+                return;
+
             NetInfo smallRoad = CloneRoad(prefabName, newName, roadType, collection, "RoadSmallBusway", FileManager.Folder.SmallRoad);
             bool abort = smallRoad == null;
 
@@ -881,6 +884,9 @@ namespace CSL_Traffic
         {
             string prefabName = (roadType & RoadType.OneWay) == RoadType.OneWay ? "Large Oneway" : "Large Road";
             string newName = "Large Road" + GetDecoratedName(roadType) + " With Bus Lanes";
+            if (m_customPrefabs.ContainsKey(newName))
+                return;
+
             NetInfo largeRoad = CloneRoad(prefabName, newName, roadType, collection, "RoadLargeBusLanes", FileManager.Folder.LargeRoad);
             bool abort = largeRoad == null;
 
@@ -958,6 +964,9 @@ namespace CSL_Traffic
         void CreatePedestrianRoad(RoadType roadType, NetCollection roadsCollection, NetCollection beautificationCollection)
         {
             string newName = "Zonable Pedestrian" + (roadType.HasFlag(RoadType.Pavement) ? " Pavement" : " Gravel");
+            if (m_customPrefabs.ContainsKey(newName))
+                return;
+
             NetInfo pedestrianRoad = CloneRoad("Gravel Road", newName, roadType, roadsCollection, "PedestrianRoad", FileManager.Folder.PedestrianRoad);
             bool abort = pedestrianRoad == null;
 
@@ -1131,6 +1140,9 @@ namespace CSL_Traffic
 
         void ReplaceVehicleAI<T>(string prefabName, VehicleCollection collection) where T : VehicleAI
         {
+            if (transform.FindChild(prefabName) != null)
+                return;
+
             VehicleInfo vehicle = ClonePrefab<VehicleInfo>(prefabName, collection.m_prefabs, prefabName, transform, true);
             if (vehicle == null)
                 return;
@@ -1192,6 +1204,9 @@ namespace CSL_Traffic
 
         void CreateLaneProps()
         {
+            if (m_customNetLaneProps.ContainsKey("BusLane"))
+                return;
+
             // bus lane
             PropInfo busLaneText = CreateBusLaneTextProp("Road Arrow F", "BusLaneText");
             if (busLaneText == null)
@@ -1239,6 +1254,9 @@ namespace CSL_Traffic
 
         void ReplaceTransportLineAI<T>(string prefabName, NetCollection collection, string transportName, TransportCollection transportCollection)
         {
+            if (transform.FindChild(prefabName) != null)
+                return;
+
             NetInfo transportLine = ClonePrefab<NetInfo>(prefabName, collection.m_prefabs, prefabName, transform, true);
             if (transportLine == null)
                 return;
@@ -1260,6 +1278,9 @@ namespace CSL_Traffic
 
         void AddTool<T>(ToolController toolController) where T : ToolBase
         {
+            if (toolController.GetComponent<T>() != null)
+                return;
+
             toolController.gameObject.AddComponent<T>();
 
             // contributed by Japa
