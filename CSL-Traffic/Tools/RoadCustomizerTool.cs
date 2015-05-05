@@ -3,15 +3,19 @@ using ColossalFramework.Math;
 using System.Collections;
 using UnityEngine;
 using ColossalFramework.UI;
+using System.Collections.Generic;
 
 namespace CSL_Traffic
 {
     class RoadCustomizerTool : ToolBase
     {
+        const NetNode.Flags CUSTOMIZED_NODE_FLAG = (NetNode.Flags)(1 << 28);
+
         class NodeLaneMarker
         {
+            public ushort m_node;
             public Vector3 m_position;
-            public bool m_isStart;
+            public bool m_isSource;
             public uint m_lane;
             public float m_size = 1f;
             public Color m_color;
@@ -21,6 +25,7 @@ namespace CSL_Traffic
         class SegmentLaneMarker
         {
             public uint m_lane;
+            public int m_laneIndex;
             public float m_size = 1f;
             public Bezier3 m_bezier;
             public Bounds[] m_bounds;
@@ -72,20 +77,25 @@ namespace CSL_Traffic
                     bounds.Expand(1f);
                     m_bounds[i] = bounds;
                 }
-
-                
                 
             }
         }
 
-        ushort m_currentSegment;
-        ushort m_currentNode;
-        ushort m_selectedSegment;
-        ushort m_selectedNode;
+        struct Segment
+        {
+            public ushort m_segmentId;
+            public ushort m_targetNode;
+        }
+
+        ushort m_hoveredSegment;
+        ushort m_hoveredNode;
+        ushort m_selectedNode;        
         NodeLaneMarker m_selectedMarker;
-        SegmentLaneMarker m_selectedLane;
-        FastList<NodeLaneMarker> m_nodeLaneMarkers = new FastList<NodeLaneMarker>();
-        FastList<SegmentLaneMarker> m_segmentLaneMarkers = new FastList<SegmentLaneMarker>();
+        Dictionary<ushort, FastList<NodeLaneMarker>> m_nodeMarkers = new Dictionary<ushort, FastList<NodeLaneMarker>>();
+        Dictionary<ushort, Segment> m_segments = new Dictionary<ushort, Segment>();
+        Dictionary<int, FastList<SegmentLaneMarker>> m_hoveredLaneMarkers = new Dictionary<int, FastList<SegmentLaneMarker>>();
+        List<SegmentLaneMarker> m_selectedLaneMarkers = new List<SegmentLaneMarker>();
+        int m_hoveredLanes;
         UIButton m_toolButton;
 
         protected override void OnToolUpdate()
@@ -97,14 +107,106 @@ namespace CSL_Traffic
 
             if (m_selectedNode != 0)
             {
-                // Handle lane connections
+                HandleIntersectionRouting();
+                return;
+            }
 
+            if (m_hoveredSegment != 0)
+            {
+                HandleLaneCustomization();
+            }
+
+            if (!RayCastSegmentAndNode(out m_hoveredSegment, out m_hoveredNode))
+            {
+                // clear lanes
+                if (Input.GetMouseButtonUp(1))
+                    m_selectedLaneMarkers.Clear();
+                m_segments.Clear();
+                m_hoveredLaneMarkers.Clear();
+                return;
+            }
+                
+
+            if (m_hoveredSegment != 0)
+            {
+                NetSegment segment = NetManager.instance.m_segments.m_buffer[m_hoveredSegment];
+                NetNode startNode = NetManager.instance.m_nodes.m_buffer[segment.m_startNode];
+                NetNode endNode = NetManager.instance.m_nodes.m_buffer[segment.m_endNode];
+                Ray mouseRay = Camera.main.ScreenPointToRay(Input.mousePosition);
+                    
+                if (startNode.CountSegments() > 1)
+                {
+                    Bounds bounds = startNode.m_bounds;
+                    if (m_hoveredNode != 0)
+                        bounds.extents /= 2f;
+                    if (bounds.IntersectRay(mouseRay))
+                    {
+                        m_hoveredSegment = 0;
+                        m_hoveredNode = segment.m_startNode;
+                    }
+                }
+
+                if (m_hoveredSegment != 0 && endNode.CountSegments() > 1)
+                {
+                    Bounds bounds = endNode.m_bounds;
+                    if (m_hoveredNode != 0)
+                        bounds.extents /= 2f;
+                    if (bounds.IntersectRay(mouseRay))
+                    {
+                        m_hoveredSegment = 0;
+                        m_hoveredNode = segment.m_endNode;
+                    }
+                }
+
+                if (m_hoveredSegment != 0)
+                {
+                    m_hoveredNode = 0;
+                    if (!m_segments.ContainsKey(m_hoveredSegment))
+                    {
+                        m_segments.Clear();
+                        SetSegments(m_hoveredSegment);
+                        SetLaneMarkers();
+                    }
+                }
+                else if (Input.GetMouseButtonUp(1))
+                {
+                    // clear lane selection
+                    m_selectedLaneMarkers.Clear();
+                }
+                        
+            }
+            else if (m_hoveredNode != 0 && NetManager.instance.m_nodes.m_buffer[m_hoveredNode].CountSegments() < 2)
+            {
+                m_hoveredNode = 0;
+            }
+
+            if (m_hoveredSegment == 0)
+            {
+                m_segments.Clear();
+                m_hoveredLaneMarkers.Clear();
+            }
+
+            if (Input.GetMouseButtonUp(0))
+            {
+                m_selectedNode = m_hoveredNode;
+                m_hoveredNode = 0;
+
+                if (m_selectedNode != 0)
+                    SetNodeMarkers(m_selectedNode, true);
+            }
+        }
+
+        void HandleIntersectionRouting()
+        {
+            FastList<NodeLaneMarker> nodeMarkers;
+            if (m_nodeMarkers.TryGetValue(m_selectedNode, out nodeMarkers))
+            {
                 Ray mouseRay = Camera.main.ScreenPointToRay(Input.mousePosition);
                 NodeLaneMarker hoveredMarker = null;
                 Bounds bounds = new Bounds(Vector3.zero, Vector3.one);
-                for (int i = 0; i < m_nodeLaneMarkers.m_size; i++)
+                for (int i = 0; i < nodeMarkers.m_size; i++)
                 {
-                    NodeLaneMarker marker = m_nodeLaneMarkers.m_buffer[i];
+                    NodeLaneMarker marker = nodeMarkers.m_buffer[i];
 
                     if (!IsActive(marker))
                         continue;
@@ -134,65 +236,54 @@ namespace CSL_Traffic
                         m_selectedMarker.m_connections.Add(hoveredMarker);
                     }
                 }
-
-                if (Input.GetMouseButtonUp(1))
-                {
-                    if (m_selectedMarker != null)
-                        m_selectedMarker = null;
-                    else
-                        m_selectedNode = 0;
-                }
             }
-            else if (m_selectedSegment != 0)
+
+            if (Input.GetMouseButtonUp(1))
             {
-                // Handle lane settings
-                Ray mouseRay = Camera.main.ScreenPointToRay(Input.mousePosition);
-                SegmentLaneMarker hoveredMarker = null;
-                for (int i = 0; i < m_segmentLaneMarkers.m_size; i++)
+                if (m_selectedMarker != null)
+                    m_selectedMarker = null;
+                else
+                    m_selectedNode = 0;
+            }
+        }
+
+        void HandleLaneCustomization()
+        {
+            // Handle lane settings
+            Ray mouseRay = Camera.main.ScreenPointToRay(Input.mousePosition);
+            m_hoveredLanes = ushort.MaxValue;
+            foreach (FastList<SegmentLaneMarker> laneMarkers in m_hoveredLaneMarkers.Values)
+            {
+                if (laneMarkers.m_size == 0)
+                    continue;
+
+                for (int i = 0; i < laneMarkers.m_size; i++)
                 {
-                    SegmentLaneMarker marker = m_segmentLaneMarkers.m_buffer[i];
-                    
+                    SegmentLaneMarker marker = laneMarkers.m_buffer[i];
+                    if (NetManager.instance.m_lanes.m_buffer[marker.m_lane].m_segment != m_hoveredSegment)
+                        continue;
+
                     if (marker.IntersectRay(mouseRay))
                     {
-                        hoveredMarker = marker;
-                        marker.m_size = 2f;
+                        m_hoveredLanes = marker.m_laneIndex;
+                        break;
                     }
-                    else
-                        marker.m_size = 1f;
                 }
 
-                if (hoveredMarker != null && Input.GetMouseButtonUp(0))
-                {
-                    m_selectedLane = hoveredMarker;
-                }
-                
-                if (Input.GetMouseButtonUp(1))
-                {
-                    m_selectedSegment = 0;
-                    m_selectedLane = null;
-                }
+                if (m_hoveredLanes != ushort.MaxValue)
+                    break;
             }
-            else
+
+            if (m_hoveredLanes != ushort.MaxValue && Input.GetMouseButtonUp(0))
             {
-                if (!RayCastSegmentAndNode(out m_currentSegment, out m_currentNode))
-                    return;
-
-                if (m_currentNode != 0 && NetManager.instance.m_nodes.m_buffer[m_currentNode].CountSegments() <= 2)
-                    m_currentNode = 0;
-
-                if (Input.GetMouseButtonUp(0) && !m_toolController.IsInsideUI)
-                {
-                    m_selectedNode = m_currentNode;
-                    m_currentNode = 0;
-                    if (m_selectedNode == 0)
-                        m_selectedSegment = m_currentSegment;
-                    m_currentSegment = 0;
-
-                    if (m_selectedNode != 0)
-                        SetNodeLaneMarkers();
-                    else if (m_selectedSegment != 0)
-                        SetSegmentLaneMarkers();
-                }
+                SegmentLaneMarker[] hoveredMarkers = m_hoveredLaneMarkers[m_hoveredLanes].ToArray();
+                HashSet<uint> hoveredLanes = new HashSet<uint>(hoveredMarkers.Select(m => m.m_lane));
+                if (m_selectedLaneMarkers.RemoveAll(m => hoveredLanes.Contains(m.m_lane)) == 0)
+                    m_selectedLaneMarkers.AddRange(hoveredMarkers);
+            }
+            else if (Input.GetMouseButtonUp(1))
+            {
+                m_selectedLaneMarkers.Clear();
             }
         }
 
@@ -200,174 +291,296 @@ namespace CSL_Traffic
         {
             base.OnEnable();
 
-            m_currentNode = m_currentSegment = 0;
-            m_selectedNode = m_selectedSegment = 0;
+            m_hoveredNode = m_hoveredSegment = 0;
+            m_selectedNode = 0;
             m_selectedMarker = null;
+            m_selectedLaneMarkers.Clear();
+            m_segments.Clear();
+            m_hoveredLaneMarkers.Clear();
         }
 
         bool IsActive(NodeLaneMarker marker)
         {
-            if (m_selectedMarker != null && (marker.m_isStart || NetManager.instance.m_lanes.m_buffer[m_selectedMarker.m_lane].m_segment == NetManager.instance.m_lanes.m_buffer[marker.m_lane].m_segment))
+            if (m_selectedMarker != null && (marker.m_isSource || NetManager.instance.m_lanes.m_buffer[m_selectedMarker.m_lane].m_segment == NetManager.instance.m_lanes.m_buffer[marker.m_lane].m_segment))
                 return false;
-            else if (m_selectedMarker == null && !marker.m_isStart)
+            else if (m_selectedMarker == null && !marker.m_isSource)
                 return false;
 
             return true;
         }
 
-        void SetNodeLaneMarkers()
+        public void SetNodeMarkers(ushort nodeId, bool overwrite = false)
         {
-            m_nodeLaneMarkers.Clear();
-            NetNode node = NetManager.instance.m_nodes.m_buffer[m_selectedNode];
-            int colorIndex = 0;
-            ushort seg = node.m_segment0;
-            for (int i = 0; i < 8; i++)
-            {
-                if (seg == 0)
-                    break;
+            if (nodeId == 0)
+                return;
 
-                NetSegment segment = NetManager.instance.m_segments.m_buffer[seg];
-                Vector3 offset = segment.FindDirection(seg, m_selectedNode);
+            if (!m_nodeMarkers.ContainsKey(nodeId) || (NetManager.instance.m_nodes.m_buffer[nodeId].m_flags & CUSTOMIZED_NODE_FLAG) != CUSTOMIZED_NODE_FLAG || overwrite)
+            {
+                FastList<NodeLaneMarker> nodeMarkers = new FastList<NodeLaneMarker>();
+                SetNodeMarkers(nodeId, nodeMarkers);
+                m_nodeMarkers[nodeId] = nodeMarkers;
+
+                NetManager.instance.m_nodes.m_buffer[nodeId].m_flags |= CUSTOMIZED_NODE_FLAG;
+            }
+        }
+
+        void SetNodeMarkers(ushort nodeId, FastList<NodeLaneMarker> nodeMarkers)
+        {
+            NetNode node = NetManager.instance.m_nodes.m_buffer[nodeId];
+            int offsetMultiplier = node.CountSegments() <= 2 ? 3 : 1;
+            ushort segmentId = node.m_segment0;
+            for (int i = 0; i < 8 && segmentId != 0; i++)
+            {
+                NetSegment segment = NetManager.instance.m_segments.m_buffer[segmentId];
+                bool isEndNode = segment.m_endNode == nodeId;
+                Vector3 offset = segment.FindDirection(segmentId, nodeId) * offsetMultiplier;
+                NetInfo.Lane[] lanes = segment.Info.m_lanes;
                 uint laneId = segment.m_lanes;
-                NetInfo info = segment.Info;
-                int laneCount = info.m_lanes.Length;
-                for (int j = 0; j < laneCount && laneId != 0; j++)
+                for (int j = 0; j < lanes.Length && laneId != 0; j++)
                 {
-                    NetLane lane = NetManager.instance.m_lanes.m_buffer[laneId];
-                    if ((info.m_lanes[j].m_laneType & NetInfo.LaneType.Vehicle) == NetInfo.LaneType.Vehicle)
+                    if ((lanes[j].m_laneType & NetInfo.LaneType.Vehicle) == NetInfo.LaneType.Vehicle)
                     {
                         Vector3 pos = Vector3.zero;
-                        NetInfo.Direction laneDir = ((segment.m_flags & NetSegment.Flags.Invert) == NetSegment.Flags.None) ? info.m_lanes[j].m_finalDirection : NetInfo.InvertDirection(info.m_lanes[j].m_finalDirection);
-                        
-                        bool isStart = false;
-                        if (segment.m_endNode == m_selectedNode)
+                        NetInfo.Direction laneDir = ((segment.m_flags & NetSegment.Flags.Invert) == NetSegment.Flags.None) ? lanes[j].m_finalDirection : NetInfo.InvertDirection(lanes[j].m_finalDirection);
+
+                        bool isSource = false;
+                        if (isEndNode)
                         {
                             if ((laneDir & (NetInfo.Direction.Forward | NetInfo.Direction.Avoid)) == NetInfo.Direction.Forward)
-                                isStart = true;
-                            pos = lane.m_bezier.d;
+                                isSource = true;
+                            pos = NetManager.instance.m_lanes.m_buffer[laneId].m_bezier.d;
                         }
-                        else if (segment.m_startNode == m_selectedNode)
+                        else
                         {
                             if ((laneDir & (NetInfo.Direction.Backward | NetInfo.Direction.Avoid)) == NetInfo.Direction.Backward)
-                                isStart = true;
-                            pos = lane.m_bezier.a;
+                                isSource = true;
+                            pos = NetManager.instance.m_lanes.m_buffer[laneId].m_bezier.a;
                         }
 
-                        m_nodeLaneMarkers.Add(new NodeLaneMarker()
+                        nodeMarkers.Add(new NodeLaneMarker()
                         {
-                            m_position = pos + offset,
                             m_lane = laneId,
-                            m_color = colors[colorIndex++],
-                            m_isStart = isStart
+                            m_node = nodeId,
+                            m_position = pos + offset,
+                            m_color = colors[nodeMarkers.m_size],
+                            m_isSource = isSource,
                         });
                     }
-                    
-                    laneId = lane.m_nextLane;
+
+                    laneId = NetManager.instance.m_lanes.m_buffer[laneId].m_nextLane;   
                 }
 
-                seg = segment.GetRightSegment(m_selectedNode);
-                if (seg == node.m_segment0)
-                    break;
+                segmentId = segment.GetRightSegment(nodeId);
+                if (segmentId == node.m_segment0)
+                    segmentId = 0;
             }
 
-            for (int i = 0; i < m_nodeLaneMarkers.m_size; i++)
+            for (int i = 0; i < nodeMarkers.m_size; i++)
             {
-                if (!m_nodeLaneMarkers.m_buffer[i].m_isStart)
+                if (!nodeMarkers.m_buffer[i].m_isSource)
                     continue;
 
-                uint[] connections = RoadManager.GetLaneConnections(m_nodeLaneMarkers.m_buffer[i].m_lane);
+                uint[] connections = RoadManager.GetLaneConnections(nodeMarkers.m_buffer[i].m_lane);
                 if (connections == null || connections.Length == 0)
                     continue;
 
-                for (int j = 0; j < m_nodeLaneMarkers.m_size; j++)
+                for (int j = 0; j < nodeMarkers.m_size; j++)
                 {
-                    if (m_nodeLaneMarkers.m_buffer[j].m_isStart)
+                    if (nodeMarkers.m_buffer[j].m_isSource)
                         continue;
 
-                    if (connections.Contains(m_nodeLaneMarkers.m_buffer[j].m_lane))
-                        m_nodeLaneMarkers.m_buffer[i].m_connections.Add(m_nodeLaneMarkers.m_buffer[j]);
+                    if (connections.Contains(nodeMarkers.m_buffer[j].m_lane))
+                        nodeMarkers.m_buffer[i].m_connections.Add(nodeMarkers.m_buffer[j]);
                 }
             }
         }
 
-        void SetSegmentLaneMarkers()
+        void SetLaneMarkers()
         {
-            m_segmentLaneMarkers.Clear();
-            NetSegment segment = NetManager.instance.m_segments.m_buffer[m_selectedSegment];
-            uint laneId = segment.m_lanes;
+            m_hoveredLaneMarkers.Clear();
+            if (m_segments.Count == 0)
+                return;
+
+            NetSegment segment = NetManager.instance.m_segments.m_buffer[m_segments.Values.First().m_segmentId];
             NetInfo info = segment.Info;
             int laneCount = info.m_lanes.Length;
-            for (int j = 0; j < laneCount && laneId != 0; j++)
-            {
-                NetLane lane = NetManager.instance.m_lanes.m_buffer[laneId];
-                if ((info.m_lanes[j].m_laneType & NetInfo.LaneType.Vehicle) == NetInfo.LaneType.Vehicle)
-                {
-                    Bezier3 bezier = lane.m_bezier;
-                    bezier.GetBounds().Expand(1f);
+            bool bothWays = info.m_hasBackwardVehicleLanes && info.m_hasForwardVehicleLanes;
+            bool isInverted = false;
 
-                    m_segmentLaneMarkers.Add(new SegmentLaneMarker()
-                    {
-                        m_bezier = bezier,
-                        m_lane = laneId,
-                    });
+            for (ushort i = 0; i < laneCount; i++)
+                m_hoveredLaneMarkers[i] = new FastList<SegmentLaneMarker>();
+
+            foreach (Segment seg in m_segments.Values)
+            {
+                segment = NetManager.instance.m_segments.m_buffer[seg.m_segmentId];
+                uint laneId = segment.m_lanes;
+
+                if (bothWays)
+                {
+                    isInverted = seg.m_targetNode == segment.m_startNode;
+                    if ((segment.m_flags & NetSegment.Flags.Invert) == NetSegment.Flags.Invert)
+                        isInverted = !isInverted;
                 }
 
-                laneId = lane.m_nextLane;
-            }
+                for (int j = 0; j < laneCount && laneId != 0; j++)
+                {
+                    NetLane lane = NetManager.instance.m_lanes.m_buffer[laneId];
+                    
+                    if ((info.m_lanes[j].m_laneType & NetInfo.LaneType.Vehicle) == NetInfo.LaneType.Vehicle)
+                    {
+                        Bezier3 bezier = lane.m_bezier;
+                        bezier.GetBounds().Expand(1f);
 
+                        int index = j;
+                        if (bothWays && isInverted)
+                            index += (j % 2 == 0) ? 1 : -1;
+
+                        m_hoveredLaneMarkers[index].Add(new SegmentLaneMarker()
+                        {
+                            m_bezier = bezier,
+                            m_lane = laneId,
+                            m_laneIndex = index
+                        });
+                    }
+
+                    laneId = lane.m_nextLane;
+                }
+            }
+        }
+
+        void SetSegments(ushort segmentId)
+        {
+            NetSegment segment = NetManager.instance.m_segments.m_buffer[segmentId];
+            Segment seg = new Segment()
+            {
+                m_segmentId = segmentId,
+                m_targetNode = segment.m_endNode
+            };
+
+            m_segments[segmentId] = seg;
+
+            ushort infoIndex = segment.m_infoIndex;
+            NetNode node = NetManager.instance.m_nodes.m_buffer[segment.m_startNode];
+            if (node.CountSegments() == 2)
+                SetSegments(node.m_segment0 == segmentId ? node.m_segment1 : node.m_segment0, infoIndex, ref seg);
+            
+            node = NetManager.instance.m_nodes.m_buffer[segment.m_endNode];
+            if (node.CountSegments() == 2)
+                SetSegments(node.m_segment0 == segmentId ? node.m_segment1 : node.m_segment0, infoIndex, ref seg);
+        }
+
+        void SetSegments(ushort segmentId, ushort infoIndex, ref Segment previousSeg)
+        {
+            NetSegment segment = NetManager.instance.m_segments.m_buffer[segmentId];
+
+            if (segment.m_infoIndex != infoIndex || m_segments.ContainsKey(segmentId))
+                return;
+
+            Segment seg = default(Segment);
+            seg.m_segmentId = segmentId;
+
+            NetSegment previousSegment = NetManager.instance.m_segments.m_buffer[previousSeg.m_segmentId];
+            ushort nextNode;
+            if ((segment.m_startNode == previousSegment.m_endNode) || (segment.m_startNode == previousSegment.m_startNode))
+            {
+                nextNode = segment.m_endNode;
+                seg.m_targetNode = segment.m_startNode == previousSeg.m_targetNode ? segment.m_endNode : segment.m_startNode;
+            }            
+            else
+            {
+                nextNode = segment.m_startNode;
+                seg.m_targetNode = segment.m_endNode == previousSeg.m_targetNode ? segment.m_startNode : segment.m_endNode;
+            }    
+
+            m_segments[segmentId] = seg;
+
+            NetNode node = NetManager.instance.m_nodes.m_buffer[nextNode];
+            if (node.CountSegments() == 2)
+                SetSegments(node.m_segment0 == segmentId ? node.m_segment1 : node.m_segment0, infoIndex, ref seg);
         }
 
         public override void RenderOverlay(RenderManager.CameraInfo cameraInfo)
         {
             base.RenderOverlay(cameraInfo);
 
-            if (m_currentNode != 0)
+            if (m_selectedNode != 0)
             {
-                NetNode node = NetManager.instance.m_nodes.m_buffer[m_currentNode];
-                RenderManager.instance.OverlayEffect.DrawCircle(cameraInfo, new Color(0f, 0f, 0.5f, 0.75f), node.m_position, 15f, 0, 500, false, true);
-            }
-            else if (m_currentSegment != 0)
-            {
-                NetTool.RenderOverlay(RenderManager.instance.CurrentCameraInfo, ref NetManager.instance.m_segments.m_buffer[m_currentSegment], new Color(0f, 0.5f, 0f, 0.75f), new Color(0f, 0.5f, 0f, 0.75f));
-            }
-            else if (m_selectedNode != 0)
-            {
-                Vector3 nodePos = NetManager.instance.m_nodes.m_buffer[m_selectedNode].m_position;
-                for (int i = 0; i < m_nodeLaneMarkers.m_size; i++)
+                FastList<NodeLaneMarker> nodeMarkers;
+                if (m_nodeMarkers.TryGetValue(m_selectedNode, out nodeMarkers))
                 {
-                    NodeLaneMarker laneMarker = m_nodeLaneMarkers.m_buffer[i];               
+                    Vector3 nodePos = NetManager.instance.m_nodes.m_buffer[m_selectedNode].m_position;
+                    for (int i = 0; i < nodeMarkers.m_size; i++)
+                    {
+                        NodeLaneMarker laneMarker = nodeMarkers.m_buffer[i];
+
+                        for (int j = 0; j < laneMarker.m_connections.m_size; j++)
+                            RenderLane(cameraInfo, laneMarker.m_position, laneMarker.m_connections.m_buffer[j].m_position, nodePos, laneMarker.m_connections.m_buffer[j].m_color);
+
+                        if (m_selectedMarker != laneMarker && !IsActive(laneMarker))
+                            continue;
+
+                        if (m_selectedMarker == laneMarker)
+                        {
+                            RaycastOutput output;
+                            if (RayCastSegmentAndNode(out output))
+                            {
+                                RenderLane(cameraInfo, m_selectedMarker.m_position, output.m_hitPos, nodePos, m_selectedMarker.m_color);
+                                m_selectedMarker.m_size = 2f;
+                            }
+                        }
+
+                        RenderManager.instance.OverlayEffect.DrawCircle(cameraInfo, laneMarker.m_color, laneMarker.m_position, laneMarker.m_size, 0, 500, false, true);
+                    }
+                }
+            }
+            else
+            {
+                foreach (KeyValuePair<int, FastList<SegmentLaneMarker>> keyValuePair in m_hoveredLaneMarkers)
+                {
+                    bool renderBig = false;
+                    if (m_hoveredLanes == keyValuePair.Key)
+                        renderBig = true;
+
+                    FastList<SegmentLaneMarker> laneMarkers = keyValuePair.Value;
+                    for (int i = 0; i < laneMarkers.m_size; i++)
+                        RenderManager.instance.OverlayEffect.DrawBezier(cameraInfo, new Color(0f, 0f, 1f, 0.75f), laneMarkers.m_buffer[i].m_bezier, renderBig ? 2f : laneMarkers.m_buffer[i].m_size, 0, 0, 0, 500, false, false);
+                }
+
+                foreach (SegmentLaneMarker marker in m_selectedLaneMarkers)
+                {
+                    RenderManager.instance.OverlayEffect.DrawBezier(cameraInfo, new Color(0f, 1f, 0f, 0.75f), marker.m_bezier, 2f, 0, 0, 0, 500, false, false);
+                }
+            }
+
+            foreach (ushort node in m_nodeMarkers.Keys)
+            {
+                if (node == m_selectedNode || (NetManager.instance.m_nodes.m_buffer[node].m_flags & CUSTOMIZED_NODE_FLAG) != CUSTOMIZED_NODE_FLAG)
+                    continue;
+
+                FastList<NodeLaneMarker> list = m_nodeMarkers[node];
+                Vector3 nodePos = NetManager.instance.m_nodes.m_buffer[node].m_position;
+                for (int i = 0; i < list.m_size; i++)
+                {
+                    NodeLaneMarker laneMarker = list.m_buffer[i];
 
                     for (int j = 0; j < laneMarker.m_connections.m_size; j++)
-                        RenderLane(cameraInfo, laneMarker.m_position, laneMarker.m_connections.m_buffer[j].m_position, nodePos, laneMarker.m_color);
-
-                    if (m_selectedMarker != laneMarker && !IsActive(laneMarker))
-                        continue;
-
-                    if (m_selectedMarker == laneMarker)
                     {
-                        RaycastOutput output;
-                        if (RayCastSegmentAndNode(out output))
+                        if (((NetLane.Flags)NetManager.instance.m_lanes.m_buffer[laneMarker.m_connections.m_buffer[j].m_lane].m_flags & NetLane.Flags.Created) == NetLane.Flags.Created)
                         {
-                            RenderLane(cameraInfo, m_selectedMarker.m_position, output.m_hitPos, nodePos, m_selectedMarker.m_color);
-                            m_selectedMarker.m_size = 2f;
+                            Color color = laneMarker.m_connections.m_buffer[j].m_color;
+                            color.a = 0.75f;
+                            RenderLane(cameraInfo, laneMarker.m_position, laneMarker.m_connections.m_buffer[j].m_position, nodePos, color);
                         }
+                            
                     }
-
-                    RenderManager.instance.OverlayEffect.DrawCircle(cameraInfo, laneMarker.m_color, laneMarker.m_position, laneMarker.m_size, 0, 500, false, true);
+                        
                 }
             }
-            else if (m_selectedSegment != 0)
-            {
-                for (int i = 0; i < m_segmentLaneMarkers.m_size; i++)
-                {
-                    SegmentLaneMarker marker = m_segmentLaneMarkers.m_buffer[i];
-                    
-                    bool selected = false;
-                    if (marker == m_selectedLane)
-                        selected = true;
 
-                    RenderManager.instance.OverlayEffect.DrawBezier(cameraInfo, selected ? new Color(0f, 1f, 0f, 0.75f) : new Color(0f, 0f, 1f, 0.75f), marker.m_bezier, selected ? 2f : marker.m_size, 0, 0, 0, 500, false, true);
-                }
+            if (m_hoveredNode != 0)
+            {
+                NetNode node = NetManager.instance.m_nodes.m_buffer[m_hoveredNode];
+                RenderManager.instance.OverlayEffect.DrawCircle(cameraInfo, new Color(0f, 0f, 0.5f, 0.75f), node.m_position, 15f, 0, 500, false, true);
             }
         }
 
@@ -383,7 +596,7 @@ namespace CSL_Traffic
             bezier.a = start;
             bezier.d = end;
             NetSegment.CalculateMiddlePoints(bezier.a, (middlePoint - bezier.a).normalized, bezier.d, (middlePoint - bezier.d).normalized, false, false, out bezier.b, out bezier.c);
-            
+
             RenderManager.instance.OverlayEffect.DrawBezier(cameraInfo, color, bezier, size, 0, 0, 0, 500, false, true);
         }
 
@@ -530,6 +743,9 @@ namespace CSL_Traffic
         //    return true;
         //}
 
+
+        int laneButtonsStart, laneButtonsWidth, laneButtonsHeight, laneButtonsSpacing;
+        int screenWidth, screenHeight;
         protected override void OnToolGUI()
         {
             base.OnToolGUI();
@@ -537,46 +753,74 @@ namespace CSL_Traffic
             if (m_toolButton == null)
                 m_toolButton = TryCreateToolButton();
 
-            if (m_selectedSegment == 0 || m_selectedLane == null)
+            if (m_selectedLaneMarkers.Count == 0)
                 return;
 
-            RoadManager.VehicleType vehicleRestrictions = RoadManager.GetVehicleRestrictions(m_selectedLane.m_lane);
+            if (screenWidth != Screen.width || screenHeight != Screen.height)
+            {
+                screenWidth = Screen.width;
+                screenHeight = Screen.height;
+                laneButtonsStart = (700 * screenHeight) / 1080;
+                laneButtonsWidth = 150; // font doesn't scale, so width must remain the same for every resolution
+                laneButtonsHeight = (20 * screenHeight) / 1080; // only causes problems in very low resolutions
+                laneButtonsSpacing = (5 * screenHeight) / 1080;
+            }
 
-            if (GUI.Button(new Rect(10, 700, 150, 20), "Ambulances: " + ((vehicleRestrictions & RoadManager.VehicleType.Ambulance) == RoadManager.VehicleType.Ambulance ? "On" : "Off")))
+            RoadManager.VehicleType vehicleRestrictions = RoadManager.GetVehicleRestrictions(m_selectedLaneMarkers[0].m_lane);
+            bool apply = false;
+            int i = 1;
+            if (GUI.Button(new Rect(10, laneButtonsStart, laneButtonsWidth, laneButtonsHeight), "Ambulances: " + ((vehicleRestrictions & RoadManager.VehicleType.Ambulance) == RoadManager.VehicleType.Ambulance ? "On" : "Off")))
             {
-                RoadManager.ToggleVehicleRestriction(m_selectedLane.m_lane, RoadManager.VehicleType.Ambulance);
+                vehicleRestrictions ^= RoadManager.VehicleType.Ambulance;
+                apply = true;
             }
-            if (GUI.Button(new Rect(10, 725, 150, 20), "Bus: " + ((vehicleRestrictions & RoadManager.VehicleType.Bus) == RoadManager.VehicleType.Bus ? "On" : "Off")))
+            if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Bus: " + ((vehicleRestrictions & RoadManager.VehicleType.Bus) == RoadManager.VehicleType.Bus ? "On" : "Off")))
             {
-                RoadManager.ToggleVehicleRestriction(m_selectedLane.m_lane, RoadManager.VehicleType.Bus);
+                vehicleRestrictions ^= RoadManager.VehicleType.Bus;
+                apply = true;
             }
-            if (GUI.Button(new Rect(10, 750, 150, 20), "Cargo Trucks: " + ((vehicleRestrictions & RoadManager.VehicleType.CargoTruck) == RoadManager.VehicleType.CargoTruck ? "On" : "Off")))
+            if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Cargo Trucks: " + ((vehicleRestrictions & RoadManager.VehicleType.CargoTruck) == RoadManager.VehicleType.CargoTruck ? "On" : "Off")))
             {
-                RoadManager.ToggleVehicleRestriction(m_selectedLane.m_lane, RoadManager.VehicleType.CargoTruck);
+                vehicleRestrictions ^= RoadManager.VehicleType.CargoTruck;
+                apply = true;
             }
-            if (GUI.Button(new Rect(10, 775, 150, 20), "Fire Trucks: " + ((vehicleRestrictions & RoadManager.VehicleType.FireTruck) == RoadManager.VehicleType.FireTruck ? "On" : "Off")))
+            if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Fire Trucks: " + ((vehicleRestrictions & RoadManager.VehicleType.FireTruck) == RoadManager.VehicleType.FireTruck ? "On" : "Off")))
             {
-                RoadManager.ToggleVehicleRestriction(m_selectedLane.m_lane, RoadManager.VehicleType.FireTruck);
+                vehicleRestrictions ^= RoadManager.VehicleType.FireTruck;
+                apply = true;
             }
-            if (GUI.Button(new Rect(10, 800, 150, 20), "Garbage Trucks: " + ((vehicleRestrictions & RoadManager.VehicleType.GarbageTruck) == RoadManager.VehicleType.GarbageTruck ? "On" : "Off")))
+            if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Garbage Trucks: " + ((vehicleRestrictions & RoadManager.VehicleType.GarbageTruck) == RoadManager.VehicleType.GarbageTruck ? "On" : "Off")))
             {
-                RoadManager.ToggleVehicleRestriction(m_selectedLane.m_lane, RoadManager.VehicleType.GarbageTruck);
+                vehicleRestrictions ^= RoadManager.VehicleType.GarbageTruck;
+                apply = true;
             }
-            if (GUI.Button(new Rect(10, 825, 150, 20), "Hearses: " + ((vehicleRestrictions & RoadManager.VehicleType.Hearse) == RoadManager.VehicleType.Hearse ? "On" : "Off")))
+            if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Hearses: " + ((vehicleRestrictions & RoadManager.VehicleType.Hearse) == RoadManager.VehicleType.Hearse ? "On" : "Off")))
             {
-                RoadManager.ToggleVehicleRestriction(m_selectedLane.m_lane, RoadManager.VehicleType.Hearse);
+                vehicleRestrictions ^= RoadManager.VehicleType.Hearse;
+                apply = true;
             }
-            if (GUI.Button(new Rect(10, 850, 150, 20), "Citizens: " + ((vehicleRestrictions & RoadManager.VehicleType.PassengerCar) == RoadManager.VehicleType.PassengerCar ? "On" : "Off")))
+            if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Citizens: " + ((vehicleRestrictions & RoadManager.VehicleType.PassengerCar) == RoadManager.VehicleType.PassengerCar ? "On" : "Off")))
             {
-                RoadManager.ToggleVehicleRestriction(m_selectedLane.m_lane, RoadManager.VehicleType.PassengerCar);
+                vehicleRestrictions ^= RoadManager.VehicleType.PassengerCar;
+                apply = true;
             }
-            if (GUI.Button(new Rect(10, 875, 150, 20), "Police: " + ((vehicleRestrictions & RoadManager.VehicleType.PoliceCar) == RoadManager.VehicleType.PoliceCar ? "On" : "Off")))
+            if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Police: " + ((vehicleRestrictions & RoadManager.VehicleType.PoliceCar) == RoadManager.VehicleType.PoliceCar ? "On" : "Off")))
             {
-                RoadManager.ToggleVehicleRestriction(m_selectedLane.m_lane, RoadManager.VehicleType.PoliceCar);
+                vehicleRestrictions ^= RoadManager.VehicleType.PoliceCar;
+                apply = true;
             }
-            if (GUI.Button(new Rect(10, 900, 150, 20), "Emergency: " + ((vehicleRestrictions & RoadManager.VehicleType.Emergency) == RoadManager.VehicleType.Emergency ? "On" : "Off")))
+            if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Emergency: " + ((vehicleRestrictions & RoadManager.VehicleType.Emergency) == RoadManager.VehicleType.Emergency ? "On" : "Off")))
             {
-                RoadManager.ToggleVehicleRestriction(m_selectedLane.m_lane, RoadManager.VehicleType.Emergency);
+                vehicleRestrictions ^= RoadManager.VehicleType.Emergency;
+                apply = true;
+            }
+
+            if (apply)
+            {
+                foreach (SegmentLaneMarker lane in m_selectedLaneMarkers)
+                {
+                    RoadManager.SetVehicleRestrictions(lane.m_lane, vehicleRestrictions);
+                }
             }
         }
 
@@ -614,7 +858,7 @@ namespace CSL_Traffic
             btn.size = new Vector2(36, 36);
             btn.atlas = updateModeButton.atlas;
             btn.playAudioEvents = true;
-            btn.relativePosition = new Vector3(93, 36);
+            btn.relativePosition = new Vector3(57, 36);
             btn.disabledBgSprite = updateModeButton.disabledBgSprite;
             btn.focusedBgSprite = updateModeButton.focusedBgSprite;
             btn.hoveredBgSprite = updateModeButton.hoveredBgSprite;

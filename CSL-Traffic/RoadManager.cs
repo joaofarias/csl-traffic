@@ -37,13 +37,22 @@ namespace CSL_Traffic
                 try
                 {
                     RoadManager.sm_lanes = (Lane[]) binaryFormatter.Deserialize(memStream);
+                    
+                    FastList<ushort> nodesList = new FastList<ushort>();
                     foreach (Lane lane in RoadManager.sm_lanes)
                     {
                         if (lane == null)
                             continue;
 
                         lane.UpdateArrows();
+                        if (lane.ConnectionCount() > 0)
+                            nodesList.Add(lane.m_nodeId);
                     }
+
+                    RoadCustomizerTool customizerTool = ToolsModifierControl.GetTool<RoadCustomizerTool>();
+                    foreach (ushort nodeId in nodesList)
+                        customizerTool.SetNodeMarkers(nodeId);
+
                 }
                 catch (Exception e)
                 {
@@ -106,7 +115,7 @@ namespace CSL_Traffic
             public const ushort CONTROL_BIT = 2048;
 
             public uint m_laneId;
-            private ushort m_nodeId;
+            public ushort m_nodeId;
             private List<uint> m_laneConnections = new List<uint>();
             public VehicleType m_vehicleTypes = VehicleType.All;
             public float m_speed;            
@@ -194,6 +203,8 @@ namespace CSL_Traffic
 
             public bool ConnectsTo(uint laneId)
             {
+                VerifyConnections();
+
                 bool result = true;
                 while (!Monitor.TryEnter(this.m_laneConnections, SimulationManager.SYNCHRONIZE_TIMEOUT))
                 {
@@ -237,7 +248,7 @@ namespace CSL_Traffic
                 NetLane lane = NetManager.instance.m_lanes.m_buffer[m_laneId];
                 NetSegment segment = NetManager.instance.m_segments.m_buffer[lane.m_segment];
 
-                if (m_nodeId == 0 && !FindNode(segment))
+                if ((m_nodeId == 0 && !FindNode(segment)) || NetManager.instance.m_nodes.m_buffer[m_nodeId].CountSegments() <= 2)
                     return;
 
                 if (ConnectionCount() == 0)
@@ -255,7 +266,7 @@ namespace CSL_Traffic
                 {
                     ushort seg = NetManager.instance.m_lanes.m_buffer[connection].m_segment;
                     Vector3 dir = NetManager.instance.m_segments.m_buffer[seg].GetDirection(m_nodeId);
-                    if (Vector3.Angle(segDir, dir) > 120f)
+                    if (Vector3.Angle(segDir, dir) > 150f)
                     {
                         flags |= NetLane.Flags.Forward;
                     }
@@ -404,6 +415,11 @@ namespace CSL_Traffic
         public static VehicleType GetVehicleRestrictions(uint laneId)
         {
             return GetLane(laneId).m_vehicleTypes;
+        }
+
+        public static void SetVehicleRestrictions(uint laneId, VehicleType vehicleRestrictions)
+        {
+            GetLane(laneId).m_vehicleTypes = vehicleRestrictions;
         }
 
         public static void ToggleVehicleRestriction(uint laneId, VehicleType vehicleType)
