@@ -450,11 +450,12 @@ namespace CSL_Traffic
 
         private bool GetStopPosition(TransportInfo info, ushort segment, ushort building, ushort firstStop, ref Vector3 hitPos, out bool fixedPlatform)
         {
+            bool toggleSnapTarget = Input.GetKey(KeyCode.LeftShift) | Input.GetKey(KeyCode.RightShift);
             fixedPlatform = false;
             if (segment != 0)
             {
                 NetManager instance = Singleton<NetManager>.instance;
-                if ((instance.m_segments.m_buffer[(int)segment].m_flags & NetSegment.Flags.Untouchable) != NetSegment.Flags.None)
+                if (!toggleSnapTarget && (instance.m_segments.m_buffer[(int)segment].m_flags & NetSegment.Flags.Untouchable) != NetSegment.Flags.None)
                 {
                     building = NetSegment.FindOwnerBuilding(segment, 363f);
                     if (building != 0)
@@ -491,7 +492,7 @@ namespace CSL_Traffic
                     return true;
                 }
             }
-            if (building != 0)
+            if (!toggleSnapTarget && building != 0)
             {
                 VehicleInfo randomVehicleInfo = Singleton<VehicleManager>.instance.GetRandomVehicleInfo(ref Singleton<SimulationManager>.instance.m_randomizer, info.m_class.m_service, info.m_class.m_subService, info.m_class.m_level);
                 if (randomVehicleInfo != null)
