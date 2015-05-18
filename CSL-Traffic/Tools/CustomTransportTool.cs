@@ -450,7 +450,7 @@ namespace CSL_Traffic
 
         private bool GetStopPosition(TransportInfo info, ushort segment, ushort building, ushort firstStop, ref Vector3 hitPos, out bool fixedPlatform)
         {
-            bool toggleSnapTarget = Input.GetKey(KeyCode.LeftShift) | Input.GetKey(KeyCode.RightShift);
+            bool toggleSnapTarget = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
             fixedPlatform = false;
             if (segment != 0)
             {
