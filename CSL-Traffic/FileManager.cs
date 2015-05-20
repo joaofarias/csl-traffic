@@ -19,6 +19,7 @@ namespace CSL_Traffic
             LargeRoad,
             PedestrianRoad,
             Props,
+            UI
         }
 
         static readonly string MOD_PATH = FindModPath(); 
@@ -31,6 +32,7 @@ namespace CSL_Traffic
             {Folder.LargeRoad,      "Textures/Roads/LargeRoad/"},
             {Folder.PedestrianRoad, "Textures/Roads/PedestrianRoad/"},
             {Folder.Props,          "Textures/Props/"},
+            {Folder.UI,             "Textures/UI/"},
         };
 
         static Dictionary<string, byte[]> sm_cachedFiles = new Dictionary<string, byte[]>();

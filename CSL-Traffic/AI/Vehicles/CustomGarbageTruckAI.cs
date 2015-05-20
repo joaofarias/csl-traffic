@@ -87,6 +87,10 @@ namespace CSL_Traffic
 
 		private void TryCollectGarbage(ushort vehicleID, ref Vehicle vehicleData, ref Vehicle.Frame frameData)
 		{
+			if ((vehicleData.m_flags & (Vehicle.Flags.Underground | Vehicle.Flags.Transition)) == Vehicle.Flags.Underground)
+			{
+				return;
+			}
 			Vector3 position = frameData.m_position;
 			float num = position.x - 32f;
 			float num2 = position.z - 32f;

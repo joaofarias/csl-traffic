@@ -207,7 +207,7 @@ namespace CSL_Traffic
 		{
 			SimulationManager instance = Singleton<SimulationManager>.instance;
 			CitizenManager instance2 = Singleton<CitizenManager>.instance;
-			CitizenInfo groupCitizenInfo = instance2.GetGroupCitizenInfo(ref instance.m_randomizer, this.m_info.m_class.m_service, Citizen.Gender.Male, agePhase);
+			CitizenInfo groupCitizenInfo = instance2.GetGroupCitizenInfo(ref instance.m_randomizer, this.m_info.m_class.m_service, Citizen.Gender.Male, Citizen.SubCulture.Generic, agePhase);
 			if (groupCitizenInfo != null)
 			{
 				int family = instance.m_randomizer.Int32(256u);

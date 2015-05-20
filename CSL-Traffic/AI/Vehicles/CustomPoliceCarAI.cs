@@ -10,43 +10,43 @@ namespace CSL_Traffic
 {
 	class CustomPoliceCarAI : PoliceCarAI, IVehicle
 	{
-        CustomCarAI.SpeedData m_speedData;
+		CustomCarAI.SpeedData m_speedData;
 
-        public override void InitializeAI()
-        {
-            base.InitializeAI();
+		public override void InitializeAI()
+		{
+			base.InitializeAI();
 
-            if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
-            {
-                m_speedData = new CustomCarAI.SpeedData()
-                {
-                    currentPath = uint.MaxValue,
-                    speedMultiplier = 1f
-                    //acceleration = this.m_info.m_acceleration *= 0.3f,
-                    //braking = this.m_info.m_braking *= 0.5f,
-                    //turning = this.m_info.m_turning *= 0.4f,
-                    //maxSpeed = this.m_info.m_maxSpeed *= 1f
-                };
-            }
+			if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
+			{
+				m_speedData = new CustomCarAI.SpeedData()
+				{
+					currentPath = uint.MaxValue,
+					speedMultiplier = 1f
+					//acceleration = this.m_info.m_acceleration *= 0.3f,
+					//braking = this.m_info.m_braking *= 0.5f,
+					//turning = this.m_info.m_turning *= 0.4f,
+					//maxSpeed = this.m_info.m_maxSpeed *= 1f
+				};
+			}
 
-            Debug.Log("Traffic++: Police Car initialized.\n");
-        }
+			Debug.Log("Traffic++: Police Car initialized.\n");
+		}
 
 		public override void SimulationStep(ushort vehicleID, ref Vehicle vehicleData, ref Vehicle.Frame frameData, ushort leaderID, ref Vehicle leaderData, int lodPhysics)
 		{
-            if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
-            {
-                if (m_speedData.currentPath != vehicleData.m_path)
-                {
-                    m_speedData.currentPath = vehicleData.m_path;
-                    if ((vehicleData.m_flags & Vehicle.Flags.Emergency2) == Vehicle.Flags.Emergency2)
-                        m_speedData.SetRandomSpeedMultiplier(1f, 1.75f);
-                    else
-                        m_speedData.SetRandomSpeedMultiplier(0.7f, 1.1f);
-                }
-                m_speedData.ApplySpeedMultiplier(this.m_info);
-            }
-            
+			if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
+			{
+				if (m_speedData.currentPath != vehicleData.m_path)
+				{
+					m_speedData.currentPath = vehicleData.m_path;
+					if ((vehicleData.m_flags & Vehicle.Flags.Emergency2) == Vehicle.Flags.Emergency2)
+						m_speedData.SetRandomSpeedMultiplier(1f, 1.75f);
+					else
+						m_speedData.SetRandomSpeedMultiplier(0.7f, 1.1f);
+				}
+				m_speedData.ApplySpeedMultiplier(this.m_info);
+			}
+
 
 			frameData.m_blinkState = (((vehicleData.m_flags & Vehicle.Flags.Emergency2) == Vehicle.Flags.None) ? 0f : 10f);
 			this.TryCollectCrime(vehicleID, ref vehicleData, ref frameData);
@@ -71,19 +71,19 @@ namespace CSL_Traffic
 				this.SetTarget(vehicleID, ref vehicleData, 0);
 			}
 
-            if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
-            {
-                m_speedData.RestoreVehicleSpeed(this.m_info);
-            }
+			if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
+			{
+				m_speedData.RestoreVehicleSpeed(this.m_info);
+			}
 		}
 
 		protected override bool StartPathFind(ushort vehicleID, ref Vehicle vehicleData, Vector3 startPos, Vector3 endPos, bool startBothWays, bool endBothWays)
 		{
-            RoadManager.VehicleType vehicleType = RoadManager.VehicleType.PoliceCar;
-            if ((vehicleData.m_flags & Vehicle.Flags.Emergency2) != Vehicle.Flags.None)
-                vehicleType |= RoadManager.VehicleType.Emergency;
+			RoadManager.VehicleType vehicleType = RoadManager.VehicleType.PoliceCar;
+			if ((vehicleData.m_flags & Vehicle.Flags.Emergency2) != Vehicle.Flags.None)
+				vehicleType |= RoadManager.VehicleType.Emergency;
 
-            return CustomCarAI.StartPathFind(this, vehicleID, ref vehicleData, startPos, endPos, startBothWays, endBothWays, vehicleType);
+			return CustomCarAI.StartPathFind(this, vehicleID, ref vehicleData, startPos, endPos, startBothWays, endBothWays, vehicleType);
 		}
 
 		/*
@@ -92,6 +92,10 @@ namespace CSL_Traffic
 
 		private void TryCollectCrime(ushort vehicleID, ref Vehicle vehicleData, ref Vehicle.Frame frameData)
 		{
+			if ((vehicleData.m_flags & (Vehicle.Flags.Underground | Vehicle.Flags.Transition)) == Vehicle.Flags.Underground)
+			{
+				return;
+			}
 			Vector3 position = frameData.m_position;
 			float num = position.x - 32f;
 			float num2 = position.z - 32f;
@@ -185,7 +189,7 @@ namespace CSL_Traffic
 		{
 			SimulationManager instance = Singleton<SimulationManager>.instance;
 			CitizenManager instance2 = Singleton<CitizenManager>.instance;
-			CitizenInfo groupCitizenInfo = instance2.GetGroupCitizenInfo(ref instance.m_randomizer, this.m_info.m_class.m_service, Citizen.Gender.Male, agePhase);
+			CitizenInfo groupCitizenInfo = instance2.GetGroupCitizenInfo(ref instance.m_randomizer, this.m_info.m_class.m_service, Citizen.Gender.Male, Citizen.SubCulture.Generic, agePhase);
 			if (groupCitizenInfo != null)
 			{
 				int family = instance.m_randomizer.Int32(256u);
@@ -262,14 +266,14 @@ namespace CSL_Traffic
 			base.InvalidPath(vehicleID, ref vehicleData, leaderID, ref leaderData);
 		}
 
-        public new bool IsHeavyVehicle()
-        {
-            return base.IsHeavyVehicle();
-        }
+		public new bool IsHeavyVehicle()
+		{
+			return base.IsHeavyVehicle();
+		}
 
-        public new bool IgnoreBlocked(ushort vehicleID, ref Vehicle vehicleData)
-        {
-            return base.IgnoreBlocked(vehicleID, ref vehicleData);
-        }
+		public new bool IgnoreBlocked(ushort vehicleID, ref Vehicle vehicleData)
+		{
+			return base.IgnoreBlocked(vehicleID, ref vehicleData);
+		}
 	}
 }

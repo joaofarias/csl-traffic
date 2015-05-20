@@ -48,6 +48,7 @@ namespace CSL_Traffic
         static Queue<IEnumerator> sm_actionQueue = new Queue<IEnumerator>();
         static System.Object sm_queueLock = new System.Object();
 		static bool sm_localizationInitialized;
+		static readonly string[] sm_collectionPrefixes = new string[] { "", "Europe " };
         static readonly string[] sm_thumbnailStates = new string[] { "", "Disabled", "Focused", "Hovered", "Pressed" };
         static readonly Dictionary<string, Vector2> sm_thumbnailCoords = new Dictionary<string, Vector2>()
         {
@@ -186,8 +187,61 @@ namespace CSL_Traffic
                 else
                     m_incompatibilityWarning = true;
             }
-        }
 
+            if (Input.GetKeyUp(KeyCode.KeypadPlus))
+            {
+                VehicleInfo vehicleInfo = null;
+                Color color = default(Color);
+                switch (count)
+	            {
+                    case 0:
+                        vehicleInfo = PrefabCollection<VehicleInfo>.FindLoaded("Lorry");
+                        color = vehicleInfo.m_material.color;
+                        break;
+                    case 1:
+                        vehicleInfo = PrefabCollection<VehicleInfo>.FindLoaded("Bus");
+                        color = vehicleInfo.m_material.color;
+                        break;
+                    case 2:
+                        vehicleInfo = PrefabCollection<VehicleInfo>.FindLoaded("Ambulance");
+                        color = vehicleInfo.m_material.color;
+                        break;
+                    case 3:
+                        vehicleInfo = PrefabCollection<VehicleInfo>.FindLoaded("Police Car");
+                        color = vehicleInfo.m_material.color;
+                        break;
+                    case 4:
+                        vehicleInfo = PrefabCollection<VehicleInfo>.FindLoaded("Fire Truck");
+                        color = vehicleInfo.m_material.color;
+                        break;
+                    case 5:
+                        vehicleInfo = PrefabCollection<VehicleInfo>.FindLoaded("Hearse");
+                        color = vehicleInfo.m_material.color;
+                        break;
+                    case 6:
+                        vehicleInfo = PrefabCollection<VehicleInfo>.FindLoaded("Garbage Truck");
+                        color = vehicleInfo.m_material.color;
+                        break;
+                    case 7:
+                        vehicleInfo = PrefabCollection<VehicleInfo>.FindLoaded("Sports-car");
+                        color = Color.yellow;
+                        break;
+	                default:
+                        break;
+                }
+                count = (count + 1) % 8;
+                
+                if (vehicleInfo == null)
+                    Debug.Log("Damn it!");
+                else
+                {
+                    CreateVehicle(vehicleInfo.m_mesh, vehicleInfo.m_material, color);
+                }
+            }
+        }
+        int count = 0;
+        GameObject vehicle;
+        GameObject quad;
 #if DEBUG
         void OnGUI()
         {
@@ -240,6 +294,34 @@ namespace CSL_Traffic
             }
         }
 #endif
+        void CreateVehicle(Mesh mesh, Material material, Color color)
+        {
+            if (vehicle != null)
+                Destroy(vehicle);
+
+            vehicle = new GameObject("Vehicle");
+            vehicle.transform.position = new Vector3(0f, 131f, -10f);
+            vehicle.transform.rotation = Quaternion.Euler(0f, 210f, 0f);
+            MeshFilter mf = vehicle.AddComponent<MeshFilter>();
+            mf.sharedMesh = mesh;
+            MeshRenderer mr = vehicle.AddComponent<MeshRenderer>();
+            material.color = color;
+            mr.sharedMaterial = material;
+
+            if (quad == null)
+            {
+                quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                quad.transform.position = new Vector3(0f, 130f, -10f);
+                quad.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+                quad.transform.localScale = new Vector3(100, 100);
+                quad.GetComponent<Renderer>().sharedMaterial.color = new Color(255f, 203f, 219f);
+            }
+
+            CameraController cameraController = Camera.main.GetComponent<CameraController>();
+            cameraController.m_targetPosition = new Vector3(0f, 139.775f, 0f);
+            cameraController.m_targetSize = 40;
+            cameraController.m_targetAngle = new Vector2(0f, 0f);
+        }
 
         #region Initialization
 
@@ -543,11 +625,14 @@ namespace CSL_Traffic
 
         T TryGetComponent<T>(string name)
         {
-            GameObject go = GameObject.Find(name);
-            if (go == null)
-                return default(T);
-
-            return go.GetComponent<T>();
+			foreach (string prefix in sm_collectionPrefixes)
+			{
+				GameObject go = GameObject.Find(prefix + name);
+				if (go != null)
+					return go.GetComponent<T>();
+			}
+            
+			return default(T);
         }
 
         public static void QueuePrioritizedLoadingAction(Action action)

@@ -96,8 +96,9 @@
     <Compile Include="CSL-Traffic\Properties\AssemblyInfo.cs" />
     <Compile Include="CSL-Traffic\Tools\CustomTransportTool.cs" />
     <Compile Include="CSL-Traffic\Transports\CustomTransportManager.cs" />
-    <None Include="CSL-Traffic\UI\RoadCustomizerGroupPanel.cs" />
-    <None Include="CSL-Traffic\UI\RoadCustomizerPanel.cs" />
+    <Compile Include="CSL-Traffic\UI\RoadCustomizerGroupPanel.cs" />
+    <Compile Include="CSL-Traffic\UI\RoadCustomizerPanel.cs" />
+    <Compile Include="CSL-Traffic\UI\UIUtils.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include=".git\objects\info\" />

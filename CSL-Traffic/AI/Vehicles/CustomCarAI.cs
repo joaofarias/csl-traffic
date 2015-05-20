@@ -292,6 +292,8 @@ namespace CSL_Traffic
 			frameData.m_lightIntensity.y = ((a2.z >= -0.1f) ? 0.5f : 5f);
 			frameData.m_lightIntensity.z = ((num12 >= -0.1f || !flag7) ? 0f : 5f);
 			frameData.m_lightIntensity.w = ((num12 <= 0.1f || !flag7) ? 0f : 5f);
+			frameData.m_underground = ((vehicleData.m_flags & Vehicle.Flags.Underground) != Vehicle.Flags.None);
+			frameData.m_transition = ((vehicleData.m_flags & Vehicle.Flags.Transition) != Vehicle.Flags.None);
 			if ((vehicleData.m_flags & Vehicle.Flags.Parking) != Vehicle.Flags.None && num13 <= 1f && flag)
 			{
 				Vector3 forward = vehicleData.m_targetPos1 - vehicleData.m_targetPos0;
@@ -322,6 +324,7 @@ namespace CSL_Traffic
         public static bool StartPathFind(CarAI carAI, ushort vehicleID, ref Vehicle vehicleData, Vector3 startPos, Vector3 endPos, bool startBothWays, bool endBothWays, RoadManager.VehicleType vehicleType)
         {
             VehicleInfo info = carAI.m_info;
+			bool allowUnderground = (vehicleData.m_flags & (Vehicle.Flags.Underground | Vehicle.Flags.Transition)) != Vehicle.Flags.None;
             PathUnit.Position startPosA;
             PathUnit.Position startPosB;
             float num;
@@ -330,7 +333,7 @@ namespace CSL_Traffic
             PathUnit.Position endPosB;
             float num3;
             float num4;
-            if (CustomPathManager.FindPathPosition(startPos, ItemClass.Service.Road, NetInfo.LaneType.Vehicle, info.m_vehicleType, 32f, out startPosA, out startPosB, out num, out num2, vehicleType) && CustomPathManager.FindPathPosition(endPos, ItemClass.Service.Road, NetInfo.LaneType.Vehicle, info.m_vehicleType, 32f, out endPosA, out endPosB, out num3, out num4, vehicleType))
+			if (CustomPathManager.FindPathPosition(startPos, ItemClass.Service.Road, NetInfo.LaneType.Vehicle, info.m_vehicleType, allowUnderground, 32f, out startPosA, out startPosB, out num, out num2, vehicleType) && CustomPathManager.FindPathPosition(endPos, ItemClass.Service.Road, NetInfo.LaneType.Vehicle, info.m_vehicleType, false, 32f, out endPosA, out endPosB, out num3, out num4, vehicleType))
             {
                 if (!startBothWays || num < 10f)
                 {
@@ -462,6 +465,11 @@ namespace CSL_Traffic
 		{
 			if (otherID != vehicleID && vehicleData.m_leadingVehicle != otherID && vehicleData.m_trailingVehicle != otherID)
 			{
+				VehicleInfo info = otherData.Info;
+				if (info.m_vehicleType == VehicleInfo.VehicleType.Bicycle)
+				{
+					return otherData.m_nextGridVehicle;
+				}
 				Vector3 vector;
 				Vector3 vector2;
 				if (lodPhysics >= 2)
@@ -477,7 +485,6 @@ namespace CSL_Traffic
 				if (min.x < vector2.x + 2f && min.y < vector2.y + 2f && min.z < vector2.z + 2f && vector.x < max.x + 2f && vector.y < max.y + 2f && vector.z < max.z + 2f)
 				{
 					Vehicle.Frame lastFrameData = otherData.GetLastFrameData();
-					VehicleInfo info = otherData.Info;
 					if (lodPhysics < 2)
 					{
 						float num2;

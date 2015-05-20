@@ -363,7 +363,7 @@ namespace CSL_Traffic
 				{
 					vehicleData.m_pathPositionIndex = b;
 					vehicleData.m_lastPathOffset = b2;
-					vehicleData.m_flags = ((vehicleData.m_flags & ~Vehicle.Flags.OnGravel) | info2.m_setVehicleFlags);
+					vehicleData.m_flags = ((vehicleData.m_flags & ~(Vehicle.Flags.OnGravel | Vehicle.Flags.Underground | Vehicle.Flags.Transition)) | info2.m_setVehicleFlags);
 				}
 				position = position2;
 				num3 = laneID;
