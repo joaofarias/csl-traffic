@@ -1,5 +1,6 @@
 ﻿using ColossalFramework.UI;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,6 +21,7 @@ namespace CSL_Traffic.UI
 		private static readonly string kItemTemplate = "PlaceableItemTemplate";
 		static readonly string[] sm_speedThumbnailStates = new string[] { "Disabled", "", "Hovered", "Focused" };
 		static readonly string[] sm_vehicleThumbnailStates = new string[] { "Disabled", "Deselected", "90%", "", "80%" };
+		static readonly string[] sm_emergencyVehicleThumbnailStates = new string[] { "Disabled", "Deselected", "90%", "", "80%", "Lights0", "Lights1" };
 		static readonly Dictionary<string, UIUtils.SpriteTextureInfo> sm_thumbnailCoords = new Dictionary<string, UIUtils.SpriteTextureInfo>()
         {        
             {"Emergency", new UIUtils.SpriteTextureInfo() {startX = 0, startY = 0, width = 109, height = 75}},
@@ -34,7 +36,9 @@ namespace CSL_Traffic.UI
 			{"30", new UIUtils.SpriteTextureInfo() {startX = 872, startY = 75, width = 109, height = 75}},
 			{"40", new UIUtils.SpriteTextureInfo() {startX = 545, startY = 150, width = 109, height = 75}},
 			{"50", new UIUtils.SpriteTextureInfo() {startX = 654, startY = 150, width = 109, height = 75}},
+			{"60", new UIUtils.SpriteTextureInfo() {startX = 763, startY = 150, width = 109, height = 75}},
 			{"70", new UIUtils.SpriteTextureInfo() {startX = 872, startY = 150, width = 109, height = 75}},
+			{"80", new UIUtils.SpriteTextureInfo() {startX = 545, startY = 225, width = 109, height = 75}},
 			{"90", new UIUtils.SpriteTextureInfo() {startX = 654, startY = 225, width = 109, height = 75}},
 			{"100", new UIUtils.SpriteTextureInfo() {startX = 763, startY = 225, width = 109, height = 75}},
 			{"120", new UIUtils.SpriteTextureInfo() {startX = 545, startY = 300, width = 109, height = 75}},
@@ -46,6 +50,7 @@ namespace CSL_Traffic.UI
 		private UIScrollablePanel m_scrollablePanel;
 		private int m_objectIndex, m_selectedIndex;
 		private Panel m_panelType;
+		static int m_panelIndex = 0;
 
 
 		private void Awake()
@@ -53,15 +58,15 @@ namespace CSL_Traffic.UI
 			this.m_atlas = UIUtils.LoadThumbnailsTextureAtlas("UIThumbnails");
 			this.m_scrollablePanel = GetComponentInChildren<UIScrollablePanel>();
 			this.m_scrollablePanel.autoLayoutStart = LayoutStart.TopLeft;
+			UIScrollbar scrollbar = this.GetComponentInChildren<UIScrollbar>();
+			if (scrollbar != null)
+				scrollbar.incrementAmount = 109;
 			this.m_objectIndex = m_selectedIndex = 0;
 			this.m_panelType = Panel.Unset;
 		}
 
 		private void OnEnable()
-		{
-			if (m_panelType == Panel.Unset)
-				return;
-
+		{				
 			this.RefreshPanel();
 			RoadCustomizerTool rct = ToolsModifierControl.GetTool<RoadCustomizerTool>();
 			if (rct != null)
@@ -95,7 +100,7 @@ namespace CSL_Traffic.UI
 		public void SetPanel(Panel panel)
 		{
 			this.m_panelType = panel;
-			OnEnable();
+			//OnEnable();
 		}
 
 		void EnableIcons()
@@ -103,13 +108,9 @@ namespace CSL_Traffic.UI
 			RoadCustomizerTool rct = ToolsModifierControl.GetCurrentTool<RoadCustomizerTool>();
 			if (rct != null)
 			{
-				RoadManager.VehicleType restrictions = rct.GetCurrentRestrictions();
-				//if (restrictions == RoadManager.VehicleType.None)
-				//{
-				//	DisableIcons();
-				//	return;
-				//}
-
+				RoadManager.VehicleType restrictions = rct.GetCurrentVehicleRestrictions();
+				float speed = rct.GetCurrentSpeedRestrictions()*50f;
+				
 				for (int i = 0; i < this.m_scrollablePanel.components.Count; i++)
 				{
 					UIButton btn = this.m_scrollablePanel.components[i] as UIButton;
@@ -126,6 +127,13 @@ namespace CSL_Traffic.UI
 							btn.hoveredFgSprite = btn.name + "90%";
 							btn.pressedFgSprite = btn.name + "80%";
 						}
+						else if (vehicleType == RoadManager.VehicleType.EmergencyVehicles && (restrictions & RoadManager.VehicleType.Emergency) == RoadManager.VehicleType.Emergency)
+						{
+							btn.stringUserData = "Emergency";
+							btn.hoveredFgSprite = btn.name + "90%";
+							btn.pressedFgSprite = btn.name + "80%";
+							StartCoroutine("EmergencyLights", btn);
+						}
 						else
 						{
 							btn.stringUserData = null;
@@ -135,6 +143,11 @@ namespace CSL_Traffic.UI
 							btn.pressedFgSprite = btn.name + "90%";
 						}
 						btn.state = UIButton.ButtonState.Normal;
+					}
+					else if (this.m_panelType == Panel.SpeedRestrictions)
+					{
+						if (Mathf.Approximately((int)btn.objectUserData, speed))
+							m_selectedIndex = i;
 					}
 
 					btn.isEnabled = true;
@@ -151,6 +164,7 @@ namespace CSL_Traffic.UI
 				btn.state = UIButton.ButtonState.Disabled;
 				btn.isEnabled = false;
 			}
+			StopCoroutine("EmergencyLights");
 		}
 
 		public void RefreshPanel()
@@ -161,31 +175,35 @@ namespace CSL_Traffic.UI
 		public void PopulateAssets()
 		{
 			this.m_objectIndex = 0;
-			if (this.m_panelType == Panel.VehicleRestrictions)
+			//if (this.m_panelType == Panel.VehicleRestrictions)
+			if (m_panelIndex == 0)
 			{
+				this.m_panelType = Panel.VehicleRestrictions;
 				this.SpawnEntry("PassengerCar", "PassengerCar", null, null, false, false).objectUserData = RoadManager.VehicleType.PassengerCar;
 				this.SpawnEntry("Bus", "Bus", null, null, false, false).objectUserData = RoadManager.VehicleType.Bus;
 				this.SpawnEntry("CargoTruck", "CargoTruck", null, null, false, false).objectUserData = RoadManager.VehicleType.CargoTruck;
 				this.SpawnEntry("GarbageTruck", "GarbageTruck", null, null, false, false).objectUserData = RoadManager.VehicleType.GarbageTruck;
 				this.SpawnEntry("Hearse", "Hearse", null, null, false, false).objectUserData = RoadManager.VehicleType.Hearse;
-				this.SpawnEntry("Emergency", "Emergency", null, null, false, false).objectUserData = RoadManager.VehicleType.Emergency;
+				this.SpawnEntry("Emergency", "Emergency", null, null, false, false).objectUserData = RoadManager.VehicleType.EmergencyVehicles;
 			}
-			else if (this.m_panelType == Panel.SpeedRestrictions)
+			//else if (this.m_panelType == Panel.SpeedRestrictions)
+			else if (m_panelIndex == 1)
 			{
-				this.SpawnEntry("15", "15 Km/h", null, null, false, true).objectUserData = 15;
-				this.SpawnEntry("30", "30 Km/h", null, null, false, true).objectUserData = 30;
-				this.SpawnEntry("40", "40 Km/h", null, null, false, true).objectUserData = 40;
-				this.SpawnEntry("50", "50 Km/h", null, null, false, true).objectUserData = 50;
-				this.SpawnEntry("70", "70 Km/h", null, null, false, true).objectUserData = 70;
-				this.SpawnEntry("90", "90 Km/h", null, null, false, true).objectUserData = 90;
-				this.SpawnEntry("100", "100 Km/h", null, null, false, true).objectUserData = 100;
-				this.SpawnEntry("120", "120 Km/h", null, null, false, true).objectUserData = 120;
-				this.SpawnEntry("140", "140 Km/h", null, null, false, true).objectUserData = 140;
+				this.m_panelType = Panel.SpeedRestrictions;
+				this.SpawnEntry("15", "15 km/h", null, null, false, true).objectUserData = 15;
+				this.SpawnEntry("30", "30 km/h", null, null, false, true).objectUserData = 30;
+				this.SpawnEntry("40", "40 km/h", null, null, false, true).objectUserData = 40;
+				this.SpawnEntry("50", "50 km/h", null, null, false, true).objectUserData = 50;
+				this.SpawnEntry("60", "60 km/h", null, null, false, true).objectUserData = 60;
+				this.SpawnEntry("70", "70 km/h", null, null, false, true).objectUserData = 70;
+				this.SpawnEntry("80", "80 km/h", null, null, false, true).objectUserData = 80;
+				this.SpawnEntry("90", "90 km/h", null, null, false, true).objectUserData = 90;
+				this.SpawnEntry("100", "100 km/h", null, null, false, true).objectUserData = 100;
+				this.SpawnEntry("120", "120 km/h", null, null, false, true).objectUserData = 120;
+				this.SpawnEntry("140", "140 km/h", null, null, false, true).objectUserData = 140;
 			}
 
-			UIScrollbar scrollbar = this.m_scrollablePanel.GetComponentInChildren<UIScrollbar>();
-			if (scrollbar != null)
-				scrollbar.incrementAmount = 109;
+			m_panelIndex = (m_panelIndex + 1) % 2; 
 		}
 
 		protected UIButton SpawnEntry(string name, string tooltip, string thumbnail, UITextureAtlas atlas, bool enabled, bool grouped)
@@ -263,7 +281,7 @@ namespace CSL_Traffic.UI
 		protected void SetVehicleButtonsThumbnails(UIButton btn)
 		{
 			string iconName = btn.name;
-			UIUtils.SetThumbnails(iconName, sm_thumbnailCoords[iconName], btn.atlas, sm_vehicleThumbnailStates);
+			UIUtils.SetThumbnails(iconName, sm_thumbnailCoords[iconName], btn.atlas, iconName == "Emergency" ? sm_emergencyVehicleThumbnailStates : sm_vehicleThumbnailStates);
 
 			btn.normalFgSprite = iconName;
 			btn.focusedFgSprite = iconName;
@@ -330,10 +348,6 @@ namespace CSL_Traffic.UI
 				RoadManager.VehicleType vehicleType = (RoadManager.VehicleType)btn.objectUserData;
 				if (vehicleType != RoadManager.VehicleType.None)
 				{
-					RoadCustomizerTool rct = ToolsModifierControl.GetCurrentTool<RoadCustomizerTool>();
-					if (rct != null)
-						rct.ToggleRestriction(vehicleType);
-
 					if (String.IsNullOrEmpty(btn.stringUserData))
 					{
 						btn.stringUserData = "Selected";
@@ -342,15 +356,41 @@ namespace CSL_Traffic.UI
 						btn.hoveredFgSprite = btn.name + "90%";
 						btn.pressedFgSprite = btn.name + "80%";
 					}
+					else if (vehicleType == RoadManager.VehicleType.EmergencyVehicles && btn.stringUserData != "Emergency")
+					{
+						btn.stringUserData = "Emergency";
+						StartCoroutine("EmergencyLights", btn);
+					}
 					else
 					{
+						if (vehicleType == RoadManager.VehicleType.EmergencyVehicles)
+							StopCoroutine("EmergencyLights");
+
 						btn.stringUserData = null;
 						btn.normalFgSprite = btn.name + "Deselected";
 						btn.focusedFgSprite = btn.name + "Deselected";
 						btn.hoveredFgSprite = btn.name + "80%";
 						btn.pressedFgSprite = btn.name + "90%";
 					}
+
+					RoadCustomizerTool rct = ToolsModifierControl.GetCurrentTool<RoadCustomizerTool>();
+					if (rct != null)
+					{
+						if (btn.stringUserData == "Emergency")
+							rct.ToggleRestriction(vehicleType ^ RoadManager.VehicleType.Emergency);
+						else if (vehicleType == RoadManager.VehicleType.EmergencyVehicles && btn.stringUserData == null)
+							rct.ToggleRestriction(RoadManager.VehicleType.Emergency);
+						else
+							rct.ToggleRestriction(vehicleType);		
+					}
+						
 				}
+			}
+			else if (m_panelType == Panel.SpeedRestrictions)
+			{
+				RoadCustomizerTool rct = ToolsModifierControl.GetCurrentTool<RoadCustomizerTool>();
+				if (rct != null)
+					rct.SetSpeedRestrictions((int)btn.objectUserData);
 			}
 		}
 
@@ -363,6 +403,26 @@ namespace CSL_Traffic.UI
 				this.OnButtonClicked(uIButton);
 				this.m_selectedIndex = this.m_scrollablePanel.components.IndexOf(uIButton);
 			}
+		}
+
+		IEnumerator EmergencyLights(UIButton btn)
+		{
+			int n = 0;
+			do
+			{
+				yield return new WaitForEndOfFrame();
+				while (this.m_scrollablePanel.isVisible)
+				{
+					if (btn.normalFgSprite == btn.name || btn.normalFgSprite.Contains("Lights"))
+						btn.normalFgSprite = btn.name + "Lights" + n;
+					if (btn.focusedFgSprite == btn.name || btn.focusedFgSprite.Contains("Lights"))
+						btn.focusedFgSprite = btn.name + "Lights" + n;
+
+					n = (n + 1) % 2;
+
+					yield return new WaitForSeconds(0.25f);
+				}
+			} while (!this.m_scrollablePanel.isVisible);
 		}
 	}
 }

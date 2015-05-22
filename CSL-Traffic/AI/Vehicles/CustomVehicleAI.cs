@@ -86,6 +86,7 @@ namespace CSL_Traffic
 							Vector3 vector2;
 							float b3;
 							(vehicleAI as IVehicle).CalculateSegmentPosition(vehicleID, ref vehicleData, position, num3, b2, out a, out vector2, out b3);
+							b3 = RestrictSpeed(b3, num3, vehicleData.Info);
 							vector.Set(a.x, a.y, a.z, Mathf.Min(vector.w, b3));
 							float sqrMagnitude = (a - refPos).sqrMagnitude;
 							if (sqrMagnitude >= num)
@@ -226,6 +227,7 @@ namespace CSL_Traffic
 						Vector3 vector3;
 						float num8;
 						(vehicleAI as IVehicle).CalculateSegmentPosition(vehicleID, ref vehicleData, position, num3, position.m_offset, out bezier.a, out vector3, out num8);
+						num8 = RestrictSpeed(num8, num3, vehicleData.Info);
 						bool flag2 = b2 == 0;
 						if (flag2)
 						{
@@ -248,10 +250,12 @@ namespace CSL_Traffic
 								nextPosition = default(PathUnit.Position);
 							}
 							(vehicleAI as IVehicle).CalculateSegmentPosition(vehicleID, ref vehicleData, nextPosition, position2, laneID, b4, position, num3, position.m_offset, out bezier.d, out vector4, out num9);
+							num9 = RestrictSpeed(num9, laneID, vehicleData.Info);
 						}
 						else
 						{
 							(vehicleAI as IVehicle).CalculateSegmentPosition(vehicleID, ref vehicleData, position2, laneID, b4, out bezier.d, out vector4, out num9);
+							num9 = RestrictSpeed(num9, laneID, vehicleData.Info);
 						}
 						if (num9 < 0.01f || (instance2.m_segments.m_buffer[(int)position2.m_segment].m_flags & NetSegment.Flags.Flooded) != NetSegment.Flags.None)
 						{
@@ -369,6 +373,19 @@ namespace CSL_Traffic
 				num3 = laneID;
 				lane = lane2;
 			}
+		}
+
+		public static float RestrictSpeed(float calculatedSpeed, uint laneId, VehicleInfo info)
+		{
+			if (calculatedSpeed == 0f || (CSLTraffic.Options & OptionsManager.ModOptions.BetaTestRoadCustomizerTool) == OptionsManager.ModOptions.None)
+				return calculatedSpeed;
+
+			float speedLimit = RoadManager.GetLaneSpeed(laneId);
+			float curve = NetManager.instance.m_lanes.m_buffer[laneId].m_curve;
+
+			float a = 1000f / (1f + curve * 1000f / info.m_turning) + 2f;
+			float b = 8f * speedLimit;
+			return Mathf.Min(Mathf.Min(a, b), info.m_maxSpeed);
 		}
 	}
 }

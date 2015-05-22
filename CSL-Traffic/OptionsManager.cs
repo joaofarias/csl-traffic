@@ -18,9 +18,10 @@ namespace CSL_Traffic
 			AllowResidentsInPedestrianRoads = 2,
 			DisableCentralLaneOnPedestrianRoads = 4,
 			UseRealisticSpeeds = 8,
+			NoDespawn = 16,
 
-			// bits 55 to 62 reserved for beta tests
-			BetaTestNewRoads = 1L << 54,
+			// bits 55 to 62 reserved for beta tests that won't have their own option
+			//BetaTestNewRoads = 1L << 54,
 			BetaTestRoadCustomizerTool = 1L << 55,
 			//BetaTest3 = 1L << 56,
 			//BetaTest4 = 1L << 57,
@@ -42,7 +43,7 @@ namespace CSL_Traffic
 		UICheckBox m_allowResidentsCheckBox = null;
 		UICheckBox m_disableCentralLaneCheckBox = null;
 		UICheckBox m_realisticSpeedsCheckBox = null;
-		UICheckBox m_betaTestRoadsCheckBox = null;
+		UICheckBox m_noDespawnCheckBox = null;
 		UICheckBox m_betaTestRoadCustomizerCheckBox = null;
 		UICheckBox m_ghostModeCheckBox = null;
 
@@ -82,26 +83,28 @@ namespace CSL_Traffic
 			}
 
 			GameObject mod = modLabel.transform.parent.gameObject;
-
-			// Options Button
-			Transform shareButtonTransform = mod.transform.FindChild("Share");
-			if (shareButtonTransform == null)
-			{
-				//Debug.Log("Can't find share");
+			UIButton shareButton = mod.GetComponentsInChildren<UIButton>(true).FirstOrDefault(b => b.name == "Share");
+			if (shareButton == null)
 				return;
-			}
 
-			UIButton shareButton = shareButtonTransform.gameObject.GetComponent<UIButton>();
+			//// Options Button
+			//Transform shareButtonTransform = mod.transform.FindChild("Share");
+			//if (shareButtonTransform == null)
+			//{
+			//	//Debug.Log("Can't find share");
+			//	return;
+			//}
+
+			//UIButton shareButton = shareButtonTransform.gameObject.GetComponent<UIButton>();
 			this.m_optionsButtonGo = Instantiate<GameObject>(shareButton.gameObject);
 			this.m_optionsButtonGo.name = "Options";
-			this.m_optionsButtonGo.transform.SetParent(mod.transform);
+			UIButton optionsButton = mod.GetComponent<UIPanel>().AttachUIComponent(this.m_optionsButtonGo) as UIButton;
 			this.m_optionsButtonGo.transform.localPosition = shareButton.transform.localPosition;
-
-			UIButton optionsButton = this.m_optionsButtonGo.GetComponent<UIButton>();
+			
 			optionsButton.isVisible = true;
 			optionsButton.text = "Options";
 			optionsButton.eventClick += OpenOptionsPanel;
-			optionsButton.position += Vector3.right * shareButton.width * 1.1f;
+			optionsButton.position += Vector3.right * (optionsButton.width * 1.1f);
 
 			// Options Panel
 			GameObject optionsPanel = GameObject.Find("(Library) OptionsPanel");
@@ -161,8 +164,8 @@ namespace CSL_Traffic
 			m_allowResidentsCheckBox = AddOptionCheckbox("Allow Residents in Pedestrian Roads", 1);
 			m_disableCentralLaneCheckBox = AddOptionCheckbox("Disable Central Lane on Pedestrian Roads", 2);
 			m_realisticSpeedsCheckBox = AddOptionCheckbox("Beta Test: Realistic Speeds", 3);
-			m_betaTestRoadsCheckBox = AddOptionCheckbox("Beta Test: New Road Types and Textures", 4);
-			m_betaTestRoadCustomizerCheckBox = AddOptionCheckbox("Beta Test: Road Customizer Tool", 5);
+			m_betaTestRoadCustomizerCheckBox = AddOptionCheckbox("Beta Test: Road Customizer Tool", 4);
+			m_noDespawnCheckBox = AddOptionCheckbox("Beta Test: No Despawn by CBeTHaX", 5);
 
 			m_ghostModeCheckBox = AddOptionCheckbox("Ghost Mode (disables all mod functionality leaving only enough logic to load the map)");
 			m_ghostModeCheckBox.gameObject.transform.SetParent(m_optionsPanel.transform);
@@ -232,11 +235,10 @@ namespace CSL_Traffic
 				options.realisticSpeeds = true;
 				CSLTraffic.Options |= ModOptions.UseRealisticSpeeds;
 			}
-
-			if (this.m_betaTestRoadsCheckBox.isChecked)
+			if (this.m_noDespawnCheckBox.isChecked)
 			{
-				options.betaTestRoads = true;
-				CSLTraffic.Options |= ModOptions.BetaTestNewRoads;
+				options.noDespawn = true;
+				CSLTraffic.Options |= ModOptions.NoDespawn;
 			}
 			if (this.m_betaTestRoadCustomizerCheckBox.isChecked)
 			{
@@ -290,7 +292,7 @@ namespace CSL_Traffic
 			this.m_allowResidentsCheckBox.isChecked = options.allowResidents;
 			this.m_disableCentralLaneCheckBox.isChecked = options.disableCentralLane;
 			this.m_realisticSpeedsCheckBox.isChecked = options.realisticSpeeds;
-			this.m_betaTestRoadsCheckBox.isChecked = options.betaTestRoads;
+			this.m_noDespawnCheckBox.isChecked = options.noDespawn;
 			this.m_betaTestRoadCustomizerCheckBox.isChecked = options.betaTestRoadCustomizer;
 			this.m_ghostModeCheckBox.isChecked = options.ghostMode;
 
@@ -307,8 +309,8 @@ namespace CSL_Traffic
 			if (options.realisticSpeeds)
 				CSLTraffic.Options |= ModOptions.UseRealisticSpeeds;
 
-			if (options.betaTestRoads)
-				CSLTraffic.Options |= ModOptions.BetaTestNewRoads;
+			if (options.noDespawn)
+				CSLTraffic.Options |= ModOptions.NoDespawn;
 
 			if (options.betaTestRoadCustomizer)
 				CSLTraffic.Options |= ModOptions.BetaTestRoadCustomizerTool;
@@ -340,25 +342,25 @@ namespace CSL_Traffic
 			public bool allowResidents;
 			public bool disableCentralLane;
 			public bool realisticSpeeds;
+			public bool noDespawn;
 
-			public bool betaTestRoads;
 			public bool betaTestRoadCustomizer;
 
 			public bool ghostMode;
 		}
 
-		void HandleImprovedModsPanel(GameObject modBar)
-		{
-			Transform lastUpdated = modBar.transform.FindChild("LastUpdated");
-			if (lastUpdated == null)
-				return;
+		//void HandleImprovedModsPanel(GameObject modBar)
+		//{
+		//	Transform lastUpdated = modBar.transform.FindChild("LastUpdated");
+		//	if (lastUpdated == null)
+		//		return;
 
-			UILabel lastUpdatedLabel = lastUpdated.GetComponent<UILabel>();
-			if (lastUpdatedLabel == null)
-				return;
+		//	UILabel lastUpdatedLabel = lastUpdated.GetComponent<UILabel>();
+		//	if (lastUpdatedLabel == null)
+		//		return;
 
-			lastUpdatedLabel.position += Vector3.left * m_optionsButtonGo.GetComponent<UIButton>().width;
-		}
+		//	lastUpdatedLabel.position += Vector3.left * m_optionsButtonGo.GetComponent<UIButton>().width;
+		//}
 
 	}
 }

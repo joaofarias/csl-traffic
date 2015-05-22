@@ -263,6 +263,8 @@ namespace CSL_Traffic
 			if (flag5)
 			{
 				vehicleData.m_blockCounter = (byte)Mathf.Min((int)(vehicleData.m_blockCounter + 1), 255);
+				if ((vehicleData.m_blockCounter == 100 || vehicleData.m_blockCounter == 150) && (CSLTraffic.Options & OptionsManager.ModOptions.NoDespawn) == OptionsManager.ModOptions.NoDespawn)
+					vehicleData.m_blockCounter++;
 			}
 			else
 			{

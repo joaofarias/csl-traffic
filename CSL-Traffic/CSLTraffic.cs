@@ -15,7 +15,7 @@ namespace CSL_Traffic
         public const ulong WORKSHOP_ID = 409184143ul;
 
         public static OptionsManager.ModOptions Options = OptionsManager.ModOptions.None;
-        static GameObject sm_optionsManager;
+		static GameObject sm_optionsManager;
         
         GameObject m_initializer;
 

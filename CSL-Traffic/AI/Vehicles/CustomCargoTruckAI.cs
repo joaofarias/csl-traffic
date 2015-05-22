@@ -30,6 +30,14 @@ namespace CSL_Traffic
 			Debug.Log("Traffic++: Cargo Truck initialized (" + name + ").");
 		}
 
+		public override void SimulationStep(ushort vehicleID, ref Vehicle data, Vector3 physicsLodRefPos)
+		{
+			if ((CSLTraffic.Options & OptionsManager.ModOptions.NoDespawn) == OptionsManager.ModOptions.NoDespawn)
+				data.m_flags &= ~Vehicle.Flags.Congestion;
+
+			base.SimulationStep(vehicleID, ref data, physicsLodRefPos);
+		}
+
 		public override void SimulationStep(ushort vehicleID, ref Vehicle vehicleData, ushort leaderID, ref Vehicle leaderData, int lodPhysics)
 		{
 			if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)

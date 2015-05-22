@@ -89,6 +89,7 @@ namespace CSL_Traffic
         bool m_initialized;
         bool m_incompatibilityWarning;
         float m_gameStartedTime;
+		int m_level;
 
 		void Awake()
 		{
@@ -106,9 +107,14 @@ namespace CSL_Traffic
                 ReplacePathManager();
                 ReplaceTransportManager();
             }
+#if DEBUG
+			StartCoroutine(Print());
+#endif
 		}
 
 		void OnLevelWasLoaded(int level) {
+			this.m_level = level;
+
 			if (level == 6)
 			{
                 Debug.Log("Traffic++: Game level was loaded. Options enabled: \n\t" + CSLTraffic.Options);
@@ -188,6 +194,7 @@ namespace CSL_Traffic
                     m_incompatibilityWarning = true;
             }
 
+#if DEBUG
             if (Input.GetKeyUp(KeyCode.KeypadPlus))
             {
                 VehicleInfo vehicleInfo = null;
@@ -238,11 +245,13 @@ namespace CSL_Traffic
                     CreateVehicle(vehicleInfo.m_mesh, vehicleInfo.m_material, color);
                 }
             }
+#endif
         }
+
+#if DEBUG
         int count = 0;
         GameObject vehicle;
         GameObject quad;
-#if DEBUG
         void OnGUI()
         {
             if (Singleton<LoadingManager>.instance.m_loadingComplete)
@@ -293,8 +302,8 @@ namespace CSL_Traffic
                 //}
             }
         }
-#endif
-        void CreateVehicle(Mesh mesh, Material material, Color color)
+
+		void CreateVehicle(Mesh mesh, Material material, Color color)
         {
             if (vehicle != null)
                 Destroy(vehicle);
@@ -322,10 +331,11 @@ namespace CSL_Traffic
             cameraController.m_targetSize = 40;
             cameraController.m_targetAngle = new Vector2(0f, 0f);
         }
+#endif
+		
+		#region Initialization
 
-        #region Initialization
-
-        /*
+		/*
 		 * In here I'm changing the prefabs to have my classes. This way, every time the game instantiates
 		 * a prefab that I've changed, that object will run my code.
 		 * The prefabs aren't available at the moment of creation of this class, that's why I keep trying to
@@ -442,7 +452,7 @@ namespace CSL_Traffic
                     CreateSmallBusway(roadsNetCollection);
                     CreateLargeRoadWithBusLanes(roadsNetCollection);
 
-                    if ((CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) != OptionsManager.ModOptions.GhostMode)
+                    if ((CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) != OptionsManager.ModOptions.GhostMode && this.m_level == 6)
                     {
                         ReplaceVehicleAI<CustomAmbulanceAI>("Ambulance", healthCareVehicleCollection);
                         ReplaceVehicleAI<CustomBusAI>("Bus", publicTansportVehicleCollection);
@@ -724,6 +734,7 @@ namespace CSL_Traffic
             GameObject instance = GameObject.Instantiate<GameObject>(originalPrefab.gameObject);
             instance.name = newName;
             instance.transform.SetParent(customPrefabsHolder);
+			instance.transform.localPosition = new Vector3(-7500, -7500, -7500);
 
             MethodInfo initMethod = GetCollectionType(typeof(T).Name).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
             if (ghostMode)
@@ -870,8 +881,7 @@ namespace CSL_Traffic
         void CreateSmallBusway(NetCollection collection)
         {
             CreateSmallBusway(RoadType.Normal, collection);
-            if ((CSLTraffic.Options & (OptionsManager.ModOptions.BetaTestNewRoads | OptionsManager.ModOptions.GhostMode)) != OptionsManager.ModOptions.None)
-                CreateSmallBusway(RoadType.OneWay, collection);
+            CreateSmallBusway(RoadType.OneWay, collection);
         }
 
         void CreateSmallBusway(RoadType roadType, NetCollection collection)
@@ -922,11 +932,13 @@ namespace CSL_Traffic
             smallRoad.m_lanes[2].m_position -= 1f;
             smallRoad.m_lanes[2].m_stopOffset += 1f;
             smallRoad.m_lanes[2].m_laneProps = laneProps;
+			smallRoad.m_lanes[2].m_speedLimit = 1.6f;
 
             smallRoad.m_lanes[3] = new NetInfoLane(smallRoad.m_lanes[3], RoadManager.VehicleType.Bus | RoadManager.VehicleType.Emergency);
             smallRoad.m_lanes[3].m_position += 1f;
             smallRoad.m_lanes[3].m_stopOffset -= 1f;
             smallRoad.m_lanes[3].m_laneProps = laneProps;
+			smallRoad.m_lanes[3].m_speedLimit = 1.6f;
 
             m_customPrefabs.Add(newName, smallRoad);
         }
@@ -947,9 +959,11 @@ namespace CSL_Traffic
 
             smallRoad.m_lanes[2] = new NetInfoLane(smallRoad.m_lanes[2], RoadManager.VehicleType.Bus | RoadManager.VehicleType.Emergency);
             smallRoad.m_lanes[2].m_laneProps = laneProps;
+			smallRoad.m_lanes[2].m_speedLimit = 1.6f;
 
             smallRoad.m_lanes[3] = new NetInfoLane(smallRoad.m_lanes[3], RoadManager.VehicleType.Bus | RoadManager.VehicleType.Emergency);
             smallRoad.m_lanes[3].m_laneProps = laneProps;
+			smallRoad.m_lanes[3].m_speedLimit = 1.6f;
 
             m_customPrefabs.Add(newName, smallRoad);
 
@@ -1717,6 +1731,28 @@ namespace CSL_Traffic
                 };
                 locale.AddLocalizedString(k, "A two-lane, one-way busway to remove buses from common traffic and improve public transport coverage. It can also be used by vehicles in emergency.");
 
+				// Road Customizer Tool Advisor
+				k = new Locale.Key()
+				{
+					m_Identifier = "TUTORIAL_ADVISER_TITLE",
+					m_Key = "RoadCustomizer"
+				};
+				locale.AddLocalizedString(k, "Road Customizer Tool");
+
+				k = new Locale.Key()
+				{
+					m_Identifier = "TUTORIAL_ADVISER",
+					m_Key = "RoadCustomizer"
+				};
+				locale.AddLocalizedString(k,	"Vehicle and Speed Restrictions:\n\n" +
+												"1. Hover over roads to display their lanes\n" +
+												"2. Left-click to toggle selection of lane(s), right-click clears current selection(s)\n" +
+												"3. With lanes selected, set vehicle and speed restrictions using the menu icons\n\n\n" +
+												"Lane Changer:\n\n" +
+												"1. Hover over roads and find an intersection (circle appears), then click to edit it\n" +
+												"2. Entry points will be shown, click one to select it (right-click goes back to step 1)\n" +
+												"3. Click the exit routes you wish to allow (right-click goes back to step 2)");
+
 				sm_localizationInitialized = true;
 			}
 			catch (ArgumentException e)
@@ -1726,5 +1762,77 @@ namespace CSL_Traffic
 
             Debug.Log("Traffic++: Localization successfully updated.");
 		}
+
+#if DEBUG
+		#region SceneInspectionTools
+
+		IEnumerator Print()
+		{
+			while (!LoadingManager.instance.m_loadingComplete)
+				yield return new WaitForEndOfFrame();
+
+			List<GameObject> sceneObjects = GameObject.FindObjectsOfType<GameObject>().ToList();
+			foreach (var item in sceneObjects)
+			{
+				if (item.transform.parent == null)
+					PrintGameObjects(item, "MapScene_110b.txt");
+			}
+
+			List<GameObject> prefabs = Resources.FindObjectsOfTypeAll<GameObject>().Except(sceneObjects).ToList();
+			foreach (var item in prefabs)
+			{
+				if (item.transform.parent == null)
+					PrintGameObjects(item, "MapScenePrefabs_110b.txt");
+			}
+		}
+
+		public static void PrintGameObjects(GameObject go, string fileName, int depth = 0)
+		{
+			StringBuilder sb = new StringBuilder();
+			for (int i = 0; i < depth; i++)
+			{
+				sb.Append("\t");
+			}
+
+			sb.Append(go.name);
+			sb.Append(" {\n");
+
+			System.IO.File.AppendAllText(fileName, sb.ToString());
+
+			PrintComponents(go, fileName, depth);
+
+			foreach (Transform t in go.transform)
+			{
+				PrintGameObjects(t.gameObject, fileName, depth + 1);
+			}
+
+			sb = new StringBuilder();
+			for (int i = 0; i < depth; i++)
+			{
+				sb.Append("\t");
+			}
+			sb.Append("}\n\n");
+			System.IO.File.AppendAllText(fileName, sb.ToString());
+		}
+
+		public static void PrintComponents(GameObject go, string fileName, int depth)
+		{
+			foreach (var item in go.GetComponents<Component>())
+			{
+				StringBuilder sb = new StringBuilder();
+				for (int i = 0; i < depth; i++)
+				{
+					sb.Append("\t");
+				}
+				sb.Append("\t-- ");
+				sb.Append(item.GetType().Name);
+				sb.Append("\n");
+
+				System.IO.File.AppendAllText(fileName, sb.ToString());
+			}
+		}
+
+		#endregion
+#endif
 	}
 }

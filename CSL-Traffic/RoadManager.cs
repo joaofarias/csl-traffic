@@ -21,7 +21,7 @@ namespace CSL_Traffic
                 if ((CSLTraffic.Options & OptionsManager.ModOptions.BetaTestRoadCustomizerTool) == OptionsManager.ModOptions.None || (CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) == OptionsManager.ModOptions.GhostMode)
                     return;
 
-                Debug.Log("Traffic++: Loading road data!");
+                Debug.Log("Traffic++: Loading road data! - Time: " + Time.realtimeSinceStartup);
                 byte[] data = serializableDataManager.LoadData(LANE_DATA_ID);
                 if (data == null)
                 {
@@ -47,12 +47,30 @@ namespace CSL_Traffic
                         lane.UpdateArrows();
                         if (lane.ConnectionCount() > 0)
                             nodesList.Add(lane.m_nodeId);
+
+						if (lane.m_speed == 0)
+						{
+							NetSegment segment = NetManager.instance.m_segments.m_buffer[NetManager.instance.m_lanes.m_buffer[lane.m_laneId].m_segment];
+							NetInfo info = segment.Info;
+							uint l = segment.m_lanes;
+							int n = 0;
+							while (l != lane.m_laneId && n < info.m_lanes.Length)
+							{
+								l = NetManager.instance.m_lanes.m_buffer[l].m_nextLane;
+								n++;
+							}
+
+							if (n < info.m_lanes.Length)
+								lane.m_speed = info.m_lanes[n].m_speedLimit;
+						}
+
                     }
 
                     RoadCustomizerTool customizerTool = ToolsModifierControl.GetTool<RoadCustomizerTool>();
                     foreach (ushort nodeId in nodesList)
                         customizerTool.SetNodeMarkers(nodeId);
 
+					Debug.Log("Traffic++: Finished loading road data! - Time: " + Time.realtimeSinceStartup);
                 }
                 catch (Exception e)
                 {
@@ -118,7 +136,7 @@ namespace CSL_Traffic
             public ushort m_nodeId;
             private List<uint> m_laneConnections = new List<uint>();
             public VehicleType m_vehicleTypes = VehicleType.All;
-            public float m_speed;            
+            public float m_speed = 1f;            
 
             public bool AddConnection(uint laneId)
             {
@@ -353,10 +371,9 @@ namespace CSL_Traffic
             {
                 NetInfoLane netInfoLane = netInfo.m_lanes[laneIndex] as NetInfoLane;
                 if (netInfoLane != null)
-                {
                     lane.m_vehicleTypes = netInfoLane.m_allowedVehicleTypes;
-                    lane.m_speed = netInfoLane.m_speedLimit;
-                }
+
+				lane.m_speed = netInfo.m_lanes[laneIndex].m_speedLimit;
             }
 
             NetManager.instance.m_lanes.m_buffer[laneId].m_flags |= Lane.CONTROL_BIT;
@@ -428,5 +445,19 @@ namespace CSL_Traffic
         }
 
         #endregion
-    }
+
+		#region Lane Speeds
+
+		public static float GetLaneSpeed(uint laneId)
+		{
+			return GetLane(laneId).m_speed;
+		}
+
+		public static void SetLaneSpeed(uint laneId, int speed)
+		{
+			GetLane(laneId).m_speed = speed/50f;
+		}
+
+		#endregion
+	}
 }
