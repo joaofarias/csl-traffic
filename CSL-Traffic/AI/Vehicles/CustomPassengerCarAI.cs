@@ -46,24 +46,21 @@ namespace CSL_Traffic
 				m_speedData.ApplySpeedMultiplier(this.m_info);
 			}
 
-			base.SimulationStep(vehicleID, ref vehicleData, ref frameData, leaderID, ref leaderData, lodPhysics);
+			if ((vehicleData.m_flags & Vehicle.Flags.Stopped) != Vehicle.Flags.None)
+			{
+				vehicleData.m_waitCounter += 1;
+				if (this.CanLeave(vehicleID, ref vehicleData))
+				{
+					vehicleData.m_flags &= ~Vehicle.Flags.Stopped;
+					vehicleData.m_waitCounter = 0;
+				}
+			}
+			CustomCarAI.SimulationStep(this, vehicleID, ref vehicleData, ref frameData, leaderID, ref leaderData, lodPhysics);
 
 			if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
 			{
 				m_speedData.RestoreVehicleSpeed(this.m_info);
 			}
-
-			// For future modifications
-			//if ((vehicleData.m_flags & Vehicle.Flags.Stopped) != Vehicle.Flags.None)
-			//{
-			//    vehicleData.m_waitCounter += 1;
-			//    if (this.CanLeave(vehicleID, ref vehicleData))
-			//    {
-			//        vehicleData.m_flags &= ~Vehicle.Flags.Stopped;
-			//        vehicleData.m_waitCounter = 0;
-			//    }
-			//}
-			//base.SimulationStep(vehicleID, ref vehicleData, ref frameData, leaderID, ref leaderData, lodPhysics);
 		}
 
 		protected override bool StartPathFind(ushort vehicleID, ref Vehicle vehicleData, Vector3 startPos, Vector3 endPos, bool startBothWays, bool endBothWays)

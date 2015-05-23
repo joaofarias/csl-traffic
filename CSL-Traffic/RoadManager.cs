@@ -455,7 +455,7 @@ namespace CSL_Traffic
 
 		public static void SetLaneSpeed(uint laneId, int speed)
 		{
-			GetLane(laneId).m_speed = speed/50f;
+			GetLane(laneId).m_speed = (float)Math.Round(speed/50f, 2);
 		}
 
 		#endregion
