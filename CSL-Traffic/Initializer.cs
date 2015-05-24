@@ -454,18 +454,19 @@ namespace CSL_Traffic
 
                     if ((CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) != OptionsManager.ModOptions.GhostMode && this.m_level == 6)
                     {
-                        ReplaceVehicleAI<CustomAmbulanceAI>("Ambulance", healthCareVehicleCollection);
-                        ReplaceVehicleAI<CustomBusAI>("Bus", publicTansportVehicleCollection);
-                        ReplaceVehicleAI<CustomCargoTruckAI>(industrialVehicleCollection);
-                        ReplaceVehicleAI<CustomCargoTruckAI>(industrialFarmingVehicleCollection);
-                        ReplaceVehicleAI<CustomCargoTruckAI>(industrialForestryVehicleCollection);
-                        ReplaceVehicleAI<CustomCargoTruckAI>(industrialOilVehicleCollection);
-                        ReplaceVehicleAI<CustomCargoTruckAI>(industrialOreVehicleCollection);
-                        ReplaceVehicleAI<CustomFireTruckAI>("Fire Truck", fireDepartmentVehicleCollection);
-                        ReplaceVehicleAI<CustomGarbageTruckAI>("Garbage Truck", garbageVehicleCollection);
-                        ReplaceVehicleAI<CustomHearseAI>("Hearse", healthCareVehicleCollection);
-                        ReplaceVehicleAI<CustomPassengerCarAI>(residentialVehicleCollection);
-                        ReplaceVehicleAI<CustomPoliceCarAI>("Police Car", policeVehicleCollection);
+                        ReplaceVehicleAI(healthCareVehicleCollection);
+                        ReplaceVehicleAI(publicTansportVehicleCollection);
+                        ReplaceVehicleAI(industrialVehicleCollection);
+                        ReplaceVehicleAI(industrialFarmingVehicleCollection);
+                        ReplaceVehicleAI(industrialForestryVehicleCollection);
+                        ReplaceVehicleAI(industrialOilVehicleCollection);
+                        ReplaceVehicleAI(industrialOreVehicleCollection);
+                        ReplaceVehicleAI(fireDepartmentVehicleCollection);
+                        ReplaceVehicleAI(garbageVehicleCollection);
+                        ReplaceVehicleAI(residentialVehicleCollection);
+                        ReplaceVehicleAI(policeVehicleCollection);
+
+						StartCoroutine(HandleCustomVehicles());
 
                         ReplaceTransportLineAI<BusTransportLineAI>("Bus Line", publicTansportNetCollection, "Bus", publicTransportTransportCollection);
 
@@ -731,24 +732,24 @@ namespace CSL_Traffic
             if (originalPrefab == null)
                 return null;
 
-            GameObject instance = GameObject.Instantiate<GameObject>(originalPrefab.gameObject);
-            instance.name = newName;
-            instance.transform.SetParent(customPrefabsHolder);
+			GameObject instance = GameObject.Instantiate<GameObject>(originalPrefab.gameObject);
+			instance.name = newName;
+			instance.transform.SetParent(customPrefabsHolder);
 			instance.transform.localPosition = new Vector3(-7500, -7500, -7500);
 
-            MethodInfo initMethod = GetCollectionType(typeof(T).Name).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
-            if (ghostMode)
-            {
-                Initializer.QueuePrioritizedLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { newName, new[] { instance.GetComponent<T>() }, new string[] { replace ? prefabName : null } }));
-                return null;
-            }
+			MethodInfo initMethod = GetCollectionType(typeof(T).Name).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
+			if (ghostMode)
+			{
+				Initializer.QueuePrioritizedLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { newName, new[] { instance.GetComponent<T>() }, new string[] { replace ? prefabName : null } }));
+				return null;
+			}
 
-            T newPrefab = instance.GetComponent<T>();
-            newPrefab.m_prefabInitialized = false;
+			T newPrefab = instance.GetComponent<T>();
+			newPrefab.m_prefabInitialized = false;
 
-            Initializer.QueuePrioritizedLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { newName, new[] { newPrefab }, new string[] { replace ? prefabName : null } }));
+			Initializer.QueuePrioritizedLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { newName, new[] { newPrefab }, new string[] { replace ? prefabName : null } }));
 
-            return newPrefab;
+			return newPrefab;
         }
 
         NetInfo CloneRoad(string prefabName, string newName, RoadType roadType, NetCollection collection, string fileName = null, FileManager.Folder folder = FileManager.Folder.Roads)
@@ -1228,67 +1229,86 @@ namespace CSL_Traffic
 
         #region Vehicles
 
-        void ReplaceVehicleAI<T>(VehicleCollection collection) where T : VehicleAI
+        void ReplaceVehicleAI(VehicleCollection collection)
         {
             foreach (VehicleInfo vehicle in collection.m_prefabs)
-            {
-                if (vehicle.GetComponent<VehicleAI>().GetType() == typeof(T).BaseType)
-                    ReplaceVehicleAI<T>(vehicle.name, collection);
-            }
+                    ReplaceVehicleAI(vehicle);
         }
 
-        void ReplaceVehicleAI<T>(string prefabName, VehicleCollection collection) where T : VehicleAI
-        {
-            if (transform.FindChild(prefabName) != null)
-                return;
+		void ReplaceVehicleAI(VehicleInfo info)
+		{
+			VehicleAI vAI = info.m_vehicleAI;
+			if (vAI == null)
+				return;
 
-            VehicleInfo vehicle = ClonePrefab<VehicleInfo>(prefabName, collection.m_prefabs, prefabName, transform, true);
-            if (vehicle == null)
-                return;
+			Type type = vAI.GetType();
 
-            VehicleAI originalAI = vehicle.GetComponent<VehicleAI>();
-            T newAI = vehicle.gameObject.AddComponent<T>();
-            CopyVehicleAIAttributes<T>(originalAI, newAI);
-            Destroy(originalAI);
+			if (type == typeof(AmbulanceAI))
+				ReplaceVehicleAI<CustomAmbulanceAI>(info);
+			else if (type == typeof(BusAI))
+				ReplaceVehicleAI<CustomBusAI>(info);
+			else if (type == typeof(CargoTruckAI))
+				ReplaceVehicleAI<CustomCargoTruckAI>(info);
+			else if (type == typeof(FireTruckAI))
+				ReplaceVehicleAI<CustomFireTruckAI>(info);
+			else if (type == typeof(GarbageTruckAI))
+				ReplaceVehicleAI<CustomGarbageTruckAI>(info);
+			else if (type == typeof(HearseAI))
+				ReplaceVehicleAI<CustomHearseAI>(info);
+			else if (type == typeof(PassengerCarAI))
+				ReplaceVehicleAI<CustomPassengerCarAI>(info);
+			else if (type == typeof(PoliceCarAI))
+				ReplaceVehicleAI<CustomPoliceCarAI>(info);
+		}
 
-            if (vehicle.m_generatedInfo.m_vehicleInfo != null)// && vehicle.m_generatedInfo.m_vehicleInfo != vehicle)
-                vehicle.m_generatedInfo.m_vehicleInfo = null;
+		void ReplaceVehicleAI<T>(VehicleInfo vehicle) where T : VehicleAI
+		{
+			VehicleAI originalAI = vehicle.GetComponent<VehicleAI>();
+			T newAI = vehicle.gameObject.AddComponent<T>();
+			CopyVehicleAIAttributes<T>(originalAI, newAI);
+			Destroy(originalAI);
 
-            if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
-            {
-                // TODO: set correct values on vehicles for realistic speeds
-                switch (prefabName)
-                {
-                    case "Ambulance":
-                        vehicle.m_acceleration *= 0.2f;
-                        //vehicle.m_braking *= 0.3f;
-                        //vehicle.m_turning *= 0.25f;
-                        vehicle.m_maxSpeed *= 0.5f;
-                        break;
-                    case "Bus":
-                    case "Fire Truck":
-                    case "Garbage Truck":
-                        vehicle.m_acceleration *= 0.15f;
-                        //vehicle.m_braking *= 0.25f;
-                        //vehicle.m_turning *= 0.2f;
-                        vehicle.m_maxSpeed *= 0.5f;
-                        break;
-                    case "Hearse":
-                    case "Police Car":
-                        vehicle.m_acceleration *= 0.25f;
-                        //vehicle.m_braking *= 0.35f;
-                        //vehicle.m_turning *= 0.3f;
-                        vehicle.m_maxSpeed *= 0.5f;
-                        break;
-                    default:
-                        vehicle.m_acceleration *= 0.25f;
-                        //vehicle.m_braking *= 0.35f;
-                        //vehicle.m_turning *= 0.3f;
-                        vehicle.m_maxSpeed *= 0.5f;
-                        break;
-                }
-            }
-        }
+			if (vehicle.m_generatedInfo.m_vehicleInfo != null)// && vehicle.m_generatedInfo.m_vehicleInfo != vehicle)
+				vehicle.m_generatedInfo.m_vehicleInfo = null;
+
+			vehicle.m_vehicleAI = newAI;
+			newAI.m_info = vehicle;
+
+			if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
+			{
+				// TODO: set correct values on vehicles for realistic speeds
+				switch (vehicle.name)
+				{
+					case "Ambulance":
+						vehicle.m_acceleration *= 0.2f;
+						//vehicle.m_braking *= 0.3f;
+						//vehicle.m_turning *= 0.25f;
+						vehicle.m_maxSpeed *= 0.5f;
+						break;
+					case "Bus":
+					case "Fire Truck":
+					case "Garbage Truck":
+						vehicle.m_acceleration *= 0.15f;
+						//vehicle.m_braking *= 0.25f;
+						//vehicle.m_turning *= 0.2f;
+						vehicle.m_maxSpeed *= 0.5f;
+						break;
+					case "Hearse":
+					case "Police Car":
+						vehicle.m_acceleration *= 0.25f;
+						//vehicle.m_braking *= 0.35f;
+						//vehicle.m_turning *= 0.3f;
+						vehicle.m_maxSpeed *= 0.5f;
+						break;
+					default:
+						vehicle.m_acceleration *= 0.25f;
+						//vehicle.m_braking *= 0.35f;
+						//vehicle.m_turning *= 0.3f;
+						vehicle.m_maxSpeed *= 0.5f;
+						break;
+				}
+			}
+		}
 
         void CopyVehicleAIAttributes<T>(VehicleAI from, T to)
         {
@@ -1297,6 +1317,28 @@ namespace CSL_Traffic
                     fi.SetValue(to, fi.GetValue(from));
             }
         }
+
+		IEnumerator HandleCustomVehicles()
+		{
+			uint index = 0;
+			List<string> replacedVehicles = new List<string>();
+			while (!Singleton<LoadingManager>.instance.m_loadingComplete)
+			{
+				while (PrefabCollection<VehicleInfo>.LoadedCount() > index)
+				{
+					VehicleInfo info = PrefabCollection<VehicleInfo>.GetLoaded(index);
+					if (info != null && info.name.EndsWith("_Data") && !replacedVehicles.Contains(info.name))
+					{
+						replacedVehicles.Add(info.name);
+						ReplaceVehicleAI(info);
+					}
+					
+					++index;
+				}					
+				
+				yield return new WaitForEndOfFrame();
+			}
+		}
         #endregion
 
         #region Props
