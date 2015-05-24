@@ -27,22 +27,13 @@ namespace CSL_Traffic
             
             Elevated    = 4,
             Bridge      = 8,
+			Slope		= 16,
+			Tunnel		= 32,
             
-            Pavement    = 16,
-            Gravel      = 32,
+            Pavement    = 64,
+            Gravel      = 128,
             
-            OneWay      = 64
-        }
-
-        [Flags]
-        enum TextureType
-        {
-            Main = 1,
-            XYS = 2,
-            ACI = 4,
-            APR = 8,
-            
-            All = 15
+            OneWay      = 256
         }
 
         static Queue<IEnumerator> sm_actionQueue = new Queue<IEnumerator>();
@@ -67,24 +58,22 @@ namespace CSL_Traffic
             {"RoadSmallBuswayOneWay",           "RoadSmallBusway"},
             {"RoadSmallBuswayOneWay-bus",       "RoadSmallBusway"},
             {"RoadSmallBuswayOneWay-busBoth",   "RoadSmallBusway"},
-            {"PedestrianRoad-node",             "PedestrianRoad"},
         };
-        static readonly Dictionary<string, string> sm_lodFileIndex = new Dictionary<string, string>()
+		static readonly Dictionary<string, string> sm_lodFileIndex = new Dictionary<string, string>()
         {
-            {"RoadLargeBusLanes",               "RoadsWithBusLanes"},
-            {"RoadLargeBusLanesBridge",         "RoadsWithBusLanes"},
-            {"RoadLargeBusLanesElevated",       "RoadsWithBusLanes"},
-            {"RoadSmallBusway",                 "RoadsWithBusLanes"},
-            {"RoadSmallBuswayBridge",           "RoadsWithBusLanes"},
-            {"RoadSmallBuswayElevated",         "RoadsWithBusLanes"},
-            {"RoadSmallBuswayOneWay",           "RoadsWithBusLanes"},
-            {"RoadSmallBuswayOneWayBridge",     "RoadsWithBusLanes"},
-            {"RoadSmallBuswayOneWayElevated",   "RoadsWithBusLanes"},
+			{"RoadLargeBusLanesElevated",       "RoadLargeBusLanesBridge"},
+            {"RoadSmallBuswayElevated",         "RoadSmallBuswayBridge"},
+            {"RoadSmallBuswayOneWayBridge",     "RoadSmallBuswayBridge"},
+            {"RoadSmallBuswayOneWayElevated",   "RoadSmallBuswayBridge"},
+            {"RoadSmallBuswayOneWay",           "RoadSmallBusway"},
+            {"RoadSmallBuswayOneWay-bus",       "RoadSmallBusway-bus"},
+            {"RoadSmallBuswayOneWay-busBoth",   "RoadSmallBusway-busBoth"},
         };
 
         Dictionary<string, NetLaneProps> m_customNetLaneProps;
         Dictionary<string, PrefabInfo> m_customPrefabs;
-        Queue<Action> m_postLoadingActions;
+		Dictionary<string, Texture2D> m_customTextures;
+        //Queue<Action> m_postLoadingActions;
         UITextureAtlas m_thumbnailsTextureAtlas;
         bool m_initialized;
         bool m_incompatibilityWarning;
@@ -97,7 +86,8 @@ namespace CSL_Traffic
 
             m_customNetLaneProps = new Dictionary<string, NetLaneProps>();
             m_customPrefabs = new Dictionary<string, PrefabInfo>();
-            m_postLoadingActions = new Queue<Action>();
+			m_customTextures = new Dictionary<string, Texture2D>();
+            //m_postLoadingActions = new Queue<Action>();
 		}
 
 		void Start()
@@ -108,7 +98,7 @@ namespace CSL_Traffic
                 ReplaceTransportManager();
             }
 #if DEBUG
-			StartCoroutine(Print());
+			//StartCoroutine(Print());
 #endif
 		}
 
@@ -133,7 +123,7 @@ namespace CSL_Traffic
 
                 m_customNetLaneProps.Clear();
                 m_customPrefabs.Clear();
-                m_postLoadingActions.Clear();
+                //m_postLoadingActions.Clear();
 			}
 		}
 
@@ -157,13 +147,16 @@ namespace CSL_Traffic
                 return;
             }
 
+			if ((CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) == OptionsManager.ModOptions.GhostMode)
+				return;
+
             if (!Singleton<LoadingManager>.instance.m_loadingComplete)
                 return;
             else if (m_gameStartedTime == 0f)
                 m_gameStartedTime = Time.realtimeSinceStartup;
 
-            while (m_postLoadingActions.Count > 0)
-                m_postLoadingActions.Dequeue().Invoke();
+			//while (m_postLoadingActions.Count > 0)
+			//	m_postLoadingActions.Dequeue().Invoke();
 
             // contributed by Japa
             TransportTool transportTool = ToolsModifierControl.GetCurrentTool<TransportTool>();
@@ -258,6 +251,7 @@ namespace CSL_Traffic
             {
                 if (GUI.Button(new Rect(10, 900, 150, 30), "Update Textures"))
                 {
+					m_customTextures.Clear();
                     foreach (var item in m_customPrefabs.Values)
                     {
                         NetInfo netInfo = item as NetInfo;
@@ -265,7 +259,6 @@ namespace CSL_Traffic
                             continue;
 
                         string fileName = netInfo.m_segments[0].m_material.mainTexture.name;
-                        string lodFileName = netInfo.m_segments[0].m_combinedMaterial.mainTexture.name;
                         for (int i = 0; i < netInfo.m_segments.Length; i++)
                         {
                             if (i == 1) fileName += "-bus";
@@ -273,17 +266,14 @@ namespace CSL_Traffic
                             if (fileName.StartsWith("RoadLarge"))
                             {
                                 ReplaceTextures(fileName, FileManager.Folder.LargeRoad, netInfo.m_segments[i].m_segmentMaterial);
-                                ReplaceLODTextures(lodFileName, FileManager.Folder.Roads, netInfo.m_segments[i].m_combinedMaterial);
                             }
                             else if (fileName.StartsWith("RoadSmall"))
                             {
                                 ReplaceTextures(fileName, FileManager.Folder.SmallRoad, netInfo.m_segments[i].m_segmentMaterial);
-                                ReplaceLODTextures(lodFileName, FileManager.Folder.Roads, netInfo.m_segments[i].m_combinedMaterial);
                             }
                             else
                             {
                                 ReplaceTextures(fileName, FileManager.Folder.PedestrianRoad, netInfo.m_segments[i].m_segmentMaterial);
-                                ReplaceLODTextures(lodFileName, FileManager.Folder.Roads, netInfo.m_segments[i].m_combinedMaterial);
                             }
                         }
                     }
@@ -776,15 +766,10 @@ namespace CSL_Traffic
             if (sm_fileIndex.TryGetValue(fileName, out str))
                 fileName = str;
 
-            string lodFileName;
-            if (!sm_lodFileIndex.TryGetValue(fileName, out lodFileName))
-                lodFileName = fileName;
-
-            
             for (int i = 0; i < road.m_segments.Length; i++)
             {
                 string segFileName = fileName;
-                if (roadType != RoadType.Bridge && roadType != RoadType.Elevated)
+                if ((roadType & (RoadType.Bridge | RoadType.Elevated | RoadType.Tunnel | RoadType.Slope)) == RoadType.Normal)
                 {
                     if (i == 1) segFileName += "-bus";
                     if (i == 2) segFileName += "-busBoth";
@@ -795,12 +780,13 @@ namespace CSL_Traffic
 
                 road.m_segments[i].m_material = new Material(road.m_segments[i].m_material);
                 ReplaceTextures(segFileName, folder, road.m_segments[i].m_material);
-                int index = i;
-                m_postLoadingActions.Enqueue(() =>
-                {
-                    ReplaceLODTextures(lodFileName, FileManager.Folder.Roads, road.m_segments[index].m_combinedMaterial);
-                    road.m_segments[index].m_lodRenderDistance *= 2;
-                });
+
+				string lodFileName;
+				if (!sm_lodFileIndex.TryGetValue(segFileName, out lodFileName))
+					lodFileName = segFileName;
+
+				road.m_segments[i].m_lodMaterial = new Material(road.m_segments[i].m_lodMaterial);
+				ReplaceTextures(lodFileName + "-LOD", folder, road.m_segments[i].m_lodMaterial);
             }
 
             for (int i = 0; i < road.m_nodes.Length; i++)
@@ -813,12 +799,13 @@ namespace CSL_Traffic
 
                 road.m_nodes[i].m_material = new Material(road.m_nodes[i].m_material);
                 ReplaceTextures(nodeFileName, folder, road.m_nodes[i].m_material);
-                int index = i;
-                m_postLoadingActions.Enqueue(() =>
-                {
-                    ReplaceLODTextures(lodFileName, FileManager.Folder.Roads, road.m_nodes[index].m_combinedMaterial);
-                    road.m_nodes[index].m_lodRenderDistance *= 2;
-                });
+
+				string lodFileName;
+				if (!sm_lodFileIndex.TryGetValue(nodeFileName, out lodFileName))
+					lodFileName = nodeFileName;
+
+				road.m_nodes[i].m_lodMaterial = new Material(road.m_nodes[i].m_lodMaterial);
+				ReplaceTextures(lodFileName + "-LOD", folder, road.m_nodes[i].m_lodMaterial);
             }
 
             return road;
@@ -866,6 +853,10 @@ namespace CSL_Traffic
                 sb.Append(whiteSpaces ? " Elevated" : "Elevated");
             else if (roadType.HasFlag(RoadType.Bridge))
                 sb.Append(whiteSpaces ? " Bridge" : "Bridge");
+			else if (roadType.HasFlag(RoadType.Slope))
+				sb.Append(whiteSpaces ? " Slope" : "Slope");
+			else if (roadType.HasFlag(RoadType.Tunnel))
+				sb.Append(whiteSpaces ? " Tunnel" : "Tunnel");
             
             if (roadType.HasFlag(RoadType.Grass))
                 sb.Append(whiteSpaces ? " Decoration Grass" : "DecorationGrass");
@@ -896,14 +887,24 @@ namespace CSL_Traffic
             bool abort = smallRoad == null;
 
             PrefabInfo bridge;
-            string bridgeName = "Small Busway" + GetDecoratedName(roadType | RoadType.Bridge);
-            if (!m_customPrefabs.TryGetValue(bridgeName, out bridge))
+			string otherPrefabName = "Small Busway" + GetDecoratedName(roadType | RoadType.Bridge);
+			if (!m_customPrefabs.TryGetValue(otherPrefabName, out bridge))
                 bridge = CreateSmallBuswayBridge(roadType | RoadType.Bridge, collection);
 
             PrefabInfo elevated;
-            bridgeName = "Small Busway" + GetDecoratedName(roadType | RoadType.Elevated);
-            if (!m_customPrefabs.TryGetValue(bridgeName, out elevated))
+			otherPrefabName = "Small Busway" + GetDecoratedName(roadType | RoadType.Elevated);
+			if (!m_customPrefabs.TryGetValue(otherPrefabName, out elevated))
                 elevated = CreateSmallBuswayBridge(roadType | RoadType.Elevated, collection);
+
+			PrefabInfo tunnel;
+			otherPrefabName = "Small Busway" + GetDecoratedName(roadType | RoadType.Tunnel);
+			if (!m_customPrefabs.TryGetValue(otherPrefabName, out tunnel))
+				tunnel = CreateSmallBuswayBridge(roadType | RoadType.Tunnel, collection);
+
+			PrefabInfo slope;
+			otherPrefabName = "Small Busway" + GetDecoratedName(roadType | RoadType.Slope);
+			if (!m_customPrefabs.TryGetValue(otherPrefabName, out slope))
+				slope = CreateSmallBuswayBridge(roadType | RoadType.Slope, collection);
 
             if (abort)
                 return;
@@ -920,6 +921,8 @@ namespace CSL_Traffic
             roadAI.m_enableZoning = false;
             roadAI.m_bridgeInfo = bridge as NetInfo;
             roadAI.m_elevatedInfo = elevated as NetInfo;
+			roadAI.m_tunnelInfo = tunnel as NetInfo;
+			roadAI.m_slopeInfo = slope as NetInfo;
 
             NetLaneProps laneProps = null;
             m_customNetLaneProps.TryGetValue("BusLane", out laneProps);
@@ -952,8 +955,9 @@ namespace CSL_Traffic
             if (smallRoad == null)
                 return null;
 
-            RoadBridgeAI roadAI = smallRoad.GetComponent<RoadBridgeAI>();
+            RoadBaseAI roadAI = smallRoad.GetComponent<RoadBaseAI>();
             roadAI.m_maintenanceCost = CalculateMaintenanceCost(roadAI.m_maintenanceCost / 625 + 0.06f);
+			// TODO: check maintenace costs for tunnels
 
             NetLaneProps laneProps = null;
             m_customNetLaneProps.TryGetValue("BusLane", out laneProps);
@@ -991,14 +995,24 @@ namespace CSL_Traffic
             bool abort = largeRoad == null;
 
             PrefabInfo bridge;
-            string bridgeName = "Large Road" + GetDecoratedName(roadType | RoadType.Bridge) + " With Bus Lanes";
-            if (!m_customPrefabs.TryGetValue(bridgeName, out bridge))
+            string otherPrefabName = "Large Road" + GetDecoratedName(roadType | RoadType.Bridge) + " With Bus Lanes";
+            if (!m_customPrefabs.TryGetValue(otherPrefabName, out bridge))
                 bridge = CreateLargeRoadBridgeWithBusLanes(roadType | RoadType.Bridge, collection);
             
             PrefabInfo elevated;
-            bridgeName = "Large Road" + GetDecoratedName(roadType | RoadType.Elevated) + " With Bus Lanes";
-            if (!m_customPrefabs.TryGetValue(bridgeName, out elevated))
+            otherPrefabName = "Large Road" + GetDecoratedName(roadType | RoadType.Elevated) + " With Bus Lanes";
+            if (!m_customPrefabs.TryGetValue(otherPrefabName, out elevated))
                 elevated = CreateLargeRoadBridgeWithBusLanes(roadType | RoadType.Elevated, collection);
+
+			PrefabInfo tunnel;
+			otherPrefabName = "Large Road" + GetDecoratedName(roadType | RoadType.Tunnel) + " With Bus Lanes";
+			if (!m_customPrefabs.TryGetValue(otherPrefabName, out tunnel))
+				tunnel = CreateLargeRoadBridgeWithBusLanes(roadType | RoadType.Tunnel, collection);
+
+			PrefabInfo slope;
+			otherPrefabName = "Large Road" + GetDecoratedName(roadType | RoadType.Slope) + " With Bus Lanes";
+			if (!m_customPrefabs.TryGetValue(otherPrefabName, out slope))
+				slope = CreateLargeRoadBridgeWithBusLanes(roadType | RoadType.Slope, collection);
 
             if (abort)
                 return;
@@ -1009,6 +1023,8 @@ namespace CSL_Traffic
             roadAI.m_maintenanceCost = 662;
             roadAI.m_bridgeInfo = bridge as NetInfo;
             roadAI.m_elevatedInfo = elevated as NetInfo;
+			roadAI.m_tunnelInfo = tunnel as NetInfo;
+			roadAI.m_slopeInfo = slope as NetInfo;
 
             NetInfo highway = collection.m_prefabs.FirstOrDefault(p => p.name == "Highway");
             if (highway != null)
@@ -1034,8 +1050,9 @@ namespace CSL_Traffic
             if (largeRoad == null)
                 return null;
 
-            RoadBridgeAI roadAI = largeRoad.GetComponent<RoadBridgeAI>();
+            RoadBaseAI roadAI = largeRoad.GetComponent<RoadBaseAI>();
             roadAI.m_maintenanceCost = 1980;
+			// TODO: check maintenace costs for tunnels
 
             NetLaneProps laneProps = null;
             m_customNetLaneProps.TryGetValue("BusLane", out laneProps);
@@ -1379,7 +1396,7 @@ namespace CSL_Traffic
             newProp.m_useColorVariations = false;
 
             Material newMat = new Material(newProp.GetComponent<Renderer>().sharedMaterial);
-            ReplaceTextures(newName, FileManager.Folder.Props, newMat, TextureType.Main | TextureType.ACI | TextureType.XYS, 4);
+            ReplaceTextures(newName, FileManager.Folder.Props, newMat, 4);
             newMat.color = new Color32(255, 255, 255, 100);
             newProp.GetComponent<Renderer>().sharedMaterial = newMat;
 
@@ -1436,82 +1453,51 @@ namespace CSL_Traffic
         #endregion
 
         #region Textures
+		static string[] sm_mapNames = new string[] { "_MainTex", "_XYSMap", "_ACIMap", "_APRMap" };
+		static string[] sm_suffixes = new string[] { "", "-xys", "-aci", "-apr" };
 
-        static bool ReplaceLODTextures(string fileName, FileManager.Folder textureFolder, Material mat, TextureType textureTypes = TextureType.All, int anisoLevel = 8, FilterMode filterMode = FilterMode.Trilinear, bool skipCache = false)
-        {
-            return ReplaceTextures(fileName + "-lodAtlas", textureFolder, mat, textureTypes, anisoLevel, filterMode, skipCache);
-        }
-
-        static bool ReplaceTextures(string fileName, FileManager.Folder textureFolder, Material mat, TextureType textureTypes = TextureType.All, int anisoLevel = 8, FilterMode filterMode = FilterMode.Trilinear, bool skipCache = false)
+        bool ReplaceTextures(string fileName, FileManager.Folder textureFolder, Material mat, int anisoLevel = 8, FilterMode filterMode = FilterMode.Trilinear, bool skipCache = false)
         {
             bool success = false;
             byte[] textureBytes;
             Texture2D tex;
 
-            if ((textureTypes & TextureType.Main) == TextureType.Main)
-            {
-                if (FileManager.GetTextureBytes(fileName + ".png", textureFolder, skipCache, out textureBytes))
-                {
-                    tex = new Texture2D(1, 1);
-                    tex.name = fileName;
-                    tex.LoadImage(textureBytes);
-                    tex.anisoLevel = anisoLevel;
-                    tex.filterMode = filterMode;
+			for (int i = 0; i < sm_mapNames.Length; i++)
+			{
+				if (mat.HasProperty(sm_mapNames[i]) && mat.GetTexture(sm_mapNames[i]) != null)
+				{
+					if (!m_customTextures.TryGetValue(fileName + sm_suffixes[i], out tex))
+					{
+						if (FileManager.GetTextureBytes(fileName + sm_suffixes[i] + ".png", textureFolder, skipCache, out textureBytes))
+						{
+							tex = new Texture2D(1, 1);
+							tex.LoadImage(textureBytes);
+						}
+						else if (fileName.Contains("-LOD"))
+						{
+							Texture2D original = mat.GetTexture(sm_mapNames[i]) as Texture2D;
+							if (original != null)
+							{
+								tex = new Texture2D(original.width, original.height);
+								tex.SetPixels(original.GetPixels());
+								tex.Apply();
+							}
+						}
+					}
 
-                    mat.mainTexture = tex;
-
-                    success = true;
-                }
-            }
-
-            if ((textureTypes & TextureType.XYS) == TextureType.XYS && mat.HasProperty("_XYSMap"))
-            {
-                if (FileManager.GetTextureBytes(fileName + "-xys.png", textureFolder, skipCache, out textureBytes))
-                {
-                    tex = new Texture2D(1, 1);
-                    tex.name = fileName + "-xys";
-                    tex.LoadImage(textureBytes);
-                    tex.anisoLevel = anisoLevel;
-                    tex.filterMode = filterMode;
-
-                    mat.SetTexture("_XYSMap", tex);
-
-                    success = true;
-                }
-            }
-
-            if ((textureTypes & TextureType.ACI) == TextureType.ACI && mat.HasProperty("_ACIMap"))
-            {
-                if (FileManager.GetTextureBytes(fileName + "-aci.png", textureFolder, skipCache, out textureBytes))
-                {
-                    tex = new Texture2D(1, 1);
-                    tex.name = fileName + "-aci";
-                    tex.LoadImage(textureBytes);
-                    tex.anisoLevel = anisoLevel;
-                    tex.filterMode = filterMode;
-
-                    mat.SetTexture("_ACIMap", tex);
-
-                    success = true;
-                }
-            }
-
-            if ((textureTypes & TextureType.APR) == TextureType.APR && mat.HasProperty("_APRMap"))
-            {
-                if (FileManager.GetTextureBytes(fileName + "-apr.png", textureFolder, skipCache, out textureBytes))
-                {
-                    tex = new Texture2D(1, 1);
-                    tex.name = fileName + "-apr";
-                    tex.LoadImage(textureBytes);
-                    tex.anisoLevel = anisoLevel;
-                    tex.filterMode = filterMode;
-
-                    mat.SetTexture("_APRMap", tex);
-
-                    success = true;
-                }
-            }
-
+					if (tex != null)
+					{
+						tex.name = fileName + sm_suffixes[i];
+						tex.anisoLevel = anisoLevel;
+						tex.filterMode = filterMode;
+						mat.SetTexture(sm_mapNames[i], tex);
+						m_customTextures[tex.name] = tex;
+						success = true;
+						tex = null;
+					}
+				}
+			}
+			
             return success;
         }
 
