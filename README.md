@@ -1,22 +1,25 @@
 # Traffic++
 A WIP mod for Cities: Skylines to improve traffic.
 
-# !!!ATTENTION!!!
-This mod adds new components to the game which means maps saved while the mod is active won't work without it. You can run the mod in "Ghost Mode" (from its options screen in Content Manager > Mods) should you wish to load them without using Traffic++. In ghost modes the new components revert to their nearest native C:S equivalent, and all other Traffic++ funcitonailty is disabled.
+Caution: If used, the new road types will be included in your save games... which means you'll need Traffic++ to load them. If you want to disable all Traffic++ features, but still open those save games, enable Ghost Mode in the mod options.
 
 # Objective
 The goal of this mod is to improve traffic in Cities: Skylines by adding new roads, vehicles, tools and behaviours.
 
 # Current Features
-- Realistic Speeds (optional)
-- New types of roads:
+- New Road Types:
 	- Six-lane road with bus lanes
 	- Two-lane busway
-	- Zonable pedestrian roads
-	- Small gravel road
-- Intersection lane editor
-- Vehicle restrictions
-- (soon) Speed restrictions
+	- Suburban Road (Pedestrianised, Zoneable)
+	- Rural Lane (Pedestrianised, Zoneable)
+- Road Customiser Tool:
+	- Intersection lane editor
+	- Vehicle restrictions
+	- Speed restrictions
+- Other Features:
+	- Multi-track Station Enabler (via Sims Firehouse)
+	- Realistic Speeds (optional)
+	- Prevent vehicle despawn (optionak, via CBeTHaX)
 
 # Roadmap
 - Allow info overlays to be active while building roads
