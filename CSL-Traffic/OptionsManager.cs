@@ -5,6 +5,7 @@ using ColossalFramework.UI;
 using ColossalFramework.DataBinding;
 using System.Xml.Serialization;
 using System.IO;
+using System.Collections.Generic;
 
 namespace CSL_Traffic
 {
@@ -19,6 +20,7 @@ namespace CSL_Traffic
 			DisableCentralLaneOnPedestrianRoads = 4,
 			UseRealisticSpeeds = 8,
 			NoDespawn = 16,
+			ImprovedAI = 32,
 
 			// bits 55 to 62 reserved for beta tests that won't have their own option
 			//BetaTestNewRoads = 1L << 54,
@@ -44,6 +46,7 @@ namespace CSL_Traffic
 		UICheckBox m_disableCentralLaneCheckBox = null;
 		UICheckBox m_realisticSpeedsCheckBox = null;
 		UICheckBox m_noDespawnCheckBox = null;
+		UICheckBox m_improvedAICheckBox = null;
 		UICheckBox m_betaTestRoadCustomizerCheckBox = null;
 		UICheckBox m_ghostModeCheckBox = null;
 
@@ -57,11 +60,11 @@ namespace CSL_Traffic
 		void Start()
 		{
 #if DEBUG
-			foreach (var item in GameObject.FindObjectsOfType<GameObject>())
-			{
-				if (item.transform.parent == null)
-					Initializer.PrintGameObjects(item, "MainMenuScene_110b.txt");
-			}
+			//foreach (var item in GameObject.FindObjectsOfType<GameObject>())
+			//{
+			//	if (item.transform.parent == null)
+			//		Initializer.PrintGameObjects(item, "MainMenuScene_110b.txt");
+			//}
 #endif
 
 			GameObject contentManager = GameObject.Find("(Library) ContentManagerPanel");
@@ -163,19 +166,16 @@ namespace CSL_Traffic
 			m_allowTrucksCheckBox = AddOptionCheckbox("Allow Trucks in Pedestrian Roads", 0);
 			m_allowResidentsCheckBox = AddOptionCheckbox("Allow Residents in Pedestrian Roads", 1);
 			m_disableCentralLaneCheckBox = AddOptionCheckbox("Disable Central Lane on Pedestrian Roads", 2);
-			m_realisticSpeedsCheckBox = AddOptionCheckbox("Beta Test: Realistic Speeds", 3);
-			m_betaTestRoadCustomizerCheckBox = AddOptionCheckbox("Beta Test: Road Customizer Tool", 4);
-			m_noDespawnCheckBox = AddOptionCheckbox("Beta Test: No Despawn by CBeTHaX", 5);
+			m_noDespawnCheckBox = AddOptionCheckbox("No Despawn by CBeTHaX", 3);
+			m_realisticSpeedsCheckBox = AddOptionCheckbox("Beta Test: Realistic Speeds", 4);
+			m_betaTestRoadCustomizerCheckBox = AddOptionCheckbox("Beta Test: Road Customizer Tool", 5);
+			m_improvedAICheckBox = AddOptionCheckbox("Beta Test: Improved AI", 6);
 
 			m_ghostModeCheckBox = AddOptionCheckbox("Ghost Mode (disables all mod functionality leaving only enough logic to load the map)");
 			m_ghostModeCheckBox.gameObject.transform.SetParent(m_optionsPanel.transform);
 			m_ghostModeCheckBox.AlignTo(m_optionsPanel.GetComponent<UIPanel>(), UIAlignAnchor.BottomLeft);
 			m_ghostModeCheckBox.position += new Vector3(-cornerOffset.x, cornerOffset.y);
 			m_ghostModeCheckBox.width -= saveButton.width;
-
-
-
-			//HandleImprovedModsPanel(mod);
 
 			LoadOptions();
 
@@ -240,6 +240,11 @@ namespace CSL_Traffic
 				options.noDespawn = true;
 				CSLTraffic.Options |= ModOptions.NoDespawn;
 			}
+			if (this.m_improvedAICheckBox.isChecked)
+			{
+				options.improvedAI = true;
+				CSLTraffic.Options |= ModOptions.ImprovedAI;
+			}
 			if (this.m_betaTestRoadCustomizerCheckBox.isChecked)
 			{
 				options.betaTestRoadCustomizer = true;
@@ -293,6 +298,7 @@ namespace CSL_Traffic
 			this.m_disableCentralLaneCheckBox.isChecked = options.disableCentralLane;
 			this.m_realisticSpeedsCheckBox.isChecked = options.realisticSpeeds;
 			this.m_noDespawnCheckBox.isChecked = options.noDespawn;
+			this.m_improvedAICheckBox.isChecked = options.improvedAI;
 			this.m_betaTestRoadCustomizerCheckBox.isChecked = options.betaTestRoadCustomizer;
 			this.m_ghostModeCheckBox.isChecked = options.ghostMode;
 
@@ -311,6 +317,9 @@ namespace CSL_Traffic
 
 			if (options.noDespawn)
 				CSLTraffic.Options |= ModOptions.NoDespawn;
+
+			if (options.improvedAI)
+				CSLTraffic.Options |= ModOptions.ImprovedAI;
 
 			if (options.betaTestRoadCustomizer)
 				CSLTraffic.Options |= ModOptions.BetaTestRoadCustomizerTool;
@@ -343,24 +352,11 @@ namespace CSL_Traffic
 			public bool disableCentralLane;
 			public bool realisticSpeeds;
 			public bool noDespawn;
+			public bool improvedAI;
 
 			public bool betaTestRoadCustomizer;
 
 			public bool ghostMode;
 		}
-
-		//void HandleImprovedModsPanel(GameObject modBar)
-		//{
-		//	Transform lastUpdated = modBar.transform.FindChild("LastUpdated");
-		//	if (lastUpdated == null)
-		//		return;
-
-		//	UILabel lastUpdatedLabel = lastUpdated.GetComponent<UILabel>();
-		//	if (lastUpdatedLabel == null)
-		//		return;
-
-		//	lastUpdatedLabel.position += Vector3.left * m_optionsButtonGo.GetComponent<UIButton>().width;
-		//}
-
 	}
 }

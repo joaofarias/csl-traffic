@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Xml.Serialization;
 using UnityEngine;
 
 namespace CSL_Traffic
@@ -56,7 +57,7 @@ namespace CSL_Traffic
         public static bool GetTextureBytes(string fileName, Folder folder, bool skipCache, out byte[] bytes)
         {
             bytes = null;
-            string filePath = GetTexturePath(fileName, folder);
+            string filePath = GetFilePath(fileName, folder);
             if (filePath == null || !File.Exists(filePath))
             {
 #if DEBUG
@@ -82,7 +83,7 @@ namespace CSL_Traffic
             return true;
         }
 
-        public static string GetTexturePath(string fileName, Folder folder)
+        public static string GetFilePath(string fileName, Folder folder)
         {
             if (MOD_PATH == null)
                 return null;
@@ -95,6 +96,36 @@ namespace CSL_Traffic
             path = Path.Combine(path, relativeFolderPath);
             return Path.Combine(path, fileName);
         }
+
+		public static Initializer.TextureInfo[] GetTextureIndex()
+		{
+			Initializer.TextureInfo[] textureIndex;
+			string path = GetFilePath("TextureIndex.xml", Folder.Textures);
+			if (path == null)
+				return null;
+
+			try
+			{
+				XmlSerializer xmlSerializer = new XmlSerializer(typeof(Initializer.TextureInfo[]));
+				using (StreamReader streamReader = new StreamReader(path))
+				{
+					textureIndex = (Initializer.TextureInfo[])xmlSerializer.Deserialize(streamReader);
+				}
+			}
+			catch (FileNotFoundException)
+			{
+				// No texture index
+				Debug.Log("Traffic++: No texture index found.");
+				return null;
+			}
+			catch (Exception e)
+			{
+				Debug.Log("Traffic++: Unexpected " + e.GetType().Name + " loading texture index: " + e.Message + "\n" + e.StackTrace);
+				return null;
+			}
+
+			return textureIndex;
+		}
 
         public static void ClearCache()
         {

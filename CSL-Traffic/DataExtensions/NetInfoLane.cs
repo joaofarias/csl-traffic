@@ -7,19 +7,28 @@ namespace CSL_Traffic
 {
     class NetInfoLane : NetInfo.Lane
     {
-        public RoadManager.VehicleType m_allowedVehicleTypes;
+		public enum SpecialLaneType
+		{
+			None,
+			BusLane,
+			PedestrianLane
+		}
 
-        public NetInfoLane(RoadManager.VehicleType vehicleTypes)
+        public RoadManager.VehicleType m_allowedVehicleTypes;
+		public SpecialLaneType m_specialLaneType;
+
+
+        public NetInfoLane(RoadManager.VehicleType vehicleTypes, SpecialLaneType specialLaneType = SpecialLaneType.None)
         {
             this.m_allowedVehicleTypes = vehicleTypes;
+			this.m_specialLaneType = specialLaneType;
         }
 
-        public NetInfoLane(NetInfo.Lane lane) : this(lane, RoadManager.VehicleType.All) { }
+		public NetInfoLane(NetInfo.Lane lane, SpecialLaneType specialLaneType = SpecialLaneType.None) : this(lane, RoadManager.VehicleType.All, specialLaneType) { }
 
-        public NetInfoLane(NetInfo.Lane lane, RoadManager.VehicleType vehicleTypes)
+		public NetInfoLane(NetInfo.Lane lane, RoadManager.VehicleType vehicleTypes, SpecialLaneType specialLaneType = SpecialLaneType.None) : this(vehicleTypes, specialLaneType)
         {
             CopyAttributes(lane);
-            this.m_allowedVehicleTypes = vehicleTypes;
         }
 
         void CopyAttributes(NetInfo.Lane lane)

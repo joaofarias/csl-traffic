@@ -95,6 +95,7 @@ namespace CSL_Traffic
 		private VehicleInfo.VehicleType m_vehicleTypes;
 		private RoadManager.VehicleType m_vehicleType;
 		private Dictionary<uint, RoadManager.VehicleType> m_pathVehicleType;
+		private bool m_prioritizeBusLanes;
 
 		private void Awake()
 		{
@@ -230,6 +231,10 @@ namespace CSL_Traffic
 				else
 					m_vehicleType = RoadManager.VehicleType.All;
 			}
+			if ((CSLTraffic.Options & OptionsManager.ModOptions.ImprovedAI) == OptionsManager.ModOptions.ImprovedAI)
+				this.m_prioritizeBusLanes = (this.m_vehicleType & (RoadManager.VehicleType.Bus | RoadManager.VehicleType.Emergency)) != RoadManager.VehicleType.None;
+			else
+				this.m_prioritizeBusLanes = false;
 
 			int num = (int)(this.m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_positionCount & 15);
 			int num2 = this.m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_positionCount >> 4;
@@ -978,6 +983,14 @@ namespace CSL_Traffic
 						if (flag)
 						{
 							num13 *= 2f;
+						}
+						if (this.m_prioritizeBusLanes)
+						{
+							NetInfoLane customLane2 = lane2 as NetInfoLane;
+							if (customLane2 != null && customLane2.m_specialLaneType == NetInfoLane.SpecialLaneType.BusLane)
+							{
+								num13 /= 10f;
+							}
 						}
 						float num14 = num13 / ((num5 + RoadManager.GetLaneSpeed(num2) /*lane2.m_speedLimit*/) * 0.5f * this.m_maxLength);
 						CustomPathFind.BufferItem item2;
