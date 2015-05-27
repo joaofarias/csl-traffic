@@ -947,7 +947,7 @@ namespace CSL_Traffic
 
 
             RoadAI roadAI = smallRoad.GetComponent<RoadAI>();
-            roadAI.m_maintenanceCost = GetSmallBusLaneMaintenanceCost(roadType);
+            roadAI.m_maintenanceCost = GetSmallBuswayMaintenanceCost(roadType);
             roadAI.m_enableZoning = false;
             roadAI.m_bridgeInfo = bridge as NetInfo;
             roadAI.m_elevatedInfo = elevated as NetInfo;
@@ -992,7 +992,7 @@ namespace CSL_Traffic
                 return null;
 
             RoadBaseAI roadAI = smallRoad.GetComponent<RoadBaseAI>();
-            roadAI.m_maintenanceCost = GetSmallBusLaneMaintenanceCost(roadType);
+            roadAI.m_maintenanceCost = GetSmallBuswayMaintenanceCost(roadType);
 
             NetLaneProps laneProps = null;
             m_customNetLaneProps.TryGetValue("BusLane", out laneProps);
@@ -1058,7 +1058,7 @@ namespace CSL_Traffic
             largeRoad.m_UIPriority = 20 + (int)roadType;
 
             RoadAI roadAI = largeRoad.GetComponent<RoadAI>();
-            roadAI.m_maintenanceCost = GetLargeBusLaneMaintenanceCost(roadType);
+            roadAI.m_maintenanceCost = GetLargeBuswayMaintenanceCost(roadType);
             roadAI.m_bridgeInfo = bridge as NetInfo;
             roadAI.m_elevatedInfo = elevated as NetInfo;
             roadAI.m_tunnelInfo = tunnel as NetInfo;
@@ -1089,7 +1089,7 @@ namespace CSL_Traffic
                 return null;
 
             RoadBaseAI roadAI = largeRoad.GetComponent<RoadBaseAI>();
-            roadAI.m_maintenanceCost = GetLargeBusLaneMaintenanceCost(roadType);
+            roadAI.m_maintenanceCost = GetLargeBuswayMaintenanceCost(roadType);
             NetLaneProps laneProps = null;
             m_customNetLaneProps.TryGetValue("BusLane", out laneProps);
 
@@ -1135,7 +1135,7 @@ namespace CSL_Traffic
                 return;
 
             RoadAI roadAI = pedestrianRoad.GetComponent<RoadAI>();
-            roadAI.m_maintenanceCost = GetPedestrianLaneMaintenanceCost(roadType);
+            roadAI.m_maintenanceCost = GetPedestrianRoadMaintenanceCost(roadType);
             if ((roadType & RoadType.Pavement) == RoadType.Pavement)
             {
                 pedestrianRoad.m_createGravel = false;
@@ -1297,17 +1297,17 @@ namespace CSL_Traffic
             return CalculateMaintenanceCost(finalCosts);
         }
 
-        static int GetSmallBusLaneMaintenanceCost(RoadType roadType)
+        static int GetSmallBuswayMaintenanceCost(RoadType roadType)
         {
             return GetMaintenanceCost(roadType, 0.36f, 0.08f, 2.5f, 6f);
         }
 
-        static int GetLargeBusLaneMaintenanceCost(RoadType roadType)
+        static int GetLargeBuswayMaintenanceCost(RoadType roadType)
         {
             return GetMaintenanceCost(roadType, 1.06f, 0.16f, 3f, 6f);
         }
 
-        static int GetPedestrianLaneMaintenanceCost(RoadType roadType)
+        static int GetPedestrianRoadMaintenanceCost(RoadType roadType)
         {
             if (roadType.HasFlag(RoadType.Pavement))
                 return GetMaintenanceCost(roadType, 0.40f, 0f, 2.5f, 6f);
