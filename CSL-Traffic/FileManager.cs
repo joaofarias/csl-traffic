@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Xml.Serialization;
 using UnityEngine;
 
@@ -97,35 +96,35 @@ namespace CSL_Traffic
             return Path.Combine(path, fileName);
         }
 
-		public static Initializer.TextureInfo[] GetTextureIndex()
-		{
-			Initializer.TextureInfo[] textureIndex;
-			string path = GetFilePath("TextureIndex.xml", Folder.Textures);
-			if (path == null)
-				return null;
+        public static Initializer.TextureInfo[] GetTextureIndex()
+        {
+            Initializer.TextureInfo[] textureIndex;
+            string path = GetFilePath("TextureIndex.xml", Folder.Textures);
+            if (path == null)
+                return null;
 
-			try
-			{
-				XmlSerializer xmlSerializer = new XmlSerializer(typeof(Initializer.TextureInfo[]));
-				using (StreamReader streamReader = new StreamReader(path))
-				{
-					textureIndex = (Initializer.TextureInfo[])xmlSerializer.Deserialize(streamReader);
-				}
-			}
-			catch (FileNotFoundException)
-			{
-				// No texture index
-				Debug.Log("Traffic++: No texture index found.");
-				return null;
-			}
-			catch (Exception e)
-			{
-				Debug.Log("Traffic++: Unexpected " + e.GetType().Name + " loading texture index: " + e.Message + "\n" + e.StackTrace);
-				return null;
-			}
+            try
+            {
+                XmlSerializer xmlSerializer = new XmlSerializer(typeof(Initializer.TextureInfo[]));
+                using (StreamReader streamReader = new StreamReader(path))
+                {
+                    textureIndex = (Initializer.TextureInfo[])xmlSerializer.Deserialize(streamReader);
+                }
+            }
+            catch (FileNotFoundException)
+            {
+                // No texture index
+                Debug.Log("Traffic++: No texture index found.");
+                return null;
+            }
+            catch (Exception e)
+            {
+                Debug.Log("Traffic++: Unexpected " + e.GetType().Name + " loading texture index: " + e.Message + "\n" + e.StackTrace);
+                return null;
+            }
 
-			return textureIndex;
-		}
+            return textureIndex;
+        }
 
         public static void ClearCache()
         {

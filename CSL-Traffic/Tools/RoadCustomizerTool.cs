@@ -1,10 +1,10 @@
-﻿using System.Linq;
-using ColossalFramework.Math;
-using System.Collections;
-using UnityEngine;
+﻿using ColossalFramework.Math;
 using ColossalFramework.UI;
-using System.Collections.Generic;
 using CSL_Traffic.UI;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 
 namespace CSL_Traffic
 {
@@ -103,10 +103,10 @@ namespace CSL_Traffic
         {
             base.OnToolUpdate();
 
-			if (Input.GetKeyUp(KeyCode.PageDown))
-				InfoManager.instance.SetCurrentMode(InfoManager.InfoMode.Traffic, InfoManager.SubInfoMode.Default);
-			else if (Input.GetKeyUp(KeyCode.PageUp))
-				InfoManager.instance.SetCurrentMode(InfoManager.InfoMode.None, InfoManager.SubInfoMode.Default);
+            if (Input.GetKeyUp(KeyCode.PageDown))
+                InfoManager.instance.SetCurrentMode(InfoManager.InfoMode.Traffic, InfoManager.SubInfoMode.Default);
+            else if (Input.GetKeyUp(KeyCode.PageUp))
+                InfoManager.instance.SetCurrentMode(InfoManager.InfoMode.None, InfoManager.SubInfoMode.Default);
 
             if (m_toolController.IsInsideUI)
                 return;
@@ -224,7 +224,7 @@ namespace CSL_Traffic
                     if (!IsActive(marker))
                         continue;
 
-					bounds.center = marker.m_position;
+                    bounds.center = marker.m_position;
                     if (bounds.IntersectRay(mouseRay))
                     {
                         hoveredMarker = marker;
@@ -309,21 +309,21 @@ namespace CSL_Traffic
             {
                 m_selectedLaneMarkers.Clear();
                 if (OnEndLaneCustomization != null)
-					OnEndLaneCustomization();
+                    OnEndLaneCustomization();
             }
         }
 
-		float time = 0;
+        float time = 0;
         protected override void OnEnable()
         {
             base.OnEnable();
 
-			// hack to stop bug that disables and enables this tool the first time the panel is clicked
-			if (Time.realtimeSinceStartup - time < 0.2f)
-			{
-				time = 0;
-				return;
-			}
+            // hack to stop bug that disables and enables this tool the first time the panel is clicked
+            if (Time.realtimeSinceStartup - time < 0.2f)
+            {
+                time = 0;
+                return;
+            }
 
             m_hoveredNode = m_hoveredSegment = 0;
             m_selectedNode = 0;
@@ -331,19 +331,19 @@ namespace CSL_Traffic
             m_selectedLaneMarkers.Clear();
             m_segments.Clear();
             m_hoveredLaneMarkers.Clear();
-			if (OnEndLaneCustomization != null)
-				OnEndLaneCustomization();
+            if (OnEndLaneCustomization != null)
+                OnEndLaneCustomization();
         }
 
-		protected override void OnDisable()
-		{
-			base.OnDisable();
+        protected override void OnDisable()
+        {
+            base.OnDisable();
 
-			time = Time.realtimeSinceStartup;
-			//m_selectedLaneMarkers.Clear();
-			//if (OnEndLaneCustomization != null)
-			//	OnEndLaneCustomization();
-		}
+            time = Time.realtimeSinceStartup;
+            //m_selectedLaneMarkers.Clear();
+            //if (OnEndLaneCustomization != null)
+            //	OnEndLaneCustomization();
+        }
 
         bool IsActive(NodeLaneMarker marker)
         {
@@ -384,7 +384,7 @@ namespace CSL_Traffic
                 uint laneId = segment.m_lanes;
                 for (int j = 0; j < lanes.Length && laneId != 0; j++)
                 {
-					if ((lanes[j].m_laneType & NetInfo.LaneType.Vehicle) == NetInfo.LaneType.Vehicle)
+                    if ((lanes[j].m_laneType & NetInfo.LaneType.Vehicle) == NetInfo.LaneType.Vehicle)
                     {
                         Vector3 pos = Vector3.zero;
                         NetInfo.Direction laneDir = ((segment.m_flags & NetSegment.Flags.Invert) == NetSegment.Flags.None) ? lanes[j].m_finalDirection : NetInfo.InvertDirection(lanes[j].m_finalDirection);
@@ -647,7 +647,7 @@ namespace CSL_Traffic
         {
             RaycastInput input = new RaycastInput(Camera.main.ScreenPointToRay(Input.mousePosition), Camera.main.farClipPlane);
             input.m_netService.m_service = ItemClass.Service.Road;
-			input.m_netService.m_itemLayers = ItemClass.Layer.Default | ItemClass.Layer.MetroTunnels;
+            input.m_netService.m_itemLayers = ItemClass.Layer.Default | ItemClass.Layer.MetroTunnels;
             input.m_ignoreSegmentFlags = NetSegment.Flags.None;
             input.m_ignoreNodeFlags = NetNode.Flags.None;
             input.m_ignoreTerrain = true;
@@ -663,8 +663,8 @@ namespace CSL_Traffic
                 netSegment = output.m_netSegment;
                 netNode = output.m_netNode;
 
-				if (NetManager.instance.m_segments.m_buffer[netSegment].Info.m_lanes.FirstOrDefault(l => (l.m_vehicleType & VehicleInfo.VehicleType.Car) == VehicleInfo.VehicleType.Car) == null)
-					netSegment = 0;
+                if (NetManager.instance.m_segments.m_buffer[netSegment].Info.m_lanes.FirstOrDefault(l => (l.m_vehicleType & VehicleInfo.VehicleType.Car) == VehicleInfo.VehicleType.Car) == null)
+                    netSegment = 0;
 
                 return true;
             }
@@ -703,22 +703,22 @@ namespace CSL_Traffic
             return vehicleRestrictions;
         }
 
-		public float GetCurrentSpeedRestrictions()
-		{
-			if (!AnyLaneSelected)
-				return -1f;
+        public float GetCurrentSpeedRestrictions()
+        {
+            if (!AnyLaneSelected)
+                return -1f;
 
-			return RoadManager.GetLaneSpeed(m_selectedLaneMarkers[0].m_lane);
-		}
+            return RoadManager.GetLaneSpeed(m_selectedLaneMarkers[0].m_lane);
+        }
 
-		public void SetSpeedRestrictions(int speed)
-		{
-			if (!AnyLaneSelected)
-				return;
+        public void SetSpeedRestrictions(int speed)
+        {
+            if (!AnyLaneSelected)
+                return;
 
-			foreach (SegmentLaneMarker lane in m_selectedLaneMarkers)
-				RoadManager.SetLaneSpeed(lane.m_lane, speed);
-		}
+            foreach (SegmentLaneMarker lane in m_selectedLaneMarkers)
+                RoadManager.SetLaneSpeed(lane.m_lane, speed);
+        }
 
         #endregion
 
@@ -742,42 +742,42 @@ namespace CSL_Traffic
             GameObject groupToolstrip = panel.transform.GetChild(1).gameObject;
             panel.GetComponent<UIPanel>().AttachUIComponent(groupToolstrip);
 
-			GameObject vehiclePanel = UITemplateManager.GetAsGameObject("ScrollablePanelTemplate");
-			if (vehiclePanel == null)
-				return false;
+            GameObject vehiclePanel = UITemplateManager.GetAsGameObject("ScrollablePanelTemplate");
+            if (vehiclePanel == null)
+                return false;
 
-			UIComponent comp = gtsContainer.GetComponent<UIComponent>();
-			if (comp == null)
-				return false;
-			comp.AttachUIComponent(vehiclePanel);
-			comp.relativePosition = Vector3.zero;
-			vehiclePanel.GetComponent<UIPanel>().AttachUIComponent(vehiclePanel.transform.GetChild(0).gameObject);
-			vehiclePanel.GetComponent<UIPanel>().relativePosition = Vector3.zero;
-			vehiclePanel.GetComponent<UIPanel>().isVisible = true;
-			vehiclePanel.transform.GetChild(0).gameObject.GetComponent<UIComponent>().relativePosition = new Vector3(50f, 0f);
+            UIComponent comp = gtsContainer.GetComponent<UIComponent>();
+            if (comp == null)
+                return false;
+            comp.AttachUIComponent(vehiclePanel);
+            comp.relativePosition = Vector3.zero;
+            vehiclePanel.GetComponent<UIPanel>().AttachUIComponent(vehiclePanel.transform.GetChild(0).gameObject);
+            vehiclePanel.GetComponent<UIPanel>().relativePosition = Vector3.zero;
+            vehiclePanel.GetComponent<UIPanel>().isVisible = true;
+            vehiclePanel.transform.GetChild(0).gameObject.GetComponent<UIComponent>().relativePosition = new Vector3(50f, 0f);
 
-			GameObject speedPanel = UITemplateManager.GetAsGameObject("ScrollablePanelTemplate");
-			if (speedPanel == null)
-				return false;
-			comp.AttachUIComponent(speedPanel);
-			speedPanel.GetComponent<UIPanel>().AttachUIComponent(speedPanel.transform.GetChild(0).gameObject);
-			speedPanel.GetComponent<UIPanel>().relativePosition = Vector3.zero;
-			speedPanel.transform.GetChild(0).gameObject.GetComponent<UIComponent>().relativePosition = new Vector3(50f, 0f);
+            GameObject speedPanel = UITemplateManager.GetAsGameObject("ScrollablePanelTemplate");
+            if (speedPanel == null)
+                return false;
+            comp.AttachUIComponent(speedPanel);
+            speedPanel.GetComponent<UIPanel>().AttachUIComponent(speedPanel.transform.GetChild(0).gameObject);
+            speedPanel.GetComponent<UIPanel>().relativePosition = Vector3.zero;
+            speedPanel.transform.GetChild(0).gameObject.GetComponent<UIComponent>().relativePosition = new Vector3(50f, 0f);
 
             // add RoadCustomizerGroupPanel to panel
             panel.AddComponent<RoadCustomizerGroupPanel>();
 
             // add RoadCustomizerPanel to scrollablePanel
-			vehiclePanel.AddComponent<RoadCustomizerPanel>();//.SetPanel(RoadCustomizerPanel.Panel.VehicleRestrictions);
-			speedPanel.AddComponent<RoadCustomizerPanel>();//.SetPanel(RoadCustomizerPanel.Panel.SpeedRestrictions);
+            vehiclePanel.AddComponent<RoadCustomizerPanel>();//.SetPanel(RoadCustomizerPanel.Panel.VehicleRestrictions);
+            speedPanel.AddComponent<RoadCustomizerPanel>();//.SetPanel(RoadCustomizerPanel.Panel.SpeedRestrictions);
 
-			button.eventClick += delegate(UIComponent component, UIMouseEventParameter eventParam)
-			{
-				//roadsPanel.isVisible = false;
-				panel.SetActive(true);
-				panel.GetComponent<UIPanel>().isVisible = true;
-				//vehiclePanel.GetComponent<UIPanel>().isVisible = true;
-			};
+            button.eventClick += delegate(UIComponent component, UIMouseEventParameter eventParam)
+            {
+                //roadsPanel.isVisible = false;
+                panel.SetActive(true);
+                panel.GetComponent<UIPanel>().isVisible = true;
+                //vehiclePanel.GetComponent<UIPanel>().isVisible = true;
+            };
 
             return true;
         }
@@ -796,8 +796,8 @@ namespace CSL_Traffic
         }
 #endif
 
-		//int laneButtonsStart, laneButtonsWidth, laneButtonsHeight, laneButtonsSpacing;
-		//int screenWidth, screenHeight;
+        //int laneButtonsStart, laneButtonsWidth, laneButtonsHeight, laneButtonsSpacing;
+        //int screenWidth, screenHeight;
         protected override void OnToolGUI()
         {
             base.OnToolGUI();
@@ -809,70 +809,70 @@ namespace CSL_Traffic
             }
 #endif
 
-			//if (m_toolButton == null)
-			//	m_toolButton = TryCreateToolButton();
+            //if (m_toolButton == null)
+            //	m_toolButton = TryCreateToolButton();
 
-			//if (m_selectedLaneMarkers.Count == 0)
-			//	return;
+            //if (m_selectedLaneMarkers.Count == 0)
+            //	return;
 
-			//if (screenWidth != Screen.width || screenHeight != Screen.height)
-			//{
-			//	screenWidth = Screen.width;
-			//	screenHeight = Screen.height;
-			//	laneButtonsStart = (700 * screenHeight) / 1080;
-			//	laneButtonsWidth = 150; // font doesn't scale, so width must remain the same for every resolution
-			//	laneButtonsHeight = (20 * screenHeight) / 1080; // only causes problems in very low resolutions
-			//	laneButtonsSpacing = (5 * screenHeight) / 1080;
-			//}
+            //if (screenWidth != Screen.width || screenHeight != Screen.height)
+            //{
+            //	screenWidth = Screen.width;
+            //	screenHeight = Screen.height;
+            //	laneButtonsStart = (700 * screenHeight) / 1080;
+            //	laneButtonsWidth = 150; // font doesn't scale, so width must remain the same for every resolution
+            //	laneButtonsHeight = (20 * screenHeight) / 1080; // only causes problems in very low resolutions
+            //	laneButtonsSpacing = (5 * screenHeight) / 1080;
+            //}
 
-			//RoadManager.VehicleType vehicleRestrictions = RoadManager.GetVehicleRestrictions(m_selectedLaneMarkers[0].m_lane);
-			//bool apply = false;
-			//int i = 1;
-			//if (GUI.Button(new Rect(10, laneButtonsStart, laneButtonsWidth, laneButtonsHeight), "Ambulances: " + ((vehicleRestrictions & RoadManager.VehicleType.Ambulance) == RoadManager.VehicleType.Ambulance ? "On" : "Off")))
-			//{
-			//	vehicleRestrictions ^= RoadManager.VehicleType.Ambulance;
-			//	apply = true;
-			//}
-			//if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Bus: " + ((vehicleRestrictions & RoadManager.VehicleType.Bus) == RoadManager.VehicleType.Bus ? "On" : "Off")))
-			//{
-			//	vehicleRestrictions ^= RoadManager.VehicleType.Bus;
-			//	apply = true;
-			//}
-			//if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Cargo Trucks: " + ((vehicleRestrictions & RoadManager.VehicleType.CargoTruck) == RoadManager.VehicleType.CargoTruck ? "On" : "Off")))
-			//{
-			//	vehicleRestrictions ^= RoadManager.VehicleType.CargoTruck;
-			//	apply = true;
-			//}
-			//if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Fire Trucks: " + ((vehicleRestrictions & RoadManager.VehicleType.FireTruck) == RoadManager.VehicleType.FireTruck ? "On" : "Off")))
-			//{
-			//	vehicleRestrictions ^= RoadManager.VehicleType.FireTruck;
-			//	apply = true;
-			//}
-			//if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Garbage Trucks: " + ((vehicleRestrictions & RoadManager.VehicleType.GarbageTruck) == RoadManager.VehicleType.GarbageTruck ? "On" : "Off")))
-			//{
-			//	vehicleRestrictions ^= RoadManager.VehicleType.GarbageTruck;
-			//	apply = true;
-			//}
-			//if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Hearses: " + ((vehicleRestrictions & RoadManager.VehicleType.Hearse) == RoadManager.VehicleType.Hearse ? "On" : "Off")))
-			//{
-			//	vehicleRestrictions ^= RoadManager.VehicleType.Hearse;
-			//	apply = true;
-			//}
-			//if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Citizens: " + ((vehicleRestrictions & RoadManager.VehicleType.PassengerCar) == RoadManager.VehicleType.PassengerCar ? "On" : "Off")))
-			//{
-			//	vehicleRestrictions ^= RoadManager.VehicleType.PassengerCar;
-			//	apply = true;
-			//}
-			//if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Police: " + ((vehicleRestrictions & RoadManager.VehicleType.PoliceCar) == RoadManager.VehicleType.PoliceCar ? "On" : "Off")))
-			//{
-			//	vehicleRestrictions ^= RoadManager.VehicleType.PoliceCar;
-			//	apply = true;
-			//}
-			//if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Emergency: " + ((vehicleRestrictions & RoadManager.VehicleType.Emergency) == RoadManager.VehicleType.Emergency ? "On" : "Off")))
-			//{
-			//	vehicleRestrictions ^= RoadManager.VehicleType.Emergency;
-			//	apply = true;
-			//}
+            //RoadManager.VehicleType vehicleRestrictions = RoadManager.GetVehicleRestrictions(m_selectedLaneMarkers[0].m_lane);
+            //bool apply = false;
+            //int i = 1;
+            //if (GUI.Button(new Rect(10, laneButtonsStart, laneButtonsWidth, laneButtonsHeight), "Ambulances: " + ((vehicleRestrictions & RoadManager.VehicleType.Ambulance) == RoadManager.VehicleType.Ambulance ? "On" : "Off")))
+            //{
+            //	vehicleRestrictions ^= RoadManager.VehicleType.Ambulance;
+            //	apply = true;
+            //}
+            //if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Bus: " + ((vehicleRestrictions & RoadManager.VehicleType.Bus) == RoadManager.VehicleType.Bus ? "On" : "Off")))
+            //{
+            //	vehicleRestrictions ^= RoadManager.VehicleType.Bus;
+            //	apply = true;
+            //}
+            //if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Cargo Trucks: " + ((vehicleRestrictions & RoadManager.VehicleType.CargoTruck) == RoadManager.VehicleType.CargoTruck ? "On" : "Off")))
+            //{
+            //	vehicleRestrictions ^= RoadManager.VehicleType.CargoTruck;
+            //	apply = true;
+            //}
+            //if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Fire Trucks: " + ((vehicleRestrictions & RoadManager.VehicleType.FireTruck) == RoadManager.VehicleType.FireTruck ? "On" : "Off")))
+            //{
+            //	vehicleRestrictions ^= RoadManager.VehicleType.FireTruck;
+            //	apply = true;
+            //}
+            //if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Garbage Trucks: " + ((vehicleRestrictions & RoadManager.VehicleType.GarbageTruck) == RoadManager.VehicleType.GarbageTruck ? "On" : "Off")))
+            //{
+            //	vehicleRestrictions ^= RoadManager.VehicleType.GarbageTruck;
+            //	apply = true;
+            //}
+            //if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Hearses: " + ((vehicleRestrictions & RoadManager.VehicleType.Hearse) == RoadManager.VehicleType.Hearse ? "On" : "Off")))
+            //{
+            //	vehicleRestrictions ^= RoadManager.VehicleType.Hearse;
+            //	apply = true;
+            //}
+            //if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Citizens: " + ((vehicleRestrictions & RoadManager.VehicleType.PassengerCar) == RoadManager.VehicleType.PassengerCar ? "On" : "Off")))
+            //{
+            //	vehicleRestrictions ^= RoadManager.VehicleType.PassengerCar;
+            //	apply = true;
+            //}
+            //if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Police: " + ((vehicleRestrictions & RoadManager.VehicleType.PoliceCar) == RoadManager.VehicleType.PoliceCar ? "On" : "Off")))
+            //{
+            //	vehicleRestrictions ^= RoadManager.VehicleType.PoliceCar;
+            //	apply = true;
+            //}
+            //if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Emergency: " + ((vehicleRestrictions & RoadManager.VehicleType.Emergency) == RoadManager.VehicleType.Emergency ? "On" : "Off")))
+            //{
+            //	vehicleRestrictions ^= RoadManager.VehicleType.Emergency;
+            //	apply = true;
+            //}
 
             //if (apply)
             //{
@@ -919,54 +919,54 @@ namespace CSL_Traffic
             UIButton roadsButton = (UIButton)tabstrip.tabs.First();
 
             UIButton btn = mainToolStrip.GetComponent<UIComponent>().AddUIComponent<UIButton>();
-			
+            
             btn.name = "RoadCustomizer";
             btn.text = "";
             btn.tooltip = "Road Customizer Tool";
             btn.size = roadsButton.size;
             btn.playAudioEvents = true;
 
-			btn.disabledBgSprite = "rctBg";// roadsButton.disabledBgSprite;
-			btn.focusedBgSprite = "rctBg" + "Focused";// roadsButton.focusedBgSprite;
-			btn.hoveredBgSprite = "rctBg" + "Hovered";// roadsButton.hoveredBgSprite;
-			btn.normalBgSprite = "rctBg";// roadsButton.normalBgSprite;
-			btn.pressedBgSprite = "rctBg" + "Pressed";// roadsButton.pressedBgSprite;
+            btn.disabledBgSprite = "rctBg";// roadsButton.disabledBgSprite;
+            btn.focusedBgSprite = "rctBg" + "Focused";// roadsButton.focusedBgSprite;
+            btn.hoveredBgSprite = "rctBg" + "Hovered";// roadsButton.hoveredBgSprite;
+            btn.normalBgSprite = "rctBg";// roadsButton.normalBgSprite;
+            btn.pressedBgSprite = "rctBg" + "Pressed";// roadsButton.pressedBgSprite;
 
-			btn.atlas = UI.UIUtils.LoadThumbnailsTextureAtlas("UIThumbnails");
-			btn.atlas.AddSprites(roadsButton.atlas.sprites);
-			btn.foregroundSpriteMode = UIForegroundSpriteMode.Fill;
-			UI.UIUtils.SetThumbnails("rct", new UI.UIUtils.SpriteTextureInfo() { startX = 796, startY = 0, width = 36, height = 36 }, btn.atlas);
-			UI.UIUtils.SetThumbnails("rctBg", new UI.UIUtils.SpriteTextureInfo() { startX = 835, startY = 0, width = 43, height = 49 }, btn.atlas, new string[] { "Hovered", "Pressed", "Focused", "" });
+            btn.atlas = UI.UIUtils.LoadThumbnailsTextureAtlas("UIThumbnails");
+            btn.atlas.AddSprites(roadsButton.atlas.sprites);
+            btn.foregroundSpriteMode = UIForegroundSpriteMode.Fill;
+            UI.UIUtils.SetThumbnails("rct", new UI.UIUtils.SpriteTextureInfo() { startX = 796, startY = 0, width = 36, height = 36 }, btn.atlas);
+            UI.UIUtils.SetThumbnails("rctBg", new UI.UIUtils.SpriteTextureInfo() { startX = 835, startY = 0, width = 43, height = 49 }, btn.atlas, new string[] { "Hovered", "Pressed", "Focused", "" });
 
-			btn.disabledFgSprite = "rct";
-			btn.focusedFgSprite = "rct";
-			btn.hoveredFgSprite = "rct";
-			btn.normalFgSprite = "rct";
-			btn.pressedFgSprite = "rct";
+            btn.disabledFgSprite = "rct";
+            btn.focusedFgSprite = "rct";
+            btn.hoveredFgSprite = "rct";
+            btn.normalFgSprite = "rct";
+            btn.pressedFgSprite = "rct";
             btn.group = roadsButton.group;
 
-			//btn.eventClick += delegate(UIComponent component, UIMouseEventParameter eventParam)
-			//{
-			//	//ToolsModifierControl.SetTool<RoadCustomizerTool>();
-			//	//StartCoroutine(SetRoadCustomizerTool());
-			//	ToolsModifierControl.SetTool<RoadCustomizerTool>();
-			//};
+            //btn.eventClick += delegate(UIComponent component, UIMouseEventParameter eventParam)
+            //{
+            //	//ToolsModifierControl.SetTool<RoadCustomizerTool>();
+            //	//StartCoroutine(SetRoadCustomizerTool());
+            //	ToolsModifierControl.SetTool<RoadCustomizerTool>();
+            //};
 
-			btn.eventButtonStateChanged += delegate(UIComponent component, UIButton.ButtonState value)
-			{
-				if (value == UIButton.ButtonState.Focused)
-				{
-					if (ToolsModifierControl.GetCurrentTool<DefaultTool>() != null)
-						ToolsModifierControl.SetTool<RoadCustomizerTool>();
-					else
-						StartCoroutine(SetRoadCustomizerTool());
-				}
-				else if (value == UIButton.ButtonState.Normal)
-				{
-					//if (ToolsModifierControl.GetCurrentTool<RoadCustomizerTool>() != null)
-					ToolsModifierControl.SetTool<DefaultTool>();
-				}
-			};
+            btn.eventButtonStateChanged += delegate(UIComponent component, UIButton.ButtonState value)
+            {
+                if (value == UIButton.ButtonState.Focused)
+                {
+                    if (ToolsModifierControl.GetCurrentTool<DefaultTool>() != null)
+                        ToolsModifierControl.SetTool<RoadCustomizerTool>();
+                    else
+                        StartCoroutine(SetRoadCustomizerTool());
+                }
+                else if (value == UIButton.ButtonState.Normal)
+                {
+                    //if (ToolsModifierControl.GetCurrentTool<RoadCustomizerTool>() != null)
+                    ToolsModifierControl.SetTool<DefaultTool>();
+                }
+            };
 
             InitializeUI(btn);
 

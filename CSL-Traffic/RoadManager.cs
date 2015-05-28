@@ -1,12 +1,11 @@
-﻿using System;
+﻿using ICities;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using ICities;
-using System.Runtime.Serialization.Formatters.Binary;
-using UnityEngine;
 using System.IO;
+using System.Linq;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
+using UnityEngine;
 
 namespace CSL_Traffic
 {
@@ -48,21 +47,21 @@ namespace CSL_Traffic
                         if (lane.ConnectionCount() > 0)
                             nodesList.Add(lane.m_nodeId);
 
-						if (lane.m_speed == 0)
-						{
-							NetSegment segment = NetManager.instance.m_segments.m_buffer[NetManager.instance.m_lanes.m_buffer[lane.m_laneId].m_segment];
-							NetInfo info = segment.Info;
-							uint l = segment.m_lanes;
-							int n = 0;
-							while (l != lane.m_laneId && n < info.m_lanes.Length)
-							{
-								l = NetManager.instance.m_lanes.m_buffer[l].m_nextLane;
-								n++;
-							}
+                        if (lane.m_speed == 0)
+                        {
+                            NetSegment segment = NetManager.instance.m_segments.m_buffer[NetManager.instance.m_lanes.m_buffer[lane.m_laneId].m_segment];
+                            NetInfo info = segment.Info;
+                            uint l = segment.m_lanes;
+                            int n = 0;
+                            while (l != lane.m_laneId && n < info.m_lanes.Length)
+                            {
+                                l = NetManager.instance.m_lanes.m_buffer[l].m_nextLane;
+                                n++;
+                            }
 
-							if (n < info.m_lanes.Length)
-								lane.m_speed = info.m_lanes[n].m_speedLimit;
-						}
+                            if (n < info.m_lanes.Length)
+                                lane.m_speed = info.m_lanes[n].m_speedLimit;
+                        }
 
                     }
 
@@ -70,7 +69,7 @@ namespace CSL_Traffic
                     foreach (ushort nodeId in nodesList)
                         customizerTool.SetNodeMarkers(nodeId);
 
-					Debug.Log("Traffic++: Finished loading road data! - Time: " + Time.realtimeSinceStartup);
+                    Debug.Log("Traffic++: Finished loading road data! - Time: " + Time.realtimeSinceStartup);
                 }
                 catch (Exception e)
                 {
@@ -373,7 +372,7 @@ namespace CSL_Traffic
                 if (netInfoLane != null)
                     lane.m_vehicleTypes = netInfoLane.m_allowedVehicleTypes;
 
-				lane.m_speed = netInfo.m_lanes[laneIndex].m_speedLimit;
+                lane.m_speed = netInfo.m_lanes[laneIndex].m_speedLimit;
             }
 
             NetManager.instance.m_lanes.m_buffer[laneId].m_flags |= Lane.CONTROL_BIT;
@@ -446,18 +445,18 @@ namespace CSL_Traffic
 
         #endregion
 
-		#region Lane Speeds
+        #region Lane Speeds
 
-		public static float GetLaneSpeed(uint laneId)
-		{
-			return GetLane(laneId).m_speed;
-		}
+        public static float GetLaneSpeed(uint laneId)
+        {
+            return GetLane(laneId).m_speed;
+        }
 
-		public static void SetLaneSpeed(uint laneId, int speed)
-		{
-			GetLane(laneId).m_speed = (float)Math.Round(speed/50f, 2);
-		}
+        public static void SetLaneSpeed(uint laneId, int speed)
+        {
+            GetLane(laneId).m_speed = (float)Math.Round(speed/50f, 2);
+        }
 
-		#endregion
-	}
+        #endregion
+    }
 }

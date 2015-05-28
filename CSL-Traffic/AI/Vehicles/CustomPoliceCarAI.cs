@@ -1,9 +1,5 @@
 using ColossalFramework;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using UnityEngine;
 
 namespace CSL_Traffic
@@ -11,26 +7,6 @@ namespace CSL_Traffic
 	class CustomPoliceCarAI : PoliceCarAI, IVehicle
 	{
 		CustomCarAI.SpeedData m_speedData;
-
-		public override void InitializeAI()
-		{
-			base.InitializeAI();
-
-			if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
-			{
-				m_speedData = new CustomCarAI.SpeedData()
-				{
-					currentPath = uint.MaxValue,
-					speedMultiplier = 1f
-					//acceleration = this.m_info.m_acceleration *= 0.3f,
-					//braking = this.m_info.m_braking *= 0.5f,
-					//turning = this.m_info.m_turning *= 0.4f,
-					//maxSpeed = this.m_info.m_maxSpeed *= 1f
-				};
-			}
-
-			Debug.Log("Traffic++: Police Car initialized.\n");
-		}
 
 		public override void SimulationStep(ushort vehicleID, ref Vehicle vehicleData, ref Vehicle.Frame frameData, ushort leaderID, ref Vehicle leaderData, int lodPhysics)
 		{

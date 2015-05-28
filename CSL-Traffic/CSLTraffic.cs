@@ -1,27 +1,20 @@
-using ColossalFramework.Globalization;
 using ICities;
-using System.Collections.Generic;
 using UnityEngine;
-using CSL_Traffic.Extensions;
-using ColossalFramework;
-using System;
-using System.Text;
-using ColossalFramework.Plugins;
 
 namespace CSL_Traffic
 {
-	public class CSLTraffic : LoadingExtensionBase, IUserMod
-	{
+    public class CSLTraffic : LoadingExtensionBase, IUserMod
+    {
         public const ulong WORKSHOP_ID = 409184143ul;
 
         public static OptionsManager.ModOptions Options = OptionsManager.ModOptions.None;
-		static GameObject sm_optionsManager;
+        static GameObject sm_optionsManager;
         
         GameObject m_initializer;
 
-		public string Name
-		{
-			get
+        public string Name
+        {
+            get
             {
                 if (sm_optionsManager == null)
                 {
@@ -31,16 +24,16 @@ namespace CSL_Traffic
 
                 return "Traffic++";
             }
-		}
+        }
 
-		public string Description
-		{
-			get { return "Adds zonable pedestrian paths and other traffic improvements."; }
-		}
+        public string Description
+        {
+            get { return "Adds zonable pedestrian paths and other traffic improvements."; }
+        }
 
-		public override void OnCreated(ILoading loading)
-		{
-			base.OnCreated(loading);
+        public override void OnCreated(ILoading loading)
+        {
+            base.OnCreated(loading);
 
             if (sm_optionsManager != null)
             {
@@ -52,7 +45,7 @@ namespace CSL_Traffic
                 m_initializer = new GameObject("CSL-Traffic Custom Prefabs");
                 m_initializer.AddComponent<Initializer>();
             }
-		}
+        }
 
         public override void OnLevelUnloading()
         {
@@ -62,11 +55,11 @@ namespace CSL_Traffic
                 m_initializer.GetComponent<Initializer>().OnLevelUnloading();
         }
 
-		public override void OnReleased()
-		{
-			base.OnReleased();
+        public override void OnReleased()
+        {
+            base.OnReleased();
 
             GameObject.Destroy(m_initializer);
-		}
-	}
+        }
+    }
 }

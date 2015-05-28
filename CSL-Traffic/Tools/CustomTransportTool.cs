@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UnityEngine;
-using CSL_Traffic.Extensions;
-using System.Collections;
-using System.Reflection;
-using ColossalFramework;
-using ColossalFramework.Math;
+﻿using ColossalFramework;
 using ColossalFramework.Globalization;
+using ColossalFramework.Math;
+using CSL_Traffic.Extensions;
+using System;
+using System.Reflection;
+using UnityEngine;
 
 namespace CSL_Traffic
 {

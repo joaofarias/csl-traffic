@@ -8,24 +8,6 @@ namespace CSL_Traffic
 	{
 		CustomCarAI.SpeedData m_speedData;
 
-		public override void InitializeAI()
-		{
-			base.InitializeAI();
-
-			if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
-			{
-				m_speedData = new CustomCarAI.SpeedData()
-				{
-					currentPath = uint.MaxValue,
-					speedMultiplier = 1f
-					//acceleration = this.m_info.m_acceleration *= 0.3f,
-					//braking = this.m_info.m_braking *= 0.5f,
-					//turning = this.m_info.m_turning *= 0.4f,
-					//maxSpeed = this.m_info.m_maxSpeed *= 1f
-				};
-			}
-		}
-
 		public override void SimulationStep(ushort vehicleID, ref Vehicle data, Vector3 physicsLodRefPos)
 		{
 			if ((CSLTraffic.Options & OptionsManager.ModOptions.NoDespawn) == OptionsManager.ModOptions.NoDespawn)

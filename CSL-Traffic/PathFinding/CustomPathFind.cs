@@ -1,12 +1,12 @@
 ﻿using ColossalFramework;
 using ColossalFramework.Math;
 using ColossalFramework.UI;
+using CSL_Traffic.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Threading;
 using UnityEngine;
-using CSL_Traffic.Extensions;
 
 namespace CSL_Traffic
 {

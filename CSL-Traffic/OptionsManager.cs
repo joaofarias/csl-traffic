@@ -1,11 +1,10 @@
-﻿using System;
-using System.Linq;
-using UnityEngine;
+﻿using ColossalFramework.DataBinding;
 using ColossalFramework.UI;
-using ColossalFramework.DataBinding;
-using System.Xml.Serialization;
+using System;
 using System.IO;
-using System.Collections.Generic;
+using System.Linq;
+using System.Xml.Serialization;
+using UnityEngine;
 
 namespace CSL_Traffic
 {
