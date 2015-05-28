@@ -19,20 +19,20 @@ namespace CSL_Traffic
         [Flags]
         enum RoadType
         {
-            Normal		= 0,
+            Normal = 0,
             
-            Grass       = 1,
-            Trees       = 2,
+            Grass = 1,
+            Trees = 2,
             
-            Elevated    = 4,
-            Bridge      = 8,
-            Slope		= 16,
-            Tunnel		= 32,
+            Elevated = 4,
+            Bridge = 8,
+            Slope = 16,
+            Tunnel = 32,
             
-            Pavement    = 64,
-            Gravel      = 128,
+            Pavement = 64,
+            Gravel = 128,
             
-            OneWay      = 256
+            OneWay = 256
         }
 
         static Queue<IEnumerator> sm_actionQueue = new Queue<IEnumerator>();
@@ -132,7 +132,8 @@ namespace CSL_Traffic
 #endif
         }
 
-        void OnLevelWasLoaded(int level) {
+        void OnLevelWasLoaded(int level)
+        {
             this.m_level = level;
 
             if (level == 6)
@@ -170,8 +171,8 @@ namespace CSL_Traffic
                 for (uint i = 0; i < PrefabCollection<VehicleInfo>.LoadedCount(); i++)
                 {
                     SetRealisitcSpeeds(PrefabCollection<VehicleInfo>.GetLoaded(i), false);	
-                }
             }
+        }
         }
 
         void Update()
@@ -315,7 +316,7 @@ namespace CSL_Traffic
                                 if (i == 2) textureType = TextureType.BusBoth;
                             }
 
-                            ReplaceTextures(textureInfo, textureType,  folder, netInfo.m_segments[i].m_segmentMaterial);
+                            ReplaceTextures(textureInfo, textureType, folder, netInfo.m_segments[i].m_segmentMaterial);
                         }
                     }
 
@@ -949,7 +950,7 @@ namespace CSL_Traffic
 
 
             RoadAI roadAI = smallRoad.GetComponent<RoadAI>();
-            roadAI.m_maintenanceCost = CalculateMaintenanceCost(0.36f);
+            roadAI.m_maintenanceCost = GetSmallBuswayMaintenanceCost(roadType);
             roadAI.m_enableZoning = false;
             roadAI.m_bridgeInfo = bridge as NetInfo;
             roadAI.m_elevatedInfo = elevated as NetInfo;
@@ -961,7 +962,7 @@ namespace CSL_Traffic
 
             NetInfo.Lane[] lanes = new NetInfo.Lane[4];
             Array.Copy(smallRoad.m_lanes, lanes, 2);
-            Array.Copy(smallRoad.m_lanes, smallRoad.m_lanes.Length-2, lanes, 2, 2);
+            Array.Copy(smallRoad.m_lanes, smallRoad.m_lanes.Length - 2, lanes, 2, 2);
             smallRoad.m_lanes = lanes;
 
             smallRoad.m_lanes[2] = new NetInfoLane(smallRoad.m_lanes[2], RoadManager.VehicleType.Bus | RoadManager.VehicleType.Emergency, NetInfoLane.SpecialLaneType.BusLane);
@@ -994,8 +995,7 @@ namespace CSL_Traffic
                 return null;
 
             RoadBaseAI roadAI = smallRoad.GetComponent<RoadBaseAI>();
-            roadAI.m_maintenanceCost = CalculateMaintenanceCost(roadAI.m_maintenanceCost / 625 + 0.06f);
-            // TODO: check maintenace costs for tunnels
+            roadAI.m_maintenanceCost = GetSmallBuswayMaintenanceCost(roadType);
 
             NetLaneProps laneProps = null;
             m_customNetLaneProps.TryGetValue("BusLane", out laneProps);
@@ -1061,7 +1061,7 @@ namespace CSL_Traffic
             largeRoad.m_UIPriority = 20 + (int)roadType;
 
             RoadAI roadAI = largeRoad.GetComponent<RoadAI>();
-            roadAI.m_maintenanceCost = 662;
+            roadAI.m_maintenanceCost = GetLargeBuswayMaintenanceCost(roadType);
             roadAI.m_bridgeInfo = bridge as NetInfo;
             roadAI.m_elevatedInfo = elevated as NetInfo;
             roadAI.m_tunnelInfo = tunnel as NetInfo;
@@ -1092,9 +1092,7 @@ namespace CSL_Traffic
                 return null;
 
             RoadBaseAI roadAI = largeRoad.GetComponent<RoadBaseAI>();
-            roadAI.m_maintenanceCost = 1980;
-            // TODO: check maintenace costs for tunnels
-
+            roadAI.m_maintenanceCost = GetLargeBuswayMaintenanceCost(roadType);
             NetLaneProps laneProps = null;
             m_customNetLaneProps.TryGetValue("BusLane", out laneProps);
 
@@ -1140,7 +1138,7 @@ namespace CSL_Traffic
                 return;
 
             RoadAI roadAI = pedestrianRoad.GetComponent<RoadAI>();
-
+            roadAI.m_maintenanceCost = GetPedestrianRoadMaintenanceCost(roadType);
             if ((roadType & RoadType.Pavement) == RoadType.Pavement)
             {
                 pedestrianRoad.m_createGravel = false;
@@ -1149,14 +1147,12 @@ namespace CSL_Traffic
                 //pedestrianRoad.m_Thumbnail = "ThumbnailBuildingBeautificationPedestrianPavement";
 
                 roadAI.m_constructionCost = 2000;
-                roadAI.m_maintenanceCost = 250;
                 roadAI.m_bridgeInfo = roadAI.m_elevatedInfo = bridge as NetInfo;
             }
             else
             {
                 //pedestrianRoad.m_Thumbnail = "ThumbnailBuildingBeautificationPedestrianGravel";
                 roadAI.m_constructionCost = 1000;
-                roadAI.m_maintenanceCost = 150;
             }
 
             NetInfo onewayRoad = roadsCollection.m_prefabs.FirstOrDefault(p => p.name == "Oneway Road");
@@ -1260,6 +1256,68 @@ namespace CSL_Traffic
 
         #region Road Utils
 
+        /*
+         * Default road maintenance costs per unit (normal / grass / trees / elevated / tunnel):
+         * 2-lane roads: 0.32 / 0.40 / 0.48 / 0.80 / 1.92
+         * 4-lane roads: 0.80 / 0.96 / 1.12 / 1.60 / 4.80
+         * 6-lane roads: 0.96 / 1.12 / 1.28 / 2.88 / 5.76
+         * 
+         * 2: normal -> grass -> trees: +0.08 each
+         *    normal -> elevated: x2.5
+         *    normal -> tunnel: x6
+         * 4: normal -> grass -> trees: +0.16 each
+         *    normal -> elevated: x2
+         *    normal -> tunnel: x6
+         * 6: normal -> grass -> trees: +0.16 each
+         *    normal -> elevated: x3
+         *    normal -> tunnel: x6
+         * 2 -> 4: x2.5 for base (normal)
+         * 2 -> 6: x3 for base (normal)
+         * 
+         * Bus road maintenance costs (upgrades follow the addition and multiplication rules above):
+         * 2-lane: +0.04 for base
+         * 4-lane: +0.08 for base (seeing that 4- and 6-lane roads are close; proposed, since it's not available (yet))
+         * 6-lane: +0.10 for base
+         * 
+         * Pedestrian road maintenance costs (normal / elevated):
+         * Gravel: 0.24 / N/A
+         * Pavement: 0.40 / 1.00 (x2.5, same as normal 2-lane roads)
+         */
+
+        static int GetMaintenanceCost(RoadType roadType, float baseCosts, float upgradeCosts, float timesElevated, float timesTunnel)
+        {
+            float finalCosts = baseCosts;
+            if (roadType.HasFlag(RoadType.Grass))
+                finalCosts += upgradeCosts;
+            else if (roadType.HasFlag(RoadType.Trees))
+                finalCosts += upgradeCosts * 2;
+
+            if (roadType.HasFlag(RoadType.Bridge) || roadType.HasFlag(RoadType.Elevated) || roadType.HasFlag(RoadType.Slope))
+                finalCosts *= timesElevated;
+            else if (roadType.HasFlag(RoadType.Tunnel))
+                finalCosts *= timesTunnel;
+
+            return CalculateMaintenanceCost(finalCosts);
+        }
+
+        static int GetSmallBuswayMaintenanceCost(RoadType roadType)
+        {
+            return GetMaintenanceCost(roadType, 0.36f, 0.08f, 2.5f, 6f);
+        }
+
+        static int GetLargeBuswayMaintenanceCost(RoadType roadType)
+        {
+            return GetMaintenanceCost(roadType, 1.06f, 0.16f, 3f, 6f);
+        }
+
+        static int GetPedestrianRoadMaintenanceCost(RoadType roadType)
+        {
+            if (roadType.HasFlag(RoadType.Pavement))
+                return GetMaintenanceCost(roadType, 0.40f, 0f, 2.5f, 6f);
+            else
+                return GetMaintenanceCost(roadType, 0.24f, 0f, 2.5f, 6f);
+        }
+
         static int CalculateMaintenanceCost(float target)
         {
             return Mathf.RoundToInt(target * 625);
@@ -1335,41 +1393,41 @@ namespace CSL_Traffic
             }
         }
 
-        // TODO: set correct values on vehicles for realistic speeds
+                // TODO: set correct values on vehicles for realistic speeds
         void SetRealisitcSpeeds(VehicleInfo vehicle, bool activate)
         {
             float accelerationMultiplier;
             float maxSpeedMultiplier;
-            switch (vehicle.name)
-            {
-                case "Ambulance":
+                switch (vehicle.name)
+                {
+                    case "Ambulance":
                     accelerationMultiplier = 0.2f;
-                    //vehicle.m_braking *= 0.3f;
-                    //vehicle.m_turning *= 0.25f;
+                        //vehicle.m_braking *= 0.3f;
+                        //vehicle.m_turning *= 0.25f;
                     maxSpeedMultiplier = 0.5f;
-                    break;
-                case "Bus":
-                case "Fire Truck":
-                case "Garbage Truck":
+                        break;
+                    case "Bus":
+                    case "Fire Truck":
+                    case "Garbage Truck":
                     accelerationMultiplier = 0.15f;
-                    //vehicle.m_braking *= 0.25f;
-                    //vehicle.m_turning *= 0.2f;
+                        //vehicle.m_braking *= 0.25f;
+                        //vehicle.m_turning *= 0.2f;
                     maxSpeedMultiplier = 0.5f;
-                    break;
-                case "Hearse":
-                case "Police Car":
+                        break;
+                    case "Hearse":
+                    case "Police Car":
                     accelerationMultiplier = 0.25f;
-                    //vehicle.m_braking *= 0.35f;
-                    //vehicle.m_turning *= 0.3f;
+                        //vehicle.m_braking *= 0.35f;
+                        //vehicle.m_turning *= 0.3f;
                     maxSpeedMultiplier = 0.5f;
-                    break;
-                default:
+                        break;
+                    default:
                     accelerationMultiplier = 0.25f;
-                    //vehicle.m_braking *= 0.35f;
-                    //vehicle.m_turning *= 0.3f;
+                        //vehicle.m_braking *= 0.35f;
+                        //vehicle.m_turning *= 0.3f;
                     maxSpeedMultiplier = 0.5f;
-                    break;
-            }
+                        break;
+                }
 
             if (!activate)
             {
@@ -1579,73 +1637,73 @@ namespace CSL_Traffic
                 case TextureType.Normal:
                     switch (map)
                     {
-                        case "_MainTex":	return info.mainTex;
-                        case "_XYSMap":		return info.xysTex;
-                        case "_ACIMap":		return info.aciTex;
-                        case "_APRMap":		return info.aprTex;
+                        case "_MainTex": return info.mainTex;
+                        case "_XYSMap": return info.xysTex;
+                        case "_ACIMap": return info.aciTex;
+                        case "_APRMap": return info.aprTex;
                     }
                     break;
                 case TextureType.Bus:
                     switch (map)
                     {
-                        case "_MainTex":	return info.mainTexBus;
-                        case "_XYSMap":		return info.xysTexBus;
-                        case "_ACIMap":		return info.aciTexBus;
-                        case "_APRMap":		return info.aprTexBus;
+                        case "_MainTex": return info.mainTexBus;
+                        case "_XYSMap": return info.xysTexBus;
+                        case "_ACIMap": return info.aciTexBus;
+                        case "_APRMap": return info.aprTexBus;
                     }
                     break;
                 case TextureType.BusBoth:
                     switch (map)
                     {
-                        case "_MainTex":	return info.mainTexBusBoth;
-                        case "_XYSMap":		return info.xysTexBusBoth;
-                        case "_ACIMap":		return info.aciTexBusBoth;
-                        case "_APRMap":		return info.aprTexBusBoth;
+                        case "_MainTex": return info.mainTexBusBoth;
+                        case "_XYSMap": return info.xysTexBusBoth;
+                        case "_ACIMap": return info.aciTexBusBoth;
+                        case "_APRMap": return info.aprTexBusBoth;
                     }
                     break;
                 case TextureType.Node:
                     switch (map)
                     {
-                        case "_MainTex":	return info.mainTexNode;
-                        case "_XYSMap":		return info.xysTexNode;
-                        case "_ACIMap":		return info.aciTexNode;
-                        case "_APRMap":		return info.aprTexNode;
+                        case "_MainTex": return info.mainTexNode;
+                        case "_XYSMap": return info.xysTexNode;
+                        case "_ACIMap": return info.aciTexNode;
+                        case "_APRMap": return info.aprTexNode;
                     }
                     break;
                 case TextureType.LOD:
                     switch (map)
                     {
-                        case "_MainTex":	return info.lodMainTex;
-                        case "_XYSMap":		return info.lodXysTex;
-                        case "_ACIMap":		return info.lodAciTex;
-                        case "_APRMap":		return info.lodAprTex;
+                        case "_MainTex": return info.lodMainTex;
+                        case "_XYSMap": return info.lodXysTex;
+                        case "_ACIMap": return info.lodAciTex;
+                        case "_APRMap": return info.lodAprTex;
                     }
                     break;
                 case TextureType.BusLOD:
                     switch (map)
                     {
-                        case "_MainTex":	return info.lodMainTexBus;
-                        case "_XYSMap":		return info.lodXysTexBus;
-                        case "_ACIMap":		return info.lodAciTexBus;
-                        case "_APRMap":		return info.lodAprTexBus;
+                        case "_MainTex": return info.lodMainTexBus;
+                        case "_XYSMap": return info.lodXysTexBus;
+                        case "_ACIMap": return info.lodAciTexBus;
+                        case "_APRMap": return info.lodAprTexBus;
                     }
                     break;
                 case TextureType.BusBothLOD:
                     switch (map)
                     {
-                        case "_MainTex":	return info.lodMainTexBusBoth;
-                        case "_XYSMap":		return info.lodXysTexBusBoth;
-                        case "_ACIMap":		return info.lodAciTexBusBoth;
-                        case "_APRMap":		return info.lodAprTexBusBoth;
+                        case "_MainTex": return info.lodMainTexBusBoth;
+                        case "_XYSMap": return info.lodXysTexBusBoth;
+                        case "_ACIMap": return info.lodAciTexBusBoth;
+                        case "_APRMap": return info.lodAprTexBusBoth;
                     }
                     break;
                 case TextureType.NodeLOD:
                     switch (map)
                     {
-                        case "_MainTex":	return info.lodMainTexNode;
-                        case "_XYSMap":		return info.lodXysTexNode;
-                        case "_ACIMap":		return info.lodAciTexNode;
-                        case "_APRMap":		return info.lodAprTexNode;
+                        case "_MainTex": return info.lodMainTexNode;
+                        case "_XYSMap": return info.lodXysTexNode;
+                        case "_ACIMap": return info.lodAciTexNode;
+                        case "_APRMap": return info.lodAprTexNode;
                     }
                     break;
                 default:
@@ -1945,7 +2003,7 @@ namespace CSL_Traffic
                     m_Identifier = "TUTORIAL_ADVISER",
                     m_Key = "RoadCustomizer"
                 };
-                locale.AddLocalizedString(k,	"Vehicle and Speed Restrictions:\n\n" +
+                locale.AddLocalizedString(k, "Vehicle and Speed Restrictions:\n\n" +
                                                 "1. Hover over roads to display their lanes\n" +
                                                 "2. Left-click to toggle selection of lane(s), right-click clears current selection(s)\n" +
                                                 "3. With lanes selected, set vehicle and speed restrictions using the menu icons\n\n\n" +
