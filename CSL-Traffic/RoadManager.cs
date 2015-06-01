@@ -20,11 +20,11 @@ namespace CSL_Traffic
                 if ((CSLTraffic.Options & OptionsManager.ModOptions.BetaTestRoadCustomizerTool) == OptionsManager.ModOptions.None || (CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) == OptionsManager.ModOptions.GhostMode)
                     return;
 
-                Debug.Log("Traffic++: Loading road data! - Time: " + Time.realtimeSinceStartup);
+                Logger.LogInfo("Loading road data! - Time: " + Time.realtimeSinceStartup);
                 byte[] data = serializableDataManager.LoadData(LANE_DATA_ID);
                 if (data == null)
                 {
-                    Debug.Log("Traffic++: No road data to load!");
+                    Logger.LogInfo("No road data to load!");
                     return;
                 }
 
@@ -69,11 +69,11 @@ namespace CSL_Traffic
                     foreach (ushort nodeId in nodesList)
                         customizerTool.SetNodeMarkers(nodeId);
 
-                    Debug.Log("Traffic++: Finished loading road data! - Time: " + Time.realtimeSinceStartup);
+                    Logger.LogInfo("Finished loading road data! - Time: " + Time.realtimeSinceStartup);
                 }
                 catch (Exception e)
                 {
-                    Debug.Log("Traffic++: Unexpected " + e.GetType().Name + " loading road data.");
+                    Logger.LogInfo("Unexpected " + e.GetType().Name + " loading road data.");
                 }
                 finally
                 {
@@ -86,7 +86,7 @@ namespace CSL_Traffic
                 if ((CSLTraffic.Options & OptionsManager.ModOptions.BetaTestRoadCustomizerTool) == OptionsManager.ModOptions.None || (CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) == OptionsManager.ModOptions.GhostMode)
                     return;
 
-                Debug.Log("Traffic++: Saving road data!");
+                Logger.LogInfo("Saving road data!");
                 BinaryFormatter binaryFormatter = new BinaryFormatter();
                 MemoryStream memStream = new MemoryStream();
                 try
@@ -96,7 +96,7 @@ namespace CSL_Traffic
                 }
                 catch (Exception e)
                 {
-                    Debug.Log("Traffic++: Unexpected " + e.GetType().Name + " saving road data.");
+                    Logger.LogInfo("Unexpected " + e.GetType().Name + " saving road data.");
                 }
                 finally
                 {
@@ -123,7 +123,7 @@ namespace CSL_Traffic
             EmergencyVehicles   = Emergency | Ambulance | FireTruck | PoliceCar,
             ServiceVehicles     = EmergencyVehicles | Bus | GarbageTruck | Hearse,
 
-            All             = Int32.MaxValue
+            All                 = ServiceVehicles | PassengerCar
         }
 
         [Serializable]

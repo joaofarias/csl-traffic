@@ -25,14 +25,14 @@ namespace CSL_Traffic.UI
             Shader shader = Shader.Find("UI/Default UI Shader");
             if (shader == null)
             {
-                Debug.Log("Traffic++: Cannot find UI Shader. Using default thumbnails.");
+                Logger.LogInfo("Cannot find UI Shader. Using default thumbnails.");
                 return null;
             }
 
             byte[] bytes;
             if (!FileManager.GetTextureBytes(name + ".png", FileManager.Folder.UI, out bytes))
             {
-                Debug.Log("Traffic++: Cannot find UI Atlas file. Using default thumbnails.");
+                Logger.LogInfo("Cannot find UI Atlas file. Using default thumbnails.");
                 return null;
             }
 

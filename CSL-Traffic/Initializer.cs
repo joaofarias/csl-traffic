@@ -5,6 +5,7 @@ using CSL_Traffic.Extensions;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -138,7 +139,7 @@ namespace CSL_Traffic
 
             if (level == 6)
             {
-                Debug.Log("Traffic++: Game level was loaded. Options enabled: \n\t" + CSLTraffic.Options);
+                Logger.LogInfo("Game level was loaded. Options enabled: \n\t" + CSLTraffic.Options);
 
                 m_initialized = false;
 
@@ -214,7 +215,7 @@ namespace CSL_Traffic
                     CustomPathManager customPathManager = Singleton<PathManager>.instance as CustomPathManager;
                     if (customPathManager == null)
                     {
-                        Debug.Log("Traffic++: CustomPathManager not found! There's an incompatibility with another mod.");
+                        Logger.LogInfo("CustomPathManager not found! There's an incompatibility with another mod.");
                         UIView.library.ShowModal<ExceptionPanel>("ExceptionPanel").SetMessage("Incompatibility Issue", "Traffic++ detected an incompatibility with another mod! You can continue playing but it's NOT recommended.", false);
                         m_incompatibilityWarning = true;
                     }
@@ -268,7 +269,7 @@ namespace CSL_Traffic
                 count = (count + 1) % 8;
                 
                 if (vehicleInfo == null)
-                    Debug.Log("Damn it!");
+                    Logger.LogInfo("Damn it!");
                 else
                 {
                     CreateVehicle(vehicleInfo.m_mesh, vehicleInfo.m_material, color);
@@ -466,11 +467,11 @@ namespace CSL_Traffic
             }
             catch (Exception e)
             {
-                Debug.Log("Traffic++: Unexpected " + e.GetType().Name + " getting required components: " + e.Message + "\n" + e.StackTrace + "\n");
+                Logger.LogInfo("Unexpected " + e.GetType().Name + " getting required components: " + e.Message + "\n" + e.StackTrace + "\n");
                 return;
             }
 
-            Debug.Log("Traffic++: Queueing prefabs for loading...");
+            Logger.LogInfo("Queueing prefabs for loading...");
 
             Singleton<LoadingManager>.instance.QueueLoadingAction(ActionWrapper(() =>
             {
@@ -527,17 +528,17 @@ namespace CSL_Traffic
                 }
                 catch (KeyNotFoundException knf)
                 {
-                    Debug.Log("Traffic++: Error initializing a prefab: " + knf.Message + "\n" + knf.StackTrace + "\n");
+                    Logger.LogInfo("Error initializing a prefab: " + knf.Message + "\n" + knf.StackTrace + "\n");
                 }
                 catch (Exception e)
                 {
-                    Debug.Log("Traffic++: Unexpected " + e.GetType().Name + " initializing prefabs: " + e.Message + "\n" + e.StackTrace + "\n");
+                    Logger.LogInfo("Unexpected " + e.GetType().Name + " initializing prefabs: " + e.Message + "\n" + e.StackTrace + "\n");
                 }
             }));
 
             m_initialized = true;
 
-            Debug.Log("Traffic++: Prefabs queued for loading.");
+            Logger.LogInfo("Prefabs queued for loading.");
         }
 
         //IEnumerator Print()
@@ -596,7 +597,7 @@ namespace CSL_Traffic
             if (Singleton<PathManager>.instance as CustomPathManager != null)
                 return;
 
-            Debug.Log("Traffic++: Replacing Path Manager");
+            Logger.LogInfo("Replacing Path Manager");
 
             // Change PathManager to CustomPathManager
             FieldInfo sInstance = typeof(ColossalFramework.Singleton<PathManager>).GetFieldByName("sInstance");
@@ -615,7 +616,7 @@ namespace CSL_Traffic
             // Destroy in 10 seconds to give time to all references to update to the new manager without crashing
             GameObject.Destroy(originalPathManager, 10f);
 
-            Debug.Log("Traffic++: Path Manager successfully replaced.");
+            Logger.LogInfo("Path Manager successfully replaced.");
         }
 
         void ReplaceTransportManager()
@@ -623,7 +624,7 @@ namespace CSL_Traffic
             if (Singleton<TransportManager>.instance as CustomTransportManager != null)
                 return;
 
-            Debug.Log("Traffic++: Replacing Transport Manager");
+            Logger.LogInfo("Replacing Transport Manager");
 
             // Change TransportManager to CustomTransportManager
             FieldInfo sInstance = typeof(ColossalFramework.Singleton<TransportManager>).GetFieldByName("sInstance");
@@ -663,7 +664,7 @@ namespace CSL_Traffic
             // Destroy in 10 seconds to give time to all references to update to the new manager without crashing
             GameObject.Destroy(originalTransportManager, 10f);
 
-            Debug.Log("Traffic++: Transport Manager successfully replaced.");
+            Logger.LogInfo("Transport Manager successfully replaced.");
         }
 
         T TryGetComponent<T>(string name)
@@ -1816,7 +1817,7 @@ namespace CSL_Traffic
             if (sm_localizationInitialized)
                 return;
 
-            Debug.Log("Traffic++: Updating Localization.");
+            Logger.LogInfo("Updating Localization.");
 
             try
             {
@@ -2017,10 +2018,10 @@ namespace CSL_Traffic
             }
             catch (ArgumentException e)
             {
-                Debug.Log("Traffic++: Unexpected " + e.GetType().Name + " updating localization: " + e.Message + "\n" + e.StackTrace + "\n");
+                Logger.LogInfo("Unexpected " + e.GetType().Name + " updating localization: " + e.Message + "\n" + e.StackTrace + "\n");
             }
 
-            Debug.Log("Traffic++: Localization successfully updated.");
+            Logger.LogInfo("Localization successfully updated.");
         }
 
 #if DEBUG
