@@ -73,14 +73,14 @@ namespace CSL_Traffic
 			Transform mods = contentManager.transform.GetChild(0).FindChild("Mods");
 			if (mods == null)
 			{
-				//Debug.Log("Can't find mods");
+				//Logger.LogInfo("Can't find mods");
 				return;
 			}
 
 			UILabel modLabel = mods.GetComponentsInChildren<UILabel>().FirstOrDefault(l => l.text.Contains("jfarias") || l.text.Contains("Traffic++"));
 			if (modLabel == null)
 			{
-				//Debug.Log("Can't find label");
+				//Logger.LogInfo("Can't find label");
 				return;
 			}
 
@@ -93,7 +93,7 @@ namespace CSL_Traffic
 			//Transform shareButtonTransform = mod.transform.FindChild("Share");
 			//if (shareButtonTransform == null)
 			//{
-			//	//Debug.Log("Can't find share");
+			//	//Logger.LogInfo("Can't find share");
 			//	return;
 			//}
 
@@ -265,7 +265,7 @@ namespace CSL_Traffic
 			}
 			catch (Exception e)
 			{
-				Debug.Log("Traffic++: Unexpected " + e.GetType().Name + " saving options: " + e.Message + "\n" + e.StackTrace);
+				Logger.LogInfo("Unexpected " + e.GetType().Name + " saving options: " + e.Message + "\n" + e.StackTrace);
 			}
 		}
 
@@ -288,7 +288,7 @@ namespace CSL_Traffic
 			}
 			catch (Exception e)
 			{
-				Debug.Log("Traffic++: Unexpected " + e.GetType().Name + " loading options: " + e.Message + "\n" + e.StackTrace);
+				Logger.LogInfo("Unexpected " + e.GetType().Name + " loading options: " + e.Message + "\n" + e.StackTrace);
 				return;
 			}
 

@@ -1212,12 +1212,12 @@ namespace CSL_Traffic
 		{
 			NetManager instance = Singleton<NetManager>.instance;
 			//if (instance == null)
-			//	Debug.Log("Traffic++: GetLaneDirection -> instance is null!\n");
+			//	Logger.LogInfo("GetLaneDirection -> instance is null!\n");
 			NetInfo info = instance.m_segments.m_buffer[(int)pathPos.m_segment].Info;
 			//if (info == null)
-			//	Debug.Log("Traffic++: GetLaneDirection -> info is null!\n");
+			//	Logger.LogInfo("GetLaneDirection -> info is null!\n");
 			//else if (info.m_lanes == null)
-			//	Debug.Log("Traffic++: GetLaneDirection -> info.m_lanes is null!\n");
+			//	Logger.LogInfo("GetLaneDirection -> info.m_lanes is null!\n");
 			if (info.m_lanes.Length > (int)pathPos.m_lane)
 			{
 				direction = info.m_lanes[(int)pathPos.m_lane].m_finalDirection;

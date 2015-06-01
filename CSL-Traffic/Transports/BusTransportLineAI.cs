@@ -16,7 +16,7 @@ namespace CSL_Traffic
 
 			base.InitializePrefab();
 
-			Debug.Log("Traffic++: " + name + " initialized.");
+			Logger.LogInfo("" + name + " initialized.");
 		}
 
 		public override void SimulationStep(ushort segmentID, ref NetSegment data)

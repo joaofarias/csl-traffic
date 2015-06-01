@@ -43,7 +43,7 @@ namespace CSL_Traffic
             if (plugin != null)
                 return plugin.modPath;
             else
-                Debug.Log("Traffic++: Cannot find plugin path.");
+                Logger.LogInfo("Cannot find plugin path.");
 
             return null;
         }
@@ -60,7 +60,7 @@ namespace CSL_Traffic
             if (filePath == null || !File.Exists(filePath))
             {
 #if DEBUG
-                Debug.Log("Traffic++: Cannot find texture file at " + filePath);
+                Logger.LogInfo("Cannot find texture file at " + filePath);
 #endif
                 return false;
             }
@@ -74,7 +74,7 @@ namespace CSL_Traffic
             }
             catch (Exception e)
             {
-                Debug.Log("Traffic++: Unexpected " + e.GetType().Name + " reading texture file at " + filePath);
+                Logger.LogInfo("Unexpected " + e.GetType().Name + " reading texture file at " + filePath);
                 return false;
             }
 
@@ -114,12 +114,12 @@ namespace CSL_Traffic
             catch (FileNotFoundException)
             {
                 // No texture index
-                Debug.Log("Traffic++: No texture index found.");
+                Logger.LogInfo("No texture index found.");
                 return null;
             }
             catch (Exception e)
             {
-                Debug.Log("Traffic++: Unexpected " + e.GetType().Name + " loading texture index: " + e.Message + "\n" + e.StackTrace);
+                Logger.LogInfo("Unexpected " + e.GetType().Name + " loading texture index: " + e.Message + "\n" + e.StackTrace);
                 return null;
             }
 
