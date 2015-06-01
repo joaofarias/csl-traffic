@@ -7,6 +7,7 @@ namespace CSL_Traffic
 {
     static class CustomCarAI
     {
+        public static SpeedData[] sm_speedData = new SpeedData[VehicleManager.MAX_VEHICLE_COUNT];
         public static void SimulationStep(CarAI carAI, ushort vehicleID, ref Vehicle vehicleData, ref Vehicle.Frame frameData, ushort leaderID, ref Vehicle leaderData, int lodPhysics)
         {
             uint currentFrameIndex = Singleton<SimulationManager>.instance.m_currentFrameIndex;
@@ -672,9 +673,6 @@ namespace CSL_Traffic
 
             public void ApplySpeedMultiplier(VehicleInfo vehicle)
             {
-                if (speedMultiplier == 0f)
-                    speedMultiplier = 1f;
-
                 vehicle.m_acceleration *= speedMultiplier;
                 //vehicle.m_braking *= speedMultiplier;
                 //vehicle.m_turning *= speedMultiplier;
@@ -683,9 +681,6 @@ namespace CSL_Traffic
 
             public void RestoreVehicleSpeed(VehicleInfo vehicle)
             {
-                if (speedMultiplier == 0f)
-                    speedMultiplier = 1f;
-
                 vehicle.m_acceleration /= speedMultiplier;
                 //vehicle.m_braking /= speedMultiplier;
                 //vehicle.m_turning /= speedMultiplier;

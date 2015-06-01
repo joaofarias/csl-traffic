@@ -101,6 +101,7 @@ namespace CSL_Traffic
         Dictionary<string, NetLaneProps> m_customNetLaneProps;
         Dictionary<string, PrefabInfo> m_customPrefabs;
         Dictionary<string, Texture2D> m_customTextures;
+        Dictionary<string, VehicleAI> m_replacedAIs;
         //Queue<Action> m_postLoadingActions;
         UITextureAtlas m_thumbnailsTextureAtlas;
         bool m_initialized;
@@ -115,6 +116,7 @@ namespace CSL_Traffic
             m_customNetLaneProps = new Dictionary<string, NetLaneProps>();
             m_customPrefabs = new Dictionary<string, PrefabInfo>();
             m_customTextures = new Dictionary<string, Texture2D>();
+            m_replacedAIs = new Dictionary<string, VehicleAI>();
             //m_postLoadingActions = new Queue<Action>();
 
             LoadTextureIndex();
@@ -154,6 +156,7 @@ namespace CSL_Traffic
 
                 m_customNetLaneProps.Clear();
                 m_customPrefabs.Clear();
+                m_replacedAIs.Clear();
                 //m_postLoadingActions.Clear();
             }
         }
@@ -167,12 +170,13 @@ namespace CSL_Traffic
                     CitizenInfo cit = PrefabCollection<CitizenInfo>.GetLoaded(i);
                     cit.m_walkSpeed /= 0.25f;
                 }
-
-                for (uint i = 0; i < PrefabCollection<VehicleInfo>.LoadedCount(); i++)
-                {
-                    SetRealisitcSpeeds(PrefabCollection<VehicleInfo>.GetLoaded(i), false);	
             }
-        }
+
+            for (uint i = 0; i < PrefabCollection<VehicleInfo>.LoadedCount(); i++)
+            {
+                //SetRealisitcSpeeds(PrefabCollection<VehicleInfo>.GetLoaded(i), false);
+                SetOriginalAI(PrefabCollection<VehicleInfo>.GetLoaded(i));
+            }
         }
 
         void Update()
@@ -752,13 +756,13 @@ namespace CSL_Traffic
 
         #region Clone Methods
 
-        static T ClonePrefab<T>(string prefabName, string newName, Transform customPrefabsHolder, bool replace = false, bool ghostMode = false) where T : PrefabInfo
+        T ClonePrefab<T>(string prefabName, string newName, Transform customPrefabsHolder, bool replace = false, bool ghostMode = false) where T : PrefabInfo
         {
             T[] prefabs = Resources.FindObjectsOfTypeAll<T>();
             return ClonePrefab<T>(prefabName, prefabs, newName, customPrefabsHolder, replace, ghostMode);
         }
 
-        static T ClonePrefab<T>(string prefabName, T[] prefabs, string newName, Transform customPrefabsHolder, bool replace = false, bool ghostMode = false) where T : PrefabInfo 
+        T ClonePrefab<T>(string prefabName, T[] prefabs, string newName, Transform customPrefabsHolder, bool replace = false, bool ghostMode = false) where T : PrefabInfo 
         {
             T originalPrefab = prefabs.FirstOrDefault(p => p.name == prefabName);
             if (originalPrefab == null)
@@ -768,18 +772,20 @@ namespace CSL_Traffic
             instance.name = newName;
             instance.transform.SetParent(customPrefabsHolder);
             instance.transform.localPosition = new Vector3(-7500, -7500, -7500);
+            T newPrefab = instance.GetComponent<T>();
 
             MethodInfo initMethod = GetCollectionType(typeof(T).Name).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
+            Initializer.QueuePrioritizedLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { newName, new[] { newPrefab }, new string[] { replace ? prefabName : null } }));
+
             if (ghostMode)
             {
-                Initializer.QueuePrioritizedLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { newName, new[] { instance.GetComponent<T>() }, new string[] { replace ? prefabName : null } }));
+                if (newPrefab.GetType() == typeof(NetInfo))
+                    (newPrefab as NetInfo).m_availableIn = ItemClass.Availability.None;
+                this.m_customPrefabs.Add(newName, originalPrefab);
                 return null;
             }
 
-            T newPrefab = instance.GetComponent<T>();
             newPrefab.m_prefabInitialized = false;
-
-            Initializer.QueuePrioritizedLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { newName, new[] { newPrefab }, new string[] { replace ? prefabName : null } }));
 
             return newPrefab;
         }
@@ -1144,14 +1150,12 @@ namespace CSL_Traffic
                 pedestrianRoad.m_createGravel = false;
                 pedestrianRoad.m_createPavement = true;
                 pedestrianRoad.m_setVehicleFlags = Vehicle.Flags.None;
-                //pedestrianRoad.m_Thumbnail = "ThumbnailBuildingBeautificationPedestrianPavement";
 
                 roadAI.m_constructionCost = 2000;
                 roadAI.m_bridgeInfo = roadAI.m_elevatedInfo = bridge as NetInfo;
             }
             else
             {
-                //pedestrianRoad.m_Thumbnail = "ThumbnailBuildingBeautificationPedestrianGravel";
                 roadAI.m_constructionCost = 1000;
             }
 
@@ -1357,6 +1361,7 @@ namespace CSL_Traffic
             if (vAI == null)
                 return;
 
+            Debug.Log("Traffic++: Replacing " + info.name + "'s AI.");
             Type type = vAI.GetType();
 
             if (type == typeof(AmbulanceAI))
@@ -1375,14 +1380,22 @@ namespace CSL_Traffic
                 ReplaceVehicleAI<CustomPassengerCarAI>(info);
             else if (type == typeof(PoliceCarAI))
                 ReplaceVehicleAI<CustomPoliceCarAI>(info);
+            else
+                Debug.Log("Traffic++: Replacing " + info.name + "'s AI failed.");
         }
 
         void ReplaceVehicleAI<T>(VehicleInfo vehicle) where T : VehicleAI
         {
+            if (m_replacedAIs.ContainsKey(vehicle.name))
+            {
+                Debug.Log("Traffic++: Error replacing " + vehicle.name + "'s AI. It has been replaced before");
+                return;
+            }
+
             VehicleAI originalAI = vehicle.GetComponent<VehicleAI>();
             T newAI = vehicle.gameObject.AddComponent<T>();
             CopyVehicleAIAttributes<T>(originalAI, newAI);
-            Destroy(originalAI);
+            m_replacedAIs[vehicle.name] = originalAI;
 
             vehicle.m_vehicleAI = newAI;
             newAI.m_info = vehicle;
@@ -1391,6 +1404,8 @@ namespace CSL_Traffic
             {
                 SetRealisitcSpeeds(vehicle, true);
             }
+
+            Debug.Log("Traffic++: Successfully replaced " + vehicle.name + "'s AI.");
         }
 
                 // TODO: set correct values on vehicles for realistic speeds
@@ -1437,6 +1452,21 @@ namespace CSL_Traffic
 
             vehicle.m_acceleration *= accelerationMultiplier;
             vehicle.m_maxSpeed *= maxSpeedMultiplier;
+        }
+
+        void SetOriginalAI(VehicleInfo vehicle)
+        {
+            Debug.Log("Traffic++: Resetting " + vehicle.name + "'s AI.");
+            VehicleAI vAI = vehicle.m_vehicleAI;
+            if (vAI == null || !this.m_replacedAIs.ContainsKey(vehicle.name))
+            {
+                Debug.Log("Traffic++: Resetting " + vehicle.name + "'s AI failed.");
+                return;
+            }
+                
+            vehicle.m_vehicleAI = this.m_replacedAIs[vehicle.name];
+            this.m_replacedAIs[vehicle.name].m_info = vehicle;
+            Destroy(vAI);
         }
 
         void CopyVehicleAIAttributes<T>(VehicleAI from, T to)

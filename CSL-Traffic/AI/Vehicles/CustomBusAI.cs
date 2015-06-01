@@ -5,18 +5,16 @@ namespace CSL_Traffic
 {
     class CustomBusAI : BusAI, IVehicle
     {
-        CustomCarAI.SpeedData m_speedData;
-
         public override void SimulationStep(ushort vehicleID, ref Vehicle vehicleData, ref Vehicle.Frame frameData, ushort leaderID, ref Vehicle leaderData, int lodPhysics)
         {
             if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
             {
-                if (m_speedData.currentPath != vehicleData.m_path)
+                if (CustomCarAI.sm_speedData[vehicleID].speedMultiplier == 0 || CustomCarAI.sm_speedData[vehicleID].currentPath != vehicleData.m_path)
                 {
-                    m_speedData.currentPath = vehicleData.m_path;
-                    m_speedData.SetRandomSpeedMultiplier(0.65f, 1.05f);
+                    CustomCarAI.sm_speedData[vehicleID].currentPath = vehicleData.m_path;
+                    CustomCarAI.sm_speedData[vehicleID].SetRandomSpeedMultiplier(0.65f, 1.05f);
                 }
-                m_speedData.ApplySpeedMultiplier(this.m_info);
+                CustomCarAI.sm_speedData[vehicleID].ApplySpeedMultiplier(this.m_info);
             }
             
 
@@ -38,7 +36,7 @@ namespace CSL_Traffic
 
             if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
             {
-                m_speedData.RestoreVehicleSpeed(this.m_info);
+                CustomCarAI.sm_speedData[vehicleID].RestoreVehicleSpeed(this.m_info);
             }
         }
 

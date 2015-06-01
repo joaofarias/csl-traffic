@@ -226,10 +226,10 @@ namespace CSL_Traffic
 
 			if (!m_pathVehicleType.TryGetValue(unit, out m_vehicleType))
 			{
-				if ((m_laneTypes & NetInfo.LaneType.Pedestrian) == NetInfo.LaneType.Pedestrian)
+				//if ((m_laneTypes & NetInfo.LaneType.Pedestrian) == NetInfo.LaneType.Pedestrian)
 					m_vehicleType = RoadManager.VehicleType.PassengerCar;
-				else
-					m_vehicleType = RoadManager.VehicleType.All;
+				//else
+				//	m_vehicleType = RoadManager.VehicleType.None;
 			}
 			if ((CSLTraffic.Options & OptionsManager.ModOptions.ImprovedAI) == OptionsManager.ModOptions.ImprovedAI)
 				this.m_prioritizeBusLanes = (this.m_vehicleType & (RoadManager.VehicleType.Bus | RoadManager.VehicleType.Emergency)) != RoadManager.VehicleType.None;

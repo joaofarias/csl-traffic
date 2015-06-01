@@ -5,21 +5,19 @@ namespace CSL_Traffic
 {
     class CustomAmbulanceAI : AmbulanceAI, IVehicle
     {
-        CustomCarAI.SpeedData m_speedData;
-
         public override void SimulationStep(ushort vehicleID, ref Vehicle vehicleData, ref Vehicle.Frame frameData, ushort leaderID, ref Vehicle leaderData, int lodPhysics)
         {
             if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
             {
-                if (m_speedData.currentPath != vehicleData.m_path)
+                if (CustomCarAI.sm_speedData[vehicleID].speedMultiplier == 0 || CustomCarAI.sm_speedData[vehicleID].currentPath != vehicleData.m_path)
                 {
-                    m_speedData.currentPath = vehicleData.m_path;
+                    CustomCarAI.sm_speedData[vehicleID].currentPath = vehicleData.m_path;
                     if ((vehicleData.m_flags & Vehicle.Flags.Emergency2) == Vehicle.Flags.Emergency2)
-                        m_speedData.SetRandomSpeedMultiplier(1f, 1.5f);
+                        CustomCarAI.sm_speedData[vehicleID].SetRandomSpeedMultiplier(1f, 1.5f);
                     else
-                        m_speedData.SetRandomSpeedMultiplier(0.7f, 1.05f);
+                        CustomCarAI.sm_speedData[vehicleID].SetRandomSpeedMultiplier(0.7f, 1.05f);
                 }
-                m_speedData.ApplySpeedMultiplier(this.m_info);
+                CustomCarAI.sm_speedData[vehicleID].ApplySpeedMultiplier(this.m_info);
             }
             
 
@@ -37,7 +35,7 @@ namespace CSL_Traffic
 
             if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
             {
-                m_speedData.RestoreVehicleSpeed(this.m_info);
+                CustomCarAI.sm_speedData[vehicleID].RestoreVehicleSpeed(this.m_info);
             }
         }
 

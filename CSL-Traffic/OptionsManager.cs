@@ -292,15 +292,17 @@ namespace CSL_Traffic
 				return;
 			}
 
-			this.m_allowTrucksCheckBox.isChecked = options.allowTrucks;
-			this.m_allowResidentsCheckBox.isChecked = options.allowResidents;
-			this.m_disableCentralLaneCheckBox.isChecked = options.disableCentralLane;
-			this.m_realisticSpeedsCheckBox.isChecked = options.realisticSpeeds;
-			this.m_noDespawnCheckBox.isChecked = options.noDespawn;
-			this.m_improvedAICheckBox.isChecked = options.improvedAI;
-			this.m_betaTestRoadCustomizerCheckBox.isChecked = options.betaTestRoadCustomizer;
-			this.m_ghostModeCheckBox.isChecked = options.ghostMode;
-
+			if (this.m_allowTrucksCheckBox != null)
+			{
+				this.m_allowTrucksCheckBox.isChecked = options.allowTrucks;
+				this.m_allowResidentsCheckBox.isChecked = options.allowResidents;
+				this.m_disableCentralLaneCheckBox.isChecked = options.disableCentralLane;
+				this.m_realisticSpeedsCheckBox.isChecked = options.realisticSpeeds;
+				this.m_noDespawnCheckBox.isChecked = options.noDespawn;
+				this.m_improvedAICheckBox.isChecked = options.improvedAI;
+				this.m_betaTestRoadCustomizerCheckBox.isChecked = options.betaTestRoadCustomizer;
+				this.m_ghostModeCheckBox.isChecked = options.ghostMode;
+			}
 
 			if (options.allowTrucks)
 				CSLTraffic.Options |= ModOptions.AllowTrucksInPedestrianRoads;
