@@ -43,6 +43,9 @@ namespace CSL_Traffic
                         if (lane == null)
                             continue;
 
+						if ((CSLTraffic.Options & OptionsManager.ModOptions.FixCargoTrucksNotSpawning) == OptionsManager.ModOptions.FixCargoTrucksNotSpawning && lane.m_vehicleTypes == (VehicleType.ServiceVehicles | VehicleType.PassengerCar))
+							lane.m_vehicleTypes = VehicleType.All;
+
                         lane.UpdateArrows();
                         if (lane.ConnectionCount() > 0)
                             nodesList.Add(lane.m_nodeId);
@@ -123,7 +126,7 @@ namespace CSL_Traffic
             EmergencyVehicles   = Emergency | Ambulance | FireTruck | PoliceCar,
             ServiceVehicles     = EmergencyVehicles | Bus | GarbageTruck | Hearse,
 
-            All                 = ServiceVehicles | PassengerCar
+            All                 = ServiceVehicles | PassengerCar | CargoTruck
         }
 
         [Serializable]

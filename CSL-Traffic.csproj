@@ -99,6 +99,7 @@
     <Compile Include="CSL-Traffic\UI\RoadCustomizerGroupPanel.cs" />
     <Compile Include="CSL-Traffic\UI\RoadCustomizerPanel.cs" />
     <Compile Include="CSL-Traffic\UI\UIUtils.cs" />
+    <Compile Include="CSL-Traffic\Logger.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include=".git\objects\info\" />

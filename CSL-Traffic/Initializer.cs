@@ -1362,7 +1362,7 @@ namespace CSL_Traffic
             if (vAI == null)
                 return;
 
-            Debug.Log("Traffic++: Replacing " + info.name + "'s AI.");
+            Logger.LogInfo("Replacing " + info.name + "'s AI.");
             Type type = vAI.GetType();
 
             if (type == typeof(AmbulanceAI))
@@ -1382,14 +1382,14 @@ namespace CSL_Traffic
             else if (type == typeof(PoliceCarAI))
                 ReplaceVehicleAI<CustomPoliceCarAI>(info);
             else
-                Debug.Log("Traffic++: Replacing " + info.name + "'s AI failed.");
+                Logger.LogInfo("Replacing " + info.name + "'s AI failed.");
         }
 
         void ReplaceVehicleAI<T>(VehicleInfo vehicle) where T : VehicleAI
         {
             if (m_replacedAIs.ContainsKey(vehicle.name))
             {
-                Debug.Log("Traffic++: Error replacing " + vehicle.name + "'s AI. It has been replaced before");
+                Logger.LogInfo("Error replacing " + vehicle.name + "'s AI. It has been replaced before");
                 return;
             }
 
@@ -1406,7 +1406,7 @@ namespace CSL_Traffic
                 SetRealisitcSpeeds(vehicle, true);
             }
 
-            Debug.Log("Traffic++: Successfully replaced " + vehicle.name + "'s AI.");
+            Logger.LogInfo("Successfully replaced " + vehicle.name + "'s AI.");
         }
 
                 // TODO: set correct values on vehicles for realistic speeds
@@ -1457,11 +1457,11 @@ namespace CSL_Traffic
 
         void SetOriginalAI(VehicleInfo vehicle)
         {
-            Debug.Log("Traffic++: Resetting " + vehicle.name + "'s AI.");
+            Logger.LogInfo("Resetting " + vehicle.name + "'s AI.");
             VehicleAI vAI = vehicle.m_vehicleAI;
             if (vAI == null || !this.m_replacedAIs.ContainsKey(vehicle.name))
             {
-                Debug.Log("Traffic++: Resetting " + vehicle.name + "'s AI failed.");
+                Logger.LogInfo("Resetting " + vehicle.name + "'s AI failed.");
                 return;
             }
                 

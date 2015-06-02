@@ -31,6 +31,8 @@ namespace CSL_Traffic
 			//BetaTest7 = 1L << 60,
 			//BetaTest8 = 1L << 61,
 
+			FixCargoTrucksNotSpawning = 1L << 61,
+
 			GhostMode = 1L << 62
 		}
 
@@ -327,6 +329,9 @@ namespace CSL_Traffic
 
 			if (options.ghostMode)
 				CSLTraffic.Options |= ModOptions.GhostMode;
+
+			if (options.fixCargoTrucksNotSpawning)
+				CSLTraffic.Options |= ModOptions.FixCargoTrucksNotSpawning;
 		}
 
 		void OnLevelWasLoaded(int level)
@@ -356,6 +361,8 @@ namespace CSL_Traffic
 			public bool improvedAI;
 
 			public bool betaTestRoadCustomizer;
+
+			public bool fixCargoTrucksNotSpawning;
 
 			public bool ghostMode;
 		}
