@@ -24,11 +24,12 @@ namespace CSL_Traffic
                     return;
                 }
 
-                Logger.LogInfo("Loading road data! - Time: " + Time.realtimeSinceStartup);
+
+                Logger.LogInfo("Loading road data. Time: " + Time.realtimeSinceStartup);
                 byte[] data = serializableDataManager.LoadData(LANE_DATA_ID);
                 if (data == null)
                 {
-                    Logger.LogInfo("No road data to load!");
+                    Logger.LogInfo("No road data to load.");
                     RoadManager.sm_lanes = new Lane[NetManager.MAX_LANE_COUNT];
                     return;
                 }
@@ -48,8 +49,8 @@ namespace CSL_Traffic
                         if (lane == null)
                             continue;
 
-                        if ((CSLTraffic.Options & OptionsManager.ModOptions.FixCargoTrucksNotSpawning) == OptionsManager.ModOptions.FixCargoTrucksNotSpawning && lane.m_vehicleTypes == (VehicleType.ServiceVehicles | VehicleType.PassengerCar))
-                            lane.m_vehicleTypes = VehicleType.All;
+						if ((CSLTraffic.Options & OptionsManager.ModOptions.FixCargoTrucksNotSpawning) == OptionsManager.ModOptions.FixCargoTrucksNotSpawning && lane.m_vehicleTypes == (VehicleType.ServiceVehicles | VehicleType.PassengerCar))
+							lane.m_vehicleTypes = VehicleType.All;
 
                         lane.UpdateArrows();
                         if (lane.ConnectionCount() > 0)
@@ -77,7 +78,7 @@ namespace CSL_Traffic
                     foreach (ushort nodeId in nodesList)
                         customizerTool.SetNodeMarkers(nodeId);
 
-                    Logger.LogInfo("Finished loading road data! - Time: " + Time.realtimeSinceStartup);
+                    Logger.LogInfo("Finished loading road data. Time: " + Time.realtimeSinceStartup);
                 }
                 catch (Exception e)
                 {
