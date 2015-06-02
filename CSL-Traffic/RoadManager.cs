@@ -1,4 +1,5 @@
-﻿using ICities;
+﻿using ColossalFramework.Math;
+using ICities;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -18,13 +19,17 @@ namespace CSL_Traffic
             public override void OnLoadData()
             {
                 if ((CSLTraffic.Options & OptionsManager.ModOptions.BetaTestRoadCustomizerTool) == OptionsManager.ModOptions.None || (CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) == OptionsManager.ModOptions.GhostMode)
+                {
+                    RoadManager.sm_lanes = new Lane[NetManager.MAX_LANE_COUNT];
                     return;
+                }
 
                 Logger.LogInfo("Loading road data! - Time: " + Time.realtimeSinceStartup);
                 byte[] data = serializableDataManager.LoadData(LANE_DATA_ID);
                 if (data == null)
                 {
                     Logger.LogInfo("No road data to load!");
+                    RoadManager.sm_lanes = new Lane[NetManager.MAX_LANE_COUNT];
                     return;
                 }
 
@@ -43,8 +48,8 @@ namespace CSL_Traffic
                         if (lane == null)
                             continue;
 
-						if ((CSLTraffic.Options & OptionsManager.ModOptions.FixCargoTrucksNotSpawning) == OptionsManager.ModOptions.FixCargoTrucksNotSpawning && lane.m_vehicleTypes == (VehicleType.ServiceVehicles | VehicleType.PassengerCar))
-							lane.m_vehicleTypes = VehicleType.All;
+                        if ((CSLTraffic.Options & OptionsManager.ModOptions.FixCargoTrucksNotSpawning) == OptionsManager.ModOptions.FixCargoTrucksNotSpawning && lane.m_vehicleTypes == (VehicleType.ServiceVehicles | VehicleType.PassengerCar))
+                            lane.m_vehicleTypes = VehicleType.All;
 
                         lane.UpdateArrows();
                         if (lane.ConnectionCount() > 0)
@@ -348,7 +353,7 @@ namespace CSL_Traffic
             }
         }
 
-        static Lane[] sm_lanes = new Lane[NetManager.MAX_LANE_COUNT];
+        static Lane[] sm_lanes;
 
         public static Lane CreateLane(uint laneId)
         {
@@ -458,6 +463,49 @@ namespace CSL_Traffic
         public static void SetLaneSpeed(uint laneId, int speed)
         {
             GetLane(laneId).m_speed = (float)Math.Round(speed/50f, 2);
+        }
+
+        #endregion
+
+        #region Redirected Methods
+
+        public static bool CreateLanes(out uint firstLane, ref Randomizer randomizer, ushort segment, int count)
+        {
+            Logger.LogInfo("CreateLanes for segment " + segment);
+            firstLane = 0u;
+            if (count == 0)
+            {
+                return true;
+            }
+            NetManager netManager = NetManager.instance;
+            NetLane netLane = default(NetLane);
+            uint num = 0u;
+            for (int i = 0; i < count; i++)
+            {
+                uint num2;
+                if (!netManager.m_lanes.CreateItem(out num2, ref randomizer))
+                {
+                    netManager.ReleaseLanes(firstLane);
+                    firstLane = 0u;
+                    return false;
+                }
+                if (i == 0)
+                {
+                    firstLane = num2;
+                }
+                else
+                {
+                    netLane.m_nextLane = num2;
+                    netManager.m_lanes.m_buffer[(int)((UIntPtr)num)] = netLane;
+                }
+                netLane = default(NetLane);
+                netLane.m_flags = 1;
+                netLane.m_segment = segment;
+                num = num2;
+            }
+            netManager.m_lanes.m_buffer[(int)((UIntPtr)num)] = netLane;
+            netManager.m_laneCount = (int)(netManager.m_lanes.ItemCount() - 1u);
+            return true;
         }
 
         #endregion

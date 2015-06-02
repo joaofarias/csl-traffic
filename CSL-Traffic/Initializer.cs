@@ -1,5 +1,6 @@
 using ColossalFramework;
 using ColossalFramework.Globalization;
+using ColossalFramework.Math;
 using ColossalFramework.UI;
 using CSL_Traffic.Extensions;
 using System;
@@ -491,6 +492,17 @@ namespace CSL_Traffic
 
                     if ((CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) != OptionsManager.ModOptions.GhostMode && this.m_level == 6)
                     {
+                        // Redirect methods
+                        MethodInfo originalCreateLanes = typeof(NetManager).GetMethod("CreateLanes", BindingFlags.Instance | BindingFlags.Public);
+                        MethodInfo customCreateLanes = typeof(Initializer).GetMethod("CreateLanes", BindingFlags.Instance | BindingFlags.Public);
+
+                        if (originalCreateLanes != null && customCreateLanes != null)
+                        {
+                            Logger.LogInfo("Redirecting CreateLanes...");
+                            Redirection.RedirectionHelper.RedirectCalls(originalCreateLanes, customCreateLanes);
+                            // TODO: don't forget to revert redirection
+                        }
+
                         ReplaceVehicleAI(healthCareVehicleCollection);
                         ReplaceVehicleAI(publicTansportVehicleCollection);
                         ReplaceVehicleAI(industrialVehicleCollection);
@@ -544,7 +556,44 @@ namespace CSL_Traffic
 
             Logger.LogInfo("Prefabs queued for loading.");
         }
-
+        public bool CreateLanes(out uint firstLane, ref Randomizer randomizer, ushort segment, int count)
+        {
+            Logger.LogInfo("CreateLanes for segment " + segment);
+            firstLane = 0u;
+            if (count == 0)
+            {
+                return true;
+            }
+            NetManager netManager = NetManager.instance;
+            NetLane netLane = default(NetLane);
+            uint num = 0u;
+            for (int i = 0; i < count; i++)
+            {
+                uint num2;
+                if (!netManager.m_lanes.CreateItem(out num2, ref randomizer))
+                {
+                    netManager.ReleaseLanes(firstLane);
+                    firstLane = 0u;
+                    return false;
+                }
+                if (i == 0)
+                {
+                    firstLane = num2;
+                }
+                else
+                {
+                    netLane.m_nextLane = num2;
+                    netManager.m_lanes.m_buffer[(int)((UIntPtr)num)] = netLane;
+                }
+                netLane = default(NetLane);
+                netLane.m_flags = 1;
+                netLane.m_segment = segment;
+                num = num2;
+            }
+            netManager.m_lanes.m_buffer[(int)((UIntPtr)num)] = netLane;
+            netManager.m_laneCount = (int)(netManager.m_lanes.ItemCount() - 1u);
+            return true;
+        }
         //IEnumerator Print()
         //{
         //    yield return new WaitForSeconds(30f);

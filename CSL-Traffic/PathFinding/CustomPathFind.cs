@@ -4,6 +4,7 @@ using ColossalFramework.UI;
 using CSL_Traffic.Extensions;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
 using System.Threading;
 using UnityEngine;
@@ -1235,6 +1236,9 @@ namespace CSL_Traffic
 		}
 		private void PathFindThread()
 		{
+			Stopwatch stopwatch = new Stopwatch();
+			long count = 0;
+			long totalMs = 0;
 			while (true)
 			{
 				while (!Monitor.TryEnter(this.m_queueLock, SimulationManager.SYNCHRONIZE_TIMEOUT))
@@ -1273,7 +1277,16 @@ namespace CSL_Traffic
 					this.m_pathfindProfiler.BeginStep();
 					try
 					{
+						stopwatch.Reset();
+						stopwatch.Start();
 						this.PathFindImplementation(this.m_calculating, ref this.m_pathUnits.m_buffer[(int)((UIntPtr)this.m_calculating)]);
+						stopwatch.Stop();
+						totalMs += stopwatch.ElapsedMilliseconds;
+						count++;
+						if (count == 10000)
+						{
+							System.IO.File.AppendAllText("TimeThread" + Thread.CurrentThread.ManagedThreadId + ".txt", "\n\nMs\nTime to calculate 10,000 Paths: " + totalMs + " ms\nAverage time/path: " + ((double)totalMs / count) + "ms\n");
+						}
 					}
 					finally
 					{
@@ -1303,6 +1316,8 @@ namespace CSL_Traffic
 					Monitor.Exit(this.m_queueLock);
 				}
 			}
+
+			System.IO.File.AppendAllText("TimeThread" + Thread.CurrentThread.ManagedThreadId + ".txt", "\n\nMs\nTime to calculate " + count + " Paths: " + totalMs + " ms\nAverage time/path: " + ((double)totalMs / count) + "ms\n");
 		}
 	}
 }

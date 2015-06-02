@@ -28,6 +28,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup>
     <RootNamespace>CSL_Traffic</RootNamespace>
@@ -73,6 +74,7 @@
   <ItemGroup>
     <Compile Include="CSL-Traffic\AI\Vehicles\CustomPassengerCarAI.cs" />
     <Compile Include="CSL-Traffic\DataExtensions\NetInfoLane.cs" />
+    <Compile Include="CSL-Traffic\Utils\RedirectionHelper.cs" />
     <Compile Include="CSL-Traffic\FileManager.cs" />
     <Compile Include="CSL-Traffic\RoadManager.cs" />
     <Compile Include="CSL-Traffic\Tools\RoadCustomizerTool.cs" />
@@ -88,7 +90,7 @@
     <Compile Include="CSL-Traffic\AI\Vehicles\CustomVehicleAI.cs" />
     <Compile Include="CSL-Traffic\AI\Vehicles\IVehicle.cs" />
     <Compile Include="CSL-Traffic\CSLTraffic.cs" />
-    <Compile Include="CSL-Traffic\Extensions\TypeExtensions.cs" />
+    <Compile Include="CSL-Traffic\Utils\TypeExtensions.cs" />
     <Compile Include="CSL-Traffic\Initializer.cs" />
     <Compile Include="CSL-Traffic\OptionsManager.cs" />
     <Compile Include="CSL-Traffic\PathFinding\CustomPathFind.cs" />
