@@ -377,10 +377,10 @@ namespace CSL_Traffic
 
         public static float RestrictSpeed(float calculatedSpeed, uint laneId, VehicleInfo info)
         {
-            if (calculatedSpeed == 0f || (CSLTraffic.Options & OptionsManager.ModOptions.BetaTestRoadCustomizerTool) == OptionsManager.ModOptions.None)
+            if (calculatedSpeed == 0f)
                 return calculatedSpeed;
 
-            float speedLimit = RoadManager.GetLaneSpeed(laneId);
+            float speedLimit = RoadManager.instance.m_lanes[laneId].m_speed;
             float curve = NetManager.instance.m_lanes.m_buffer[laneId].m_curve;
 
             float a = 1000f / (1f + curve * 1000f / info.m_turning) + 2f;

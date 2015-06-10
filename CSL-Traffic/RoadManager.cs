@@ -1,60 +1,150 @@
-﻿using ColossalFramework.Math;
+﻿using ColossalFramework;
+using ColossalFramework.IO;
+using ColossalFramework.Math;
 using ICities;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Text;
 using System.Threading;
 using UnityEngine;
 
 namespace CSL_Traffic
 {
-    public static class RoadManager
+    public class RoadManager : Singleton<RoadManager>
     {
         public class Data : SerializableDataExtensionBase
         {
-            const string LANE_DATA_ID = "Traffic++_RoadManager_Lanes";
+            const string LEGACY_LANE_DATA_ID = "Traffic++_RoadManager_Lanes";
+            const string LANE_DATA_ID = "Traffic++_RoadManagerData_Lanes";
+            const uint VERSION = 1;
             
             public override void OnLoadData()
             {
-                if ((CSLTraffic.Options & OptionsManager.ModOptions.BetaTestRoadCustomizerTool) == OptionsManager.ModOptions.None || (CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) == OptionsManager.ModOptions.GhostMode)
+                if ((CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) == OptionsManager.ModOptions.GhostMode)
                 {
-                    RoadManager.sm_lanes = new Lane[NetManager.MAX_LANE_COUNT];
+                    RoadManager.instance.InitializeData();
                     return;
                 }
 
-
                 Logger.LogInfo("Loading road data. Time: " + Time.realtimeSinceStartup);
+
                 byte[] data = serializableDataManager.LoadData(LANE_DATA_ID);
                 if (data == null)
                 {
-                    Logger.LogInfo("No road data to load.");
-                    RoadManager.sm_lanes = new Lane[NetManager.MAX_LANE_COUNT];
+                    if (!HandleLegacyData())
+                        RoadManager.instance.InitializeData();
                     return;
                 }
+
+                int index = 0;
+                uint version = BitConverter.ToUInt32(data, index);
+                index += 4;
+
+                RoadManager roadManager = RoadManager.instance;
+                FastList<ushort> nodesList = new FastList<ushort>();
+                int length = data.Length;
+                while (index < length)
+                {
+                    uint laneId = BitConverter.ToUInt32(data, index);
+                    index += 4;
+                    ushort nodeId = BitConverter.ToUInt16(data, index);
+                    index += 2;
+                    float speed = BitConverter.ToSingle(data, index);
+                    index += 4;
+                    int vehicleType = BitConverter.ToInt32(data, index);
+                    index += 4;
+
+                    Lane lane = new Lane(laneId, (VehicleType)vehicleType, speed, nodeId);
+
+                    int connectionsCount = BitConverter.ToInt32(data, index);
+                    index += 4;
+
+                    for (int i = 0; i < connectionsCount; i++)
+                    {
+                        lane.AddConnection(BitConverter.ToUInt32(data, index), false);
+                        index += 4;
+                    }
+
+                    roadManager.m_lanes[laneId] = lane;
+
+                    if (connectionsCount > 0)
+                        nodesList.Add(lane.m_nodeId);
+                }
+
+                RoadCustomizerTool customizerTool = ToolsModifierControl.GetTool<RoadCustomizerTool>();
+                foreach (ushort nodeId in nodesList)
+                    customizerTool.SetNodeMarkers(nodeId);
+
+                for (int i = 0; i < roadManager.m_lanes.Length; i++)
+                {
+                    if (roadManager.m_lanes[i].m_isAlive)
+                        roadManager.m_lanes[i].UpdateArrows();
+                }
+            }
+
+            public override void OnSaveData()
+            {
+                if ((CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) == OptionsManager.ModOptions.GhostMode)
+                    return;
+
+                Logger.LogInfo("Saving road data!");
+
+                List<byte> data = new List<byte>();
+                data.AddRange(BitConverter.GetBytes(VERSION));
+
+                RoadManager roadManager = RoadManager.instance;
+                int length = roadManager.m_lanes.Length;
+                for (int i = 0; i < length; i++)
+                {
+                    if (!roadManager.m_lanes[i].m_isAlive)
+                        continue;
+
+                    Lane lane = roadManager.m_lanes[i];
+                    data.AddRange(BitConverter.GetBytes(lane.m_laneId));
+                    data.AddRange(BitConverter.GetBytes(lane.m_nodeId));
+                    data.AddRange(BitConverter.GetBytes(lane.m_speed));
+                    data.AddRange(BitConverter.GetBytes((int)lane.m_vehicleTypes));
+
+                    uint[] connections = lane.GetConnectionsAsArray();
+                    data.AddRange(BitConverter.GetBytes(connections.Length));
+                    for (int j = 0; j < connections.Length; j++)
+                        data.AddRange(BitConverter.GetBytes(connections[j]));
+                }
+                serializableDataManager.SaveData(LANE_DATA_ID, data.ToArray());
+            }
+
+            bool HandleLegacyData()
+            {
+                byte[] data = serializableDataManager.LoadData(LEGACY_LANE_DATA_ID);
+                if (data == null)
+                    return false;
+
+                Logger.LogInfo("Loading legacy road data.");
+
+                RoadManager roadManager = RoadManager.instance;
 
                 MemoryStream memStream = new MemoryStream();
                 memStream.Write(data, 0, data.Length);
                 memStream.Position = 0;
 
                 BinaryFormatter binaryFormatter = new BinaryFormatter();
+                binaryFormatter.Binder = new LegacyBinder();
                 try
                 {
-                    RoadManager.sm_lanes = (Lane[]) binaryFormatter.Deserialize(memStream);
-                    
+                    LegacyLane[] lanes = (LegacyLane[])binaryFormatter.Deserialize(memStream);
+
                     FastList<ushort> nodesList = new FastList<ushort>();
-                    foreach (Lane lane in RoadManager.sm_lanes)
+                    foreach (LegacyLane legacyLane in lanes)
                     {
-                        if (lane == null)
+                        if (legacyLane == null)
                             continue;
 
-						if ((CSLTraffic.Options & OptionsManager.ModOptions.FixCargoTrucksNotSpawning) == OptionsManager.ModOptions.FixCargoTrucksNotSpawning && lane.m_vehicleTypes == (VehicleType.ServiceVehicles | VehicleType.PassengerCar))
-							lane.m_vehicleTypes = VehicleType.All;
-
-                        lane.UpdateArrows();
-                        if (lane.ConnectionCount() > 0)
-                            nodesList.Add(lane.m_nodeId);
+                        Lane lane = new Lane(legacyLane.m_laneId, legacyLane.m_vehicleTypes, legacyLane.m_speed, legacyLane.m_nodeId);
 
                         if (lane.m_speed == 0)
                         {
@@ -72,6 +162,22 @@ namespace CSL_Traffic
                                 lane.m_speed = info.m_lanes[n].m_speedLimit;
                         }
 
+                        roadManager.m_lanes[lane.m_laneId] = lane;
+                    }
+
+                    foreach (LegacyLane legacyLane in lanes)
+                    {
+                        if (legacyLane == null)
+                            continue;
+
+                        foreach (uint connection in legacyLane.m_laneConnections)
+                        {
+                            roadManager.m_lanes[legacyLane.m_laneId].AddConnection(connection);
+                        }
+
+                        roadManager.m_lanes[legacyLane.m_laneId].UpdateArrows();
+                        if (roadManager.m_lanes[legacyLane.m_laneId].ConnectionCount() > 0)
+                            nodesList.Add(roadManager.m_lanes[legacyLane.m_laneId].m_nodeId);
                     }
 
                     RoadCustomizerTool customizerTool = ToolsModifierControl.GetTool<RoadCustomizerTool>();
@@ -88,29 +194,7 @@ namespace CSL_Traffic
                 {
                     memStream.Close();
                 }
-            }
-
-            public override void OnSaveData()
-            {
-                if ((CSLTraffic.Options & OptionsManager.ModOptions.BetaTestRoadCustomizerTool) == OptionsManager.ModOptions.None || (CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) == OptionsManager.ModOptions.GhostMode)
-                    return;
-
-                Logger.LogInfo("Saving road data!");
-                BinaryFormatter binaryFormatter = new BinaryFormatter();
-                MemoryStream memStream = new MemoryStream();
-                try
-                {
-                    binaryFormatter.Serialize(memStream, RoadManager.sm_lanes);
-                    serializableDataManager.SaveData(LANE_DATA_ID, memStream.ToArray());
-                }
-                catch (Exception e)
-                {
-                    Logger.LogInfo("Unexpected " + e.GetType().Name + " saving road data.");
-                }
-                finally
-                {
-                    memStream.Close();
-                }
+                return false;
             }
         }
 
@@ -135,142 +219,169 @@ namespace CSL_Traffic
             All                 = ServiceVehicles | PassengerCar | CargoTruck
         }
 
-        [Serializable]
-        public class Lane
+        public struct Lane
         {
             public const ushort CONTROL_BIT = 2048;
 
             public uint m_laneId;
             public ushort m_nodeId;
-            private List<uint> m_laneConnections = new List<uint>();
-            public VehicleType m_vehicleTypes = VehicleType.All;
-            public float m_speed = 1f;            
+            private HashSet<uint> m_laneConnections;// = new HashSet<uint>();
+            public VehicleType m_vehicleTypes;// = VehicleType.All;
+            public float m_speed;// = 1f;
+            public bool m_isAlive;
+            private volatile bool m_lockConnections;// = false;
 
-            public bool AddConnection(uint laneId)
+            public Lane(uint laneId, VehicleType vehicleTypes = VehicleType.All, float speedLimit = 1f, ushort nodeId = 0)
             {
+                this.m_laneId = laneId;
+                this.m_nodeId = nodeId;
+                this.m_laneConnections = new HashSet<uint>();
+                this.m_vehicleTypes = vehicleTypes;
+                this.m_speed = speedLimit;
+                this.m_lockConnections = false;
+                this.m_isAlive = true;
+            }
+
+            public void Release() 
+            {
+                this.m_isAlive = false;
+                this.m_laneId = this.m_nodeId = 0;
+                this.m_vehicleTypes = VehicleType.All;
+                this.m_speed = 1f;
+                this.RemoveAllConnections();
+            }
+
+            public bool AddConnection(uint laneId, bool connectBack = true)
+            {
+                if (laneId == this.m_laneId || this.m_laneConnections == null)
+                    return false;
+
+                NetManager.instance.m_lanes.m_buffer[this.m_laneId].m_flags |= Lane.CONTROL_BIT;
+
                 bool exists = false;
-                while (!Monitor.TryEnter(this.m_laneConnections, SimulationManager.SYNCHRONIZE_TIMEOUT))
+                lock (this.m_laneConnections)
                 {
-                }
-                try
-                {
-                    if (m_laneConnections.Contains(laneId))
-                        exists = true;
-                    else
-                        m_laneConnections.Add(laneId);
-                }
-                finally
-                {
-                    Monitor.Exit(this.m_laneConnections);
+                    m_lockConnections = true;
+                    exists = !this.m_laneConnections.Add(laneId);
+                    m_lockConnections = false;
                 }
 
                 if (exists)
                     return false;
+                if (connectBack)
+                    RoadManager.instance.m_lanes[laneId].AddConnection(this.m_laneId, false);
+                else
+                    return true;
 
                 UpdateArrows();
 
                 return true;
             }
 
-            public bool RemoveConnection(uint laneId)
+            public bool RemoveConnection(uint laneId, bool removeBack = true)
             {
-                bool result = false;
-                while (!Monitor.TryEnter(this.m_laneConnections, SimulationManager.SYNCHRONIZE_TIMEOUT))
+                if (this.m_laneConnections == null)
+                    return false;
+
+                bool removed = false;
+                int count = -1;
+                lock (this.m_laneConnections)
                 {
-                }
-                try
-                {
-                    result = m_laneConnections.Remove(laneId);
-                }
-                finally
-                {
-                    Monitor.Exit(this.m_laneConnections);
+                    m_lockConnections = true;
+                    removed = this.m_laneConnections.Remove(laneId);
+                    count = this.m_laneConnections.Count;
+                    m_lockConnections = false;
                 }
 
-                if (result)
-                    UpdateArrows();
+                if (count == 0 && this.m_vehicleTypes == VehicleType.All)
+                    NetManager.instance.m_lanes.m_buffer[this.m_laneId].m_flags = (ushort)(NetManager.instance.m_lanes.m_buffer[this.m_laneId].m_flags & ~Lane.CONTROL_BIT);
 
-                return result;
+                if (!removed)
+                    return false;
+                if (removeBack)
+                    RoadManager.instance.m_lanes[laneId].RemoveConnection(this.m_laneId, false);
+                else
+                    return true;
+
+                UpdateArrows();
+
+                return removed;
+            }
+
+            public int RemoveAllConnections()
+            {
+                if (this.m_laneConnections == null)
+                    return 0;
+
+                int count = 0;
+                RoadManager roadManager = RoadManager.instance;
+                uint[] connections = GetConnectionsAsArray();
+                lock (this.m_laneConnections)
+                {
+                    m_lockConnections = true;
+                    for (int i = 0; i < connections.Length; i++)
+                    {
+                        if (this.m_laneConnections.Remove(connections[i]))
+                        {
+                            roadManager.m_lanes[connections[i]].RemoveConnection(this.m_laneId, false);
+                            count++;
+                        }
+                    }
+                    m_lockConnections = false;
+                }
+                
+                return count;
             }
 
             public uint[] GetConnectionsAsArray()
             {
+                if (this.m_laneConnections == null)
+                    return null;
+
                 uint[] connections = null;
-                while (!Monitor.TryEnter(this.m_laneConnections, SimulationManager.SYNCHRONIZE_TIMEOUT))
+                lock (this.m_laneConnections)
                 {
+                    connections = this.m_laneConnections.ToArray();
                 }
-                try
-                {
-                    connections = m_laneConnections.ToArray();
-                }
-                finally
-                {
-                    Monitor.Exit(this.m_laneConnections);
-                }
+                
                 return connections;
             }
 
             public int ConnectionCount()
             {
+                if (this.m_laneConnections == null)
+                    return 0;
+
                 int count = 0;
-                while (!Monitor.TryEnter(this.m_laneConnections, SimulationManager.SYNCHRONIZE_TIMEOUT))
+                lock (this.m_laneConnections)
                 {
+                    count = this.m_laneConnections.Count();
                 }
-                try
-                {
-                    count = m_laneConnections.Count();
-                }
-                finally
-                {
-                    Monitor.Exit(this.m_laneConnections);
-                }
+
                 return count;
             }
 
             public bool ConnectsTo(uint laneId)
             {
-                VerifyConnections();
+                if (this.m_laneConnections == null)
+                    return true;
 
+                // This is my attempt at avoiding locking unless strictly necessary, for performance reasons
+                if (!m_lockConnections)
+                    return this.m_laneConnections.Count == 0 || this.m_laneConnections.Contains(laneId);
+                
                 bool result = true;
-                while (!Monitor.TryEnter(this.m_laneConnections, SimulationManager.SYNCHRONIZE_TIMEOUT))
+                lock (this.m_laneConnections)
                 {
-                }
-                try
-                {
-                    result = m_laneConnections.Count == 0 || m_laneConnections.Contains(laneId);
-                }
-                finally
-                {
-                    Monitor.Exit(this.m_laneConnections);
+                    result = this.m_laneConnections.Count == 0 || this.m_laneConnections.Contains(laneId);
                 }
 
                 return result;
             }
 
-            void VerifyConnections()
-            {
-                uint[] connections = GetConnectionsAsArray();
-                while (!Monitor.TryEnter(this.m_laneConnections, SimulationManager.SYNCHRONIZE_TIMEOUT))
-                {
-                }
-                try
-                {
-                    foreach (uint laneId in connections)
-                    {
-                        NetLane lane = NetManager.instance.m_lanes.m_buffer[laneId];
-                        if ((lane.m_flags & CONTROL_BIT) != CONTROL_BIT)
-                            m_laneConnections.Remove(laneId);
-                    }
-                }
-                finally
-                {
-                    Monitor.Exit(this.m_laneConnections);
-                }
-            }
-
             public void UpdateArrows()
             {
-                VerifyConnections();
+                //VerifyConnections();
                 NetLane lane = NetManager.instance.m_lanes.m_buffer[m_laneId];
                 NetSegment segment = NetManager.instance.m_segments.m_buffer[lane.m_segment];
 
@@ -342,28 +453,55 @@ namespace CSL_Traffic
                 NetInfo info = segment.Info;
                 info.m_netAI.UpdateLanes(seg, ref segment, false);
 
+                RoadManager roadManager = RoadManager.instance;
                 uint laneId = segment.m_lanes;
                 int laneCount = info.m_lanes.Length;
                 for (int laneIndex = 0; laneIndex < laneCount && laneId != 0; laneIndex++)
                 {
-                    if (laneId != m_laneId && RoadManager.sm_lanes[laneId] != null && RoadManager.sm_lanes[laneId].ConnectionCount() > 0)
-                        RoadManager.sm_lanes[laneId].UpdateArrows();
+                    if (laneId != m_laneId && roadManager.m_lanes[laneId].ConnectionCount() > 0)
+                        roadManager.m_lanes[laneId].UpdateArrows();
 
                     laneId = NetManager.instance.m_lanes.m_buffer[laneId].m_nextLane;
                 }
             }
         }
 
-        static Lane[] sm_lanes;
+        public Lane[] m_lanes;
 
-        public static Lane CreateLane(uint laneId)
+        public RoadManager()
         {
-            Lane lane = new Lane()
-            {
-                m_laneId = laneId
-            };
+            this.m_lanes = new Lane[NetManager.MAX_LANE_COUNT];
+        }
 
-            NetSegment segment = NetManager.instance.m_segments.m_buffer[NetManager.instance.m_lanes.m_buffer[laneId].m_segment];
+        private void CreateLanes(uint firstLaneId, ushort segmentId)
+        {
+            NetSegment segment = NetManager.instance.m_segments.m_buffer[segmentId];
+            NetInfo netInfo = segment.Info;
+            int laneCount = netInfo.m_lanes.Length;
+            int laneIndex = 0;
+            for (uint l = firstLaneId; laneIndex < laneCount && l != 0; laneIndex++)
+            {
+                if ((NetManager.instance.m_lanes.m_buffer[l].m_flags & Lane.CONTROL_BIT) == 0)
+                {
+                    VehicleType vehicleTypes = VehicleType.All;
+
+                    NetInfoLane netInfoLane = netInfo.m_lanes[laneIndex] as NetInfoLane;
+                    if (netInfoLane != null)
+                        vehicleTypes = netInfoLane.m_allowedVehicleTypes;
+
+                    RoadManager.instance.m_lanes[l] = new Lane(l, vehicleTypes, netInfo.m_lanes[laneIndex].m_speedLimit);
+                }
+                
+                l = NetManager.instance.m_lanes.m_buffer[l].m_nextLane;
+            }
+        }
+
+        private void CreateLane(uint laneId, ushort segmentId)
+        {
+            if ((NetManager.instance.m_lanes.m_buffer[laneId].m_flags & Lane.CONTROL_BIT) != 0)
+                return;
+            
+            NetSegment segment = NetManager.instance.m_segments.m_buffer[segmentId];
             NetInfo netInfo = segment.Info;
             int laneCount = netInfo.m_lanes.Length;
             int laneIndex = 0;
@@ -371,108 +509,117 @@ namespace CSL_Traffic
             {
                 if (l == laneId)
                     break;
-
                 l = NetManager.instance.m_lanes.m_buffer[l].m_nextLane;
             }
 
             if (laneIndex < laneCount)
             {
+                VehicleType vehicleTypes = VehicleType.All;
+
                 NetInfoLane netInfoLane = netInfo.m_lanes[laneIndex] as NetInfoLane;
                 if (netInfoLane != null)
-                    lane.m_vehicleTypes = netInfoLane.m_allowedVehicleTypes;
+                    vehicleTypes = netInfoLane.m_allowedVehicleTypes;
 
-                lane.m_speed = netInfo.m_lanes[laneIndex].m_speedLimit;
+                RoadManager.instance.m_lanes[laneId] = new Lane(laneId, vehicleTypes, netInfo.m_lanes[laneIndex].m_speedLimit);
             }
-
-            NetManager.instance.m_lanes.m_buffer[laneId].m_flags |= Lane.CONTROL_BIT;
-
-            sm_lanes[laneId] = lane;
-
-            return lane;
+            else
+            {
+                Logger.LogWarning("Whoops!");
+            }
         }
 
-        public static Lane GetLane(uint laneId)
+        public void InitializeData()
         {
-            Lane lane = sm_lanes[laneId];
-            if (lane == null || (NetManager.instance.m_lanes.m_buffer[laneId].m_flags & Lane.CONTROL_BIT) == 0)
-                lane = CreateLane(laneId);
-
-            return lane;
+            NetManager netManager = NetManager.instance;
+            for (int i = 0; i < NetManager.MAX_LANE_COUNT; i++)
+            {
+                if (m_lanes[i].m_laneId == 0 && (netManager.m_lanes.m_buffer[i].m_flags & (ushort)NetLane.Flags.Created) != 0)
+                    CreateLanes(netManager.m_segments.m_buffer[netManager.m_lanes.m_buffer[i].m_segment].m_lanes, netManager.m_lanes.m_buffer[i].m_segment);
+            }
         }
+
+        //public Lane GetLane(uint laneId)
+        //{
+        //    Lane lane = m_lanes[laneId];
+        //    if (lane == null || (NetManager.instance.m_lanes.m_buffer[laneId].m_flags & Lane.CONTROL_BIT) == 0)
+        //        lane = CreateLane(laneId);
+
+        //    return lane;
+        //}
 
         #region Lane Connections
-        public static bool AddLaneConnection(uint laneId, uint connectionId)
-        {
-            Lane lane = GetLane(laneId);
-            GetLane(connectionId); // makes sure lane information is stored
 
-            return lane.AddConnection(connectionId);
+        public bool AddLaneConnection(uint laneId, uint connectionId)
+        {
+            //Lane lane = GetLane(laneId);
+            //GetLane(connectionId); // makes sure lane information is stored
+
+            return this.m_lanes[laneId].AddConnection(connectionId);
         }
 
-        public static bool RemoveLaneConnection(uint laneId, uint connectionId)
+        public bool RemoveLaneConnection(uint laneId, uint connectionId)
         {
-            Lane lane = GetLane(laneId);
+            //Lane lane = GetLane(laneId);
 
-            return lane.RemoveConnection(connectionId);
+            return this.m_lanes[laneId].RemoveConnection(connectionId);
         }
 
-        public static uint[] GetLaneConnections(uint laneId)
+        public uint[] GetLaneConnections(uint laneId)
         {
-            Lane lane = GetLane(laneId);
+            //Lane lane = GetLane(laneId);
 
-            return lane.GetConnectionsAsArray();
+            return this.m_lanes[laneId].GetConnectionsAsArray();
         }
 
-        public static bool CheckLaneConnection(uint from, uint to)
-        {   
-            Lane lane = GetLane(from);
-
-            return lane.ConnectsTo(to);
+        public bool CheckLaneConnection(uint from, uint to, VehicleType vehicleType)
+        {
+            return this.m_lanes[from].ConnectsTo(to) && (this.m_lanes[from].m_vehicleTypes & this.m_lanes[to].m_vehicleTypes & vehicleType) == vehicleType;
         }
         #endregion
 
         #region Vehicle Restrictions
-        public static bool CanUseLane(VehicleType vehicleType, uint laneId)
-        {            
-            return (GetLane(laneId).m_vehicleTypes & vehicleType) != VehicleType.None;
+        public bool CanUseLane(VehicleType vehicleType, uint laneId)
+        {
+            return (this.m_lanes[laneId].m_vehicleTypes & vehicleType) != VehicleType.None;
         }
 
-        public static VehicleType GetVehicleRestrictions(uint laneId)
+        public VehicleType GetVehicleRestrictions(uint laneId)
         {
-            return GetLane(laneId).m_vehicleTypes;
+            return this.m_lanes[laneId].m_vehicleTypes;
         }
 
-        public static void SetVehicleRestrictions(uint laneId, VehicleType vehicleRestrictions)
+        public void SetVehicleRestrictions(uint laneId, VehicleType vehicleRestrictions)
         {
-            GetLane(laneId).m_vehicleTypes = vehicleRestrictions;
+            NetManager.instance.m_lanes.m_buffer[laneId].m_flags |= Lane.CONTROL_BIT;
+            this.m_lanes[laneId].m_vehicleTypes = vehicleRestrictions;
         }
 
-        public static void ToggleVehicleRestriction(uint laneId, VehicleType vehicleType)
+        public void ToggleVehicleRestriction(uint laneId, VehicleType vehicleType)
         {
-            GetLane(laneId).m_vehicleTypes ^= vehicleType;
+            NetManager.instance.m_lanes.m_buffer[laneId].m_flags |= Lane.CONTROL_BIT;
+            this.m_lanes[laneId].m_vehicleTypes ^= vehicleType;
         }
 
         #endregion
 
         #region Lane Speeds
 
-        public static float GetLaneSpeed(uint laneId)
+        public float GetLaneSpeed(uint laneId)
         {
-            return GetLane(laneId).m_speed;
+            return this.m_lanes[laneId].m_speed;
         }
 
-        public static void SetLaneSpeed(uint laneId, int speed)
+        public void SetLaneSpeed(uint laneId, int speed)
         {
-            GetLane(laneId).m_speed = (float)Math.Round(speed/50f, 2);
+            this.m_lanes[laneId].m_speed = (float)Math.Round(speed / 50f, 2);
         }
 
         #endregion
 
         #region Redirected Methods
 
-        public static bool CreateLanes(out uint firstLane, ref Randomizer randomizer, ushort segment, int count)
+        public bool CreateLanes(out uint firstLane, ref Randomizer randomizer, ushort segment, int count)
         {
-            Logger.LogInfo("CreateLanes for segment " + segment);
             firstLane = 0u;
             if (count == 0)
             {
@@ -506,7 +653,88 @@ namespace CSL_Traffic
             }
             netManager.m_lanes.m_buffer[(int)((UIntPtr)num)] = netLane;
             netManager.m_laneCount = (int)(netManager.m_lanes.ItemCount() - 1u);
+
+            if (count > 1)
+                CreateLanes(firstLane, segment);
+            else
+                CreateLane(firstLane, segment);
+            
             return true;
+        }
+
+        public void ReleaseLanes(uint firstLane)
+        {
+            RoadManager roadManager = RoadManager.instance;
+            NetManager netManager = NetManager.instance;
+            int num = 0;
+            while (firstLane != 0u)
+            {
+                uint nextLane = netManager.m_lanes.m_buffer[(int)((UIntPtr)firstLane)].m_nextLane;
+                //if (roadManager.m_lanes[firstLane].m_speed > 0.1f)
+                    //roadManager.m_lanes[firstLane].RemoveAllConnections();
+                roadManager.m_lanes[firstLane].Release();
+                netManager.m_lanes.m_buffer[firstLane].m_flags = (ushort)(netManager.m_lanes.m_buffer[firstLane].m_flags & ~Lane.CONTROL_BIT);
+                ReleaseLaneImplementation(firstLane, ref netManager.m_lanes.m_buffer[(int)((UIntPtr)firstLane)]);
+                firstLane = nextLane;
+                if (++num > 262144)
+                {
+                    CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
+                    break;
+                }
+            }
+            netManager.m_laneCount = (int)(netManager.m_lanes.ItemCount() - 1u);
+        }
+
+        // Not redirected, simply called by ReleaseLanes above - It's here to avoid using Reflection
+        private void ReleaseLaneImplementation(uint lane, ref NetLane data)
+        {
+            NetManager netManager = NetManager.instance;
+            if (data.m_nodes != 0)
+            {
+                ushort num = data.m_nodes;
+                data.m_nodes = 0;
+                int num2 = 0;
+                while (num != 0)
+                {
+                    ushort nextLaneNode = netManager.m_nodes.m_buffer[(int)num].m_nextLaneNode;
+                    netManager.m_nodes.m_buffer[(int)num].m_nextLaneNode = 0;
+                    netManager.m_nodes.m_buffer[(int)num].m_lane = 0u;
+                    netManager.m_nodes.m_buffer[(int)num].m_laneOffset = 0;
+                    netManager.UpdateNode(num, 0, 10);
+                    num = nextLaneNode;
+                    if (++num2 > 32768)
+                    {
+                        CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
+                        break;
+                    }
+                }
+            }
+            data = default(NetLane);
+            netManager.m_lanes.ReleaseItem(lane);
+        }
+
+        #endregion
+
+        #region Legacy
+
+        [Serializable]
+        public class LegacyLane
+        {
+            public uint m_laneId;
+            public ushort m_nodeId;
+            public List<uint> m_laneConnections;
+            public VehicleType m_vehicleTypes;
+            public float m_speed;
+        }
+
+        class LegacyBinder : SerializationBinder
+        {
+            public override Type BindToType(string assemblyName, string typeName)
+            {
+                typeName = typeName.Replace("Lane", "LegacyLane");
+
+                return Type.GetType(String.Format("{0}, {1}", typeName, assemblyName));
+            }
         }
 
         #endregion

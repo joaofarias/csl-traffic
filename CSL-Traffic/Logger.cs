@@ -13,8 +13,9 @@ namespace CSL_Traffic
         {
             var msg = Prefix + String.Format(message, args);
             Debug.Log(msg);
-            if (inGameDebug)
-                DebugOutputPanel.AddMessage(PluginManager.MessageType.Message, msg);
+            // FIXME: this is causing crashes for some reason
+            //if (inGameDebug)
+            //    DebugOutputPanel.AddMessage(PluginManager.MessageType.Message, msg);
         }
 
         public static void LogWarning(string message, params object[] args)

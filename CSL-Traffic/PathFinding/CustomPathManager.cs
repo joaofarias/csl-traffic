@@ -235,10 +235,11 @@ namespace CSL_Traffic
 					float num2 = 1E+09f;
 					uint num3 = seg.m_lanes;
 					int num4 = 0;
+                    RoadManager roadManager = RoadManager.instance;
 					while (num4 < info.m_lanes.Length && num3 != 0u)
 					{
 						NetInfo.Lane lane = info.m_lanes[num4];
-						if (lane.CheckType(laneTypes, vehicleTypes) && RoadManager.CanUseLane(vehicleType, num3))
+                        if (lane.CheckType(laneTypes, vehicleTypes) && roadManager.CanUseLane(vehicleType, num3))
 						{
 							Vector3 vector;
 							float num5;

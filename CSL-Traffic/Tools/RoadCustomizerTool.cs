@@ -240,11 +240,11 @@ namespace CSL_Traffic
 					{
 						m_selectedMarker = hoveredMarker;
 					}
-					else if (RoadManager.RemoveLaneConnection(m_selectedMarker.m_lane, hoveredMarker.m_lane))
+					else if (RoadManager.instance.RemoveLaneConnection(m_selectedMarker.m_lane, hoveredMarker.m_lane))
 					{
 						m_selectedMarker.m_connections.Remove(hoveredMarker);
 					}
-					else if (RoadManager.AddLaneConnection(m_selectedMarker.m_lane, hoveredMarker.m_lane))
+					else if (RoadManager.instance.AddLaneConnection(m_selectedMarker.m_lane, hoveredMarker.m_lane))
 					{
 						m_selectedMarker.m_connections.Add(hoveredMarker);
 					}
@@ -421,12 +421,13 @@ namespace CSL_Traffic
 					segmentId = 0;
 			}
 
+            RoadManager roadManager = RoadManager.instance;
 			for (int i = 0; i < nodeMarkers.m_size; i++)
 			{
 				if (!nodeMarkers.m_buffer[i].m_isSource)
 					continue;
 
-				uint[] connections = RoadManager.GetLaneConnections(nodeMarkers.m_buffer[i].m_lane);
+                uint[] connections = roadManager.GetLaneConnections(nodeMarkers.m_buffer[i].m_lane);
 				if (connections == null || connections.Length == 0)
 					continue;
 
@@ -745,7 +746,7 @@ namespace CSL_Traffic
 			if (!AnyLaneSelected)
 				return RoadManager.VehicleType.None;
 
-			return RoadManager.GetVehicleRestrictions(m_selectedLaneMarkers[0].m_lane);
+			return RoadManager.instance.GetVehicleRestrictions(m_selectedLaneMarkers[0].m_lane);
 		}
 
 		public RoadManager.VehicleType ToggleRestriction(RoadManager.VehicleType vehicleType)
@@ -753,11 +754,13 @@ namespace CSL_Traffic
 			if (!AnyLaneSelected)
 				return RoadManager.VehicleType.None;
 
-			RoadManager.VehicleType vehicleRestrictions = RoadManager.GetVehicleRestrictions(m_selectedLaneMarkers[0].m_lane);
+            RoadManager roadManager = RoadManager.instance;
+
+            RoadManager.VehicleType vehicleRestrictions = roadManager.GetVehicleRestrictions(m_selectedLaneMarkers[0].m_lane);
 			vehicleRestrictions ^= vehicleType;
 
 			foreach (SegmentLaneMarker lane in m_selectedLaneMarkers)
-				RoadManager.SetVehicleRestrictions(lane.m_lane, vehicleRestrictions);
+                roadManager.SetVehicleRestrictions(lane.m_lane, vehicleRestrictions);
 
 			return vehicleRestrictions;
 		}
@@ -767,7 +770,7 @@ namespace CSL_Traffic
 			if (!AnyLaneSelected)
 				return -1f;
 
-			return RoadManager.GetLaneSpeed(m_selectedLaneMarkers[0].m_lane);
+            return RoadManager.instance.m_lanes[m_selectedLaneMarkers[0].m_lane].m_speed;
 		}
 
 		public void SetSpeedRestrictions(int speed)
@@ -775,8 +778,9 @@ namespace CSL_Traffic
 			if (!AnyLaneSelected)
 				return;
 
+            RoadManager roadManager = RoadManager.instance;
 			foreach (SegmentLaneMarker lane in m_selectedLaneMarkers)
-				RoadManager.SetLaneSpeed(lane.m_lane, speed);
+                roadManager.SetLaneSpeed(lane.m_lane, speed);
 		}
 
 		#endregion

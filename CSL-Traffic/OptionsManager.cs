@@ -23,7 +23,7 @@ namespace CSL_Traffic
 
 			// bits 55 to 62 reserved for beta tests that won't have their own option
 			//BetaTestNewRoads = 1L << 54,
-			BetaTestRoadCustomizerTool = 1L << 55,
+			//BetaTestRoadCustomizerTool = 1L << 55,
 			//BetaTest3 = 1L << 56,
 			//BetaTest4 = 1L << 57,
 			//BetaTest5 = 1L << 58,
@@ -48,7 +48,6 @@ namespace CSL_Traffic
 		UICheckBox m_realisticSpeedsCheckBox = null;
 		UICheckBox m_noDespawnCheckBox = null;
 		UICheckBox m_improvedAICheckBox = null;
-		UICheckBox m_betaTestRoadCustomizerCheckBox = null;
 		UICheckBox m_ghostModeCheckBox = null;
 
 		bool m_initialized;
@@ -169,8 +168,7 @@ namespace CSL_Traffic
 			m_disableCentralLaneCheckBox = AddOptionCheckbox("Disable Central Lane on Pedestrian Roads", 2);
 			m_noDespawnCheckBox = AddOptionCheckbox("No Despawn by CBeTHaX", 3);
 			m_realisticSpeedsCheckBox = AddOptionCheckbox("Beta Test: Realistic Speeds", 4);
-			m_betaTestRoadCustomizerCheckBox = AddOptionCheckbox("Beta Test: Road Customizer Tool", 5);
-			m_improvedAICheckBox = AddOptionCheckbox("Beta Test: Improved AI", 6);
+			m_improvedAICheckBox = AddOptionCheckbox("Beta Test: Improved AI", 5);
 
 			m_ghostModeCheckBox = AddOptionCheckbox("Ghost Mode (disables all mod functionality leaving only enough logic to load the map)");
 			m_ghostModeCheckBox.gameObject.transform.SetParent(m_optionsPanel.transform);
@@ -246,11 +244,6 @@ namespace CSL_Traffic
 				options.improvedAI = true;
 				CSLTraffic.Options |= ModOptions.ImprovedAI;
 			}
-			if (this.m_betaTestRoadCustomizerCheckBox.isChecked)
-			{
-				options.betaTestRoadCustomizer = true;
-				CSLTraffic.Options |= ModOptions.BetaTestRoadCustomizerTool;
-			}
 			if (this.m_ghostModeCheckBox.isChecked)
 			{
 				options.ghostMode = true;
@@ -302,7 +295,6 @@ namespace CSL_Traffic
 				this.m_realisticSpeedsCheckBox.isChecked = options.realisticSpeeds;
 				this.m_noDespawnCheckBox.isChecked = options.noDespawn;
 				this.m_improvedAICheckBox.isChecked = options.improvedAI;
-				this.m_betaTestRoadCustomizerCheckBox.isChecked = options.betaTestRoadCustomizer;
 				this.m_ghostModeCheckBox.isChecked = options.ghostMode;
 			}
 
@@ -324,14 +316,8 @@ namespace CSL_Traffic
 			if (options.improvedAI)
 				CSLTraffic.Options |= ModOptions.ImprovedAI;
 
-			if (options.betaTestRoadCustomizer)
-				CSLTraffic.Options |= ModOptions.BetaTestRoadCustomizerTool;
-
 			if (options.ghostMode)
 				CSLTraffic.Options |= ModOptions.GhostMode;
-
-			if (options.fixCargoTrucksNotSpawning)
-				CSLTraffic.Options |= ModOptions.FixCargoTrucksNotSpawning;
 		}
 
 		void OnLevelWasLoaded(int level)
@@ -359,10 +345,6 @@ namespace CSL_Traffic
 			public bool realisticSpeeds;
 			public bool noDespawn;
 			public bool improvedAI;
-
-			public bool betaTestRoadCustomizer;
-
-			public bool fixCargoTrucksNotSpawning;
 
 			public bool ghostMode;
 		}

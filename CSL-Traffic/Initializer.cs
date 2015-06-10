@@ -492,16 +492,22 @@ namespace CSL_Traffic
 
                     if ((CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) != OptionsManager.ModOptions.GhostMode && this.m_level == 6)
                     {
+                        // ------------ This will be refactored -------------- //
                         // Redirect methods
                         MethodInfo originalCreateLanes = typeof(NetManager).GetMethod("CreateLanes", BindingFlags.Instance | BindingFlags.Public);
-                        MethodInfo customCreateLanes = typeof(Initializer).GetMethod("CreateLanes", BindingFlags.Instance | BindingFlags.Public);
+                        MethodInfo customCreateLanes = typeof(RoadManager).GetMethod("CreateLanes", BindingFlags.Instance | BindingFlags.Public);
+                        MethodInfo originalReleaseLanes = typeof(NetManager).GetMethod("ReleaseLanes", BindingFlags.Instance | BindingFlags.Public);
+                        MethodInfo customReleaseLanes = typeof(RoadManager).GetMethod("ReleaseLanes", BindingFlags.Instance | BindingFlags.Public);
 
-                        if (originalCreateLanes != null && customCreateLanes != null)
+                        if (originalCreateLanes != null && customCreateLanes != null && originalReleaseLanes != null && customReleaseLanes != null)
                         {
-                            Logger.LogInfo("Redirecting CreateLanes...");
+                            RoadManager.Ensure();
+                            Logger.LogInfo("Redirecting methods...");
                             Redirection.RedirectionHelper.RedirectCalls(originalCreateLanes, customCreateLanes);
+                            Redirection.RedirectionHelper.RedirectCalls(originalReleaseLanes, customReleaseLanes);
                             // TODO: don't forget to revert redirection
                         }
+                        // -------------------------------------------------- //
 
                         ReplaceVehicleAI(healthCareVehicleCollection);
                         ReplaceVehicleAI(publicTansportVehicleCollection);
@@ -520,9 +526,7 @@ namespace CSL_Traffic
                         ReplaceTransportLineAI<BusTransportLineAI>("Bus Line", publicTansportNetCollection, "Bus", publicTransportTransportCollection);
 
                         AddTool<CustomTransportTool>(toolController);
-
-                        if ((CSLTraffic.Options & OptionsManager.ModOptions.BetaTestRoadCustomizerTool) == OptionsManager.ModOptions.BetaTestRoadCustomizerTool)
-                            AddTool<RoadCustomizerTool>(toolController);
+                        AddTool<RoadCustomizerTool>(toolController);
 
                         if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
                         {
@@ -823,6 +827,7 @@ namespace CSL_Traffic
             instance.transform.SetParent(customPrefabsHolder);
             instance.transform.localPosition = new Vector3(-7500, -7500, -7500);
             T newPrefab = instance.GetComponent<T>();
+            instance.SetActive(false);
 
             MethodInfo initMethod = GetCollectionType(typeof(T).Name).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
             Initializer.QueuePrioritizedLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { newName, new[] { newPrefab }, new string[] { replace ? prefabName : null } }));
