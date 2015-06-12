@@ -108,7 +108,7 @@ namespace CSL_Traffic
             fi_queueLock = pathFindType.GetFieldByName("m_queueLock");
             fi_pathFindThread = pathFindType.GetFieldByName("m_pathFindThread");
             fi_terminated = pathFindType.GetFieldByName("m_terminated");
-
+            
             this.m_pathfindProfiler = new ThreadProfiler();
             this.m_laneLocation = new uint[262144];
             this.m_laneTarget = new PathUnit.Position[262144];

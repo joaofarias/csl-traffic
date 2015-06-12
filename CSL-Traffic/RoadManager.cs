@@ -481,13 +481,17 @@ namespace CSL_Traffic
             int laneIndex = 0;
             for (uint l = firstLaneId; laneIndex < laneCount && l != 0; laneIndex++)
             {
-                if ((NetManager.instance.m_lanes.m_buffer[l].m_flags & Lane.CONTROL_BIT) == 0)
+                //if ((NetManager.instance.m_lanes.m_buffer[l].m_flags & Lane.CONTROL_BIT) == 0)
+                if (!RoadManager.instance.m_lanes[l].m_isAlive)
                 {
                     VehicleType vehicleTypes = VehicleType.All;
 
                     NetInfoLane netInfoLane = netInfo.m_lanes[laneIndex] as NetInfoLane;
                     if (netInfoLane != null)
+                    {
                         vehicleTypes = netInfoLane.m_allowedVehicleTypes;
+                        NetManager.instance.m_lanes.m_buffer[l].m_flags |= Lane.CONTROL_BIT;
+                    }
 
                     RoadManager.instance.m_lanes[l] = new Lane(l, vehicleTypes, netInfo.m_lanes[laneIndex].m_speedLimit);
                 }
@@ -498,7 +502,8 @@ namespace CSL_Traffic
 
         private void CreateLane(uint laneId, ushort segmentId)
         {
-            if ((NetManager.instance.m_lanes.m_buffer[laneId].m_flags & Lane.CONTROL_BIT) != 0)
+            //if ((NetManager.instance.m_lanes.m_buffer[laneId].m_flags & Lane.CONTROL_BIT) != 0)
+            if (RoadManager.instance.m_lanes[laneId].m_isAlive)
                 return;
             
             NetSegment segment = NetManager.instance.m_segments.m_buffer[segmentId];
@@ -518,7 +523,10 @@ namespace CSL_Traffic
 
                 NetInfoLane netInfoLane = netInfo.m_lanes[laneIndex] as NetInfoLane;
                 if (netInfoLane != null)
+                {
                     vehicleTypes = netInfoLane.m_allowedVehicleTypes;
+                    NetManager.instance.m_lanes.m_buffer[laneId].m_flags |= Lane.CONTROL_BIT;
+                }
 
                 RoadManager.instance.m_lanes[laneId] = new Lane(laneId, vehicleTypes, netInfo.m_lanes[laneIndex].m_speedLimit);
             }
@@ -533,7 +541,7 @@ namespace CSL_Traffic
             NetManager netManager = NetManager.instance;
             for (int i = 0; i < NetManager.MAX_LANE_COUNT; i++)
             {
-                if (m_lanes[i].m_laneId == 0 && (netManager.m_lanes.m_buffer[i].m_flags & (ushort)NetLane.Flags.Created) != 0)
+                if (!m_lanes[i].m_isAlive && (netManager.m_lanes.m_buffer[i].m_flags & (ushort)NetLane.Flags.Created) != 0)
                     CreateLanes(netManager.m_segments.m_buffer[netManager.m_lanes.m_buffer[i].m_segment].m_lanes, netManager.m_lanes.m_buffer[i].m_segment);
             }
         }
@@ -573,7 +581,7 @@ namespace CSL_Traffic
 
         public bool CheckLaneConnection(uint from, uint to, VehicleType vehicleType)
         {
-            return this.m_lanes[from].ConnectsTo(to) && (this.m_lanes[from].m_vehicleTypes & this.m_lanes[to].m_vehicleTypes & vehicleType) == vehicleType;
+            return this.m_lanes[from].ConnectsTo(to) && (this.m_lanes[from].m_vehicleTypes & this.m_lanes[to].m_vehicleTypes & vehicleType) != RoadManager.VehicleType.None;
         }
         #endregion
 
