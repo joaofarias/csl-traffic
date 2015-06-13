@@ -867,7 +867,7 @@ namespace CSL_Traffic
             for (int i = 0; i < road.m_segments.Length; i++)
             {
                 // FIXME: handle different kind of segments that shouldn't be touched.
-                if (roadType.HasFlag(RoadType.Bridge) && i != 0)
+                if (roadType.IsFlagSet(RoadType.Bridge) && i != 0)
                     break;
 
                 TextureType textureType = TextureType.Normal;
@@ -935,21 +935,21 @@ namespace CSL_Traffic
         {
             StringBuilder sb = new StringBuilder();
 
-            if (roadType.HasFlag(RoadType.OneWay))
+            if (roadType.IsFlagSet(RoadType.OneWay))
                 sb.Append(whiteSpaces ? " OneWay" : "OneWay");
             
-            if (roadType.HasFlag(RoadType.Elevated))
+            if (roadType.IsFlagSet(RoadType.Elevated))
                 sb.Append(whiteSpaces ? " Elevated" : "Elevated");
-            else if (roadType.HasFlag(RoadType.Bridge))
+            else if (roadType.IsFlagSet(RoadType.Bridge))
                 sb.Append(whiteSpaces ? " Bridge" : "Bridge");
-            else if (roadType.HasFlag(RoadType.Slope))
+            else if (roadType.IsFlagSet(RoadType.Slope))
                 sb.Append(whiteSpaces ? " Slope" : "Slope");
-            else if (roadType.HasFlag(RoadType.Tunnel))
+            else if (roadType.IsFlagSet(RoadType.Tunnel))
                 sb.Append(whiteSpaces ? " Tunnel" : "Tunnel");
             
-            if (roadType.HasFlag(RoadType.Grass))
+            if (roadType.IsFlagSet(RoadType.Grass))
                 sb.Append(whiteSpaces ? " Decoration Grass" : "Grass");
-            else if (roadType.HasFlag(RoadType.Trees))
+            else if (roadType.IsFlagSet(RoadType.Trees))
                 sb.Append(whiteSpaces ? " Decoration Trees" : "Trees");
 
             return sb.ToString();
@@ -1180,7 +1180,7 @@ namespace CSL_Traffic
 
         void CreatePedestrianRoad(RoadType roadType, NetCollection roadsCollection, NetCollection beautificationCollection)
         {
-            string newName = "Zonable Pedestrian" + (roadType.HasFlag(RoadType.Pavement) ? " Pavement" : " Gravel");
+            string newName = "Zonable Pedestrian" + (roadType.IsFlagSet(RoadType.Pavement) ? " Pavement" : " Gravel");
             if (m_customPrefabs.ContainsKey(newName))
                 return;
 
@@ -1346,14 +1346,14 @@ namespace CSL_Traffic
         static int GetMaintenanceCost(RoadType roadType, float baseCosts, float upgradeCosts, float timesElevated, float timesTunnel)
         {
             float finalCosts = baseCosts;
-            if (roadType.HasFlag(RoadType.Grass))
+            if (roadType.IsFlagSet(RoadType.Grass))
                 finalCosts += upgradeCosts;
-            else if (roadType.HasFlag(RoadType.Trees))
+            else if (roadType.IsFlagSet(RoadType.Trees))
                 finalCosts += upgradeCosts * 2;
 
-            if (roadType.HasFlag(RoadType.Bridge) || roadType.HasFlag(RoadType.Elevated) || roadType.HasFlag(RoadType.Slope))
+            if (roadType.IsFlagSet(RoadType.Bridge) || roadType.IsFlagSet(RoadType.Elevated) || roadType.IsFlagSet(RoadType.Slope))
                 finalCosts *= timesElevated;
-            else if (roadType.HasFlag(RoadType.Tunnel))
+            else if (roadType.IsFlagSet(RoadType.Tunnel))
                 finalCosts *= timesTunnel;
 
             return CalculateMaintenanceCost(finalCosts);
@@ -1371,7 +1371,7 @@ namespace CSL_Traffic
 
         static int GetPedestrianRoadMaintenanceCost(RoadType roadType)
         {
-            if (roadType.HasFlag(RoadType.Pavement))
+            if (roadType.IsFlagSet(RoadType.Pavement))
                 return GetMaintenanceCost(roadType, 0.40f, 0f, 2.5f, 6f);
             else
                 return GetMaintenanceCost(roadType, 0.24f, 0f, 2.5f, 6f);

@@ -36,15 +36,24 @@ namespace CSL_Traffic.Extensions
 
     public static class EnumExtensions
     {
-        /// <summary>
-        /// No type-safety check.
-        /// </summary>
-        public static bool HasFlag(this Enum e1, Enum e2)
+        public static bool IsFlagSet(this byte value, byte flag)
         {
-            ulong e = Convert.ToUInt64(e1);
-            ulong f = Convert.ToUInt64(e2);
+            return (value & flag) != 0;
+        }
 
-            return (e & f) == f;
+        public static byte SetFlags(this byte value, byte flag)
+        {
+            return SetFlags(value, flag, true);
+        }
+
+        public static byte ClearFlags(this byte value, byte flag)
+        {
+            return SetFlags(value, flag, false);
+        }
+
+        private static byte SetFlags(this byte value, byte flag, bool add)
+        {
+            return (byte)(!add ? value & ~flag : value | flag);
         }
     }
 }
