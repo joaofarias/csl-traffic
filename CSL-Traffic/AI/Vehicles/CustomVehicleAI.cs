@@ -182,7 +182,7 @@ namespace CSL_Traffic
                     }
                     return;
                 }
-                if ((byte)(lane2.m_laneType & (NetInfo.LaneType.Vehicle | NetInfo.LaneType.Cargo | ((NetInfo.LaneType)((byte)32)) | ((NetInfo.LaneType)((byte)64)))) == 0)
+                if ((byte)(lane2.m_laneType & (NetInfo.LaneType.Vehicle | NetInfo.LaneType.Cargo)) == 0)
                 {
                     (vehicleAI as IVehicle).InvalidPath(vehicleID, ref vehicleData, vehicleID, ref vehicleData);
                     return;
@@ -222,6 +222,12 @@ namespace CSL_Traffic
                 {
                     if (num3 != laneID && lane.m_laneType != NetInfo.LaneType.Cargo)
                     {
+                        if (!RoadManager.instance.CheckLaneConnection(num3, laneID, (vehicleAI as IVehicle).VehicleType))
+                        {
+                            (vehicleAI as IVehicle).InvalidPath(vehicleID, ref vehicleData, vehicleID, ref vehicleData);
+                            return;
+                        }
+
                         PathUnit.CalculatePathPositionOffset(laneID, vector, out b4);
                         bezier = default(Bezier3);
                         Vector3 vector3;

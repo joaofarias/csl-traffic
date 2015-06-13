@@ -59,21 +59,27 @@ namespace CSL_Traffic
                     int vehicleType = BitConverter.ToInt32(data, index);
                     index += 4;
 
-                    Lane lane = new Lane(laneId, (VehicleType)vehicleType, speed, nodeId);
-
                     int connectionsCount = BitConverter.ToInt32(data, index);
                     index += 4;
-
+                    HashSet<uint> connectionsOut = new HashSet<uint>();
                     for (int i = 0; i < connectionsCount; i++)
                     {
-                        lane.AddConnection(BitConverter.ToUInt32(data, index), false);
+                        connectionsOut.Add(BitConverter.ToUInt32(data, index));
+                        index += 4;
+                    }
+                    if (connectionsCount > 0)
+                        nodesList.Add(nodeId);
+
+                    connectionsCount = BitConverter.ToInt32(data, index);
+                    index += 4;
+                    HashSet<uint> connectionsIn = new HashSet<uint>();
+                    for (int i = 0; i < connectionsCount; i++)
+                    {
+                        connectionsIn.Add(BitConverter.ToUInt32(data, index));
                         index += 4;
                     }
 
-                    roadManager.m_lanes[laneId] = lane;
-
-                    if (connectionsCount > 0)
-                        nodesList.Add(lane.m_nodeId);
+                    roadManager.m_lanes[laneId] = new Lane(laneId, (VehicleType)vehicleType, speed, nodeId, connectionsOut, connectionsIn);
                 }
 
                 RoadCustomizerTool customizerTool = ToolsModifierControl.GetTool<RoadCustomizerTool>();
@@ -111,6 +117,11 @@ namespace CSL_Traffic
                     data.AddRange(BitConverter.GetBytes((int)lane.m_vehicleTypes));
 
                     uint[] connections = lane.GetConnectionsAsArray();
+                    data.AddRange(BitConverter.GetBytes(connections.Length));
+                    for (int j = 0; j < connections.Length; j++)
+                        data.AddRange(BitConverter.GetBytes(connections[j]));
+
+                    connections = lane.GetConnectionsInAsArray();
                     data.AddRange(BitConverter.GetBytes(connections.Length));
                     for (int j = 0; j < connections.Length; j++)
                         data.AddRange(BitConverter.GetBytes(connections[j]));
@@ -225,17 +236,32 @@ namespace CSL_Traffic
 
             public uint m_laneId;
             public ushort m_nodeId;
-            private HashSet<uint> m_laneConnections;// = new HashSet<uint>();
-            public VehicleType m_vehicleTypes;// = VehicleType.All;
-            public float m_speed;// = 1f;
+            private HashSet<uint> m_connectionsOut;
+            private HashSet<uint> m_connectionsIn;
+            public VehicleType m_vehicleTypes;
+            public float m_speed;
             public bool m_isAlive;
-            private volatile bool m_lockConnections;// = false;
+            private volatile bool m_lockConnections;
 
             public Lane(uint laneId, VehicleType vehicleTypes = VehicleType.All, float speedLimit = 1f, ushort nodeId = 0)
+                : this(laneId, vehicleTypes, speedLimit, nodeId, new HashSet<uint>(), new HashSet<uint>())
+            {
+                //this.m_laneId = laneId;
+                //this.m_nodeId = nodeId;
+                //this.m_connectionsOut = new HashSet<uint>();
+                //this.m_connectionsIn = new HashSet<uint>();
+                //this.m_vehicleTypes = vehicleTypes;
+                //this.m_speed = speedLimit;
+                //this.m_lockConnections = false;
+                //this.m_isAlive = true;
+            }
+
+            public Lane(uint laneId, VehicleType vehicleTypes, float speedLimit, ushort nodeId, HashSet<uint> connectionsOut, HashSet<uint> connectionsIn)
             {
                 this.m_laneId = laneId;
                 this.m_nodeId = nodeId;
-                this.m_laneConnections = new HashSet<uint>();
+                this.m_connectionsOut = connectionsOut;
+                this.m_connectionsIn = connectionsIn;
                 this.m_vehicleTypes = vehicleTypes;
                 this.m_speed = speedLimit;
                 this.m_lockConnections = false;
@@ -251,111 +277,139 @@ namespace CSL_Traffic
                 this.RemoveAllConnections();
             }
 
-            public bool AddConnection(uint laneId, bool connectBack = true)
+            public bool AddConnection(uint laneId)
             {
-                if (laneId == this.m_laneId || this.m_laneConnections == null)
+                if (laneId == this.m_laneId || this.m_connectionsOut == null)
+                    return false;
+
+                bool exists = false;
+                m_lockConnections = true;
+                lock (this.m_connectionsOut)
+                {
+                    exists = !this.m_connectionsOut.Add(laneId);
+                }
+                m_lockConnections = false;
+
+                if (exists)
                     return false;
 
                 NetManager.instance.m_lanes.m_buffer[this.m_laneId].m_flags |= Lane.CONTROL_BIT;
 
-                bool exists = false;
-                lock (this.m_laneConnections)
-                {
-                    m_lockConnections = true;
-                    exists = !this.m_laneConnections.Add(laneId);
-                    m_lockConnections = false;
-                }
-
-                if (exists)
-                    return false;
-                if (connectBack)
-                    RoadManager.instance.m_lanes[laneId].AddConnection(this.m_laneId, false);
-                else
-                    return true;
+                RoadManager.instance.m_lanes[laneId].AddConnectionIn(this.m_laneId);
 
                 UpdateArrows();
 
                 return true;
             }
 
-            public bool RemoveConnection(uint laneId, bool removeBack = true)
+            private bool AddConnectionIn(uint laneId)
             {
-                if (this.m_laneConnections == null)
+                if (laneId == this.m_laneId || this.m_connectionsIn == null)
+                    return false;
+
+                bool result = false;
+                lock (this.m_connectionsIn)
+                {
+                    result = this.m_connectionsIn.Add(laneId);
+                }
+                
+                return result;
+            }
+
+            public bool RemoveConnection(uint laneId)
+            {
+                if (this.m_connectionsOut == null)
                     return false;
 
                 bool removed = false;
                 int count = -1;
-                lock (this.m_laneConnections)
+                m_lockConnections = true;
+                lock (this.m_connectionsOut)
                 {
-                    m_lockConnections = true;
-                    removed = this.m_laneConnections.Remove(laneId);
-                    count = this.m_laneConnections.Count;
-                    m_lockConnections = false;
+                    removed = this.m_connectionsOut.Remove(laneId);
+                    count = this.m_connectionsOut.Count;
                 }
+                m_lockConnections = false;
+
+                if (!removed)
+                    return false;
 
                 if (count == 0 && this.m_vehicleTypes == VehicleType.All)
                     NetManager.instance.m_lanes.m_buffer[this.m_laneId].m_flags = (ushort)(NetManager.instance.m_lanes.m_buffer[this.m_laneId].m_flags & ~Lane.CONTROL_BIT);
 
-                if (!removed)
-                    return false;
-                if (removeBack)
-                    RoadManager.instance.m_lanes[laneId].RemoveConnection(this.m_laneId, false);
-                else
-                    return true;
+                RoadManager.instance.m_lanes[laneId].RemoveConnectionIn(this.m_laneId);
 
                 UpdateArrows();
 
                 return removed;
             }
 
-            public int RemoveAllConnections()
+            private bool RemoveConnectionIn(uint laneId)
             {
-                if (this.m_laneConnections == null)
-                    return 0;
+                if (this.m_connectionsIn == null)
+                    return false;
 
-                int count = 0;
-                RoadManager roadManager = RoadManager.instance;
-                uint[] connections = GetConnectionsAsArray();
-                lock (this.m_laneConnections)
+                bool result = false;
+                lock (this.m_connectionsIn)
                 {
-                    m_lockConnections = true;
-                    for (int i = 0; i < connections.Length; i++)
-                    {
-                        if (this.m_laneConnections.Remove(connections[i]))
-                        {
-                            roadManager.m_lanes[connections[i]].RemoveConnection(this.m_laneId, false);
-                            count++;
-                        }
-                    }
-                    m_lockConnections = false;
+                    result = this.m_connectionsIn.Remove(laneId);
                 }
-                
-                return count;
+
+                return result;
+            }
+
+            public void RemoveAllConnections()
+            {
+                if (this.m_connectionsOut == null)
+                    return;
+
+                uint[] connections = GetConnectionsAsArray();
+                for (int i = 0; i < connections.Length; i++)
+                    RemoveConnection(connections[i]);
+
+                RoadManager roadManager = RoadManager.instance;
+                connections = GetConnectionsInAsArray();
+                for (int i = 0; i < connections.Length; i++)
+                    roadManager.m_lanes[connections[i]].RemoveConnection(this.m_laneId);
             }
 
             public uint[] GetConnectionsAsArray()
             {
-                if (this.m_laneConnections == null)
+                if (this.m_connectionsOut == null)
                     return null;
 
                 uint[] connections = null;
-                lock (this.m_laneConnections)
+                lock (this.m_connectionsOut)
                 {
-                    connections = this.m_laneConnections.ToArray();
+                    connections = this.m_connectionsOut.ToArray();
                 }
                 
                 return connections;
             }
 
+            public uint[] GetConnectionsInAsArray()
+            {
+                if (this.m_connectionsIn == null)
+                    return null;
+
+                uint[] connections = null;
+                lock (this.m_connectionsIn)
+                {
+                    connections = this.m_connectionsIn.ToArray();
+                }
+
+                return connections;
+            }
+
             public int ConnectionCount()
             {
-                if (this.m_laneConnections == null)
+                if (this.m_connectionsOut == null)
                     return 0;
 
                 int count = 0;
-                lock (this.m_laneConnections)
+                lock (this.m_connectionsOut)
                 {
-                    count = this.m_laneConnections.Count();
+                    count = this.m_connectionsOut.Count();
                 }
 
                 return count;
@@ -363,17 +417,17 @@ namespace CSL_Traffic
 
             public bool ConnectsTo(uint laneId)
             {
-                if (this.m_laneConnections == null)
+                if (this.m_connectionsOut == null)
                     return true;
 
                 // This is my attempt at avoiding locking unless strictly necessary, for performance reasons
                 if (!m_lockConnections)
-                    return this.m_laneConnections.Count == 0 || this.m_laneConnections.Contains(laneId);
+                    return this.m_connectionsOut.Count == 0 || this.m_connectionsOut.Contains(laneId);
                 
                 bool result = true;
-                lock (this.m_laneConnections)
+                lock (this.m_connectionsOut)
                 {
-                    result = this.m_laneConnections.Count == 0 || this.m_laneConnections.Contains(laneId);
+                    result = this.m_connectionsOut.Count == 0 || this.m_connectionsOut.Contains(laneId);
                 }
 
                 return result;

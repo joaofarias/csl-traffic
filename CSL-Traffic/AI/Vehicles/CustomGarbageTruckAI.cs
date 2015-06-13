@@ -10,6 +10,8 @@ namespace CSL_Traffic
      */
     public class CustomGarbageTruckAI : GarbageTruckAI, IVehicle
     {
+        public RoadManager.VehicleType VehicleType { get { return RoadManager.VehicleType.GarbageTruck; } }
+
         public override void SimulationStep(ushort vehicleID, ref Vehicle vehicleData, ref Vehicle.Frame frameData, ushort leaderID, ref Vehicle leaderData, int lodPhysics)
         {
             if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)

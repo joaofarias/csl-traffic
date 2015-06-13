@@ -6,6 +6,8 @@ namespace CSL_Traffic
 {
 	class CustomPassengerCarAI : PassengerCarAI, IVehicle
 	{
+        public RoadManager.VehicleType VehicleType { get { return RoadManager.VehicleType.PassengerCar; } }
+
 		public override void SimulationStep(ushort vehicleID, ref Vehicle data, Vector3 physicsLodRefPos)
 		{
 			if ((CSLTraffic.Options & OptionsManager.ModOptions.NoDespawn) == OptionsManager.ModOptions.NoDespawn)

@@ -6,6 +6,9 @@ namespace CSL_Traffic
 {
 	class CustomPoliceCarAI : PoliceCarAI, IVehicle
 	{
+        private RoadManager.VehicleType m_vehicleType = RoadManager.VehicleType.PoliceCar;
+        public RoadManager.VehicleType VehicleType { get { return m_vehicleType; } }
+
 		public override void SimulationStep(ushort vehicleID, ref Vehicle vehicleData, ref Vehicle.Frame frameData, ushort leaderID, ref Vehicle leaderData, int lodPhysics)
 		{
 			if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
@@ -21,6 +24,10 @@ namespace CSL_Traffic
 				CustomCarAI.sm_speedData[vehicleID].ApplySpeedMultiplier(this.m_info);
 			}
 
+            if ((vehicleData.m_flags & Vehicle.Flags.Emergency2) != Vehicle.Flags.None)
+                m_vehicleType |= RoadManager.VehicleType.Emergency;
+            else
+                m_vehicleType &= ~RoadManager.VehicleType.Emergency;
 
 			frameData.m_blinkState = (((vehicleData.m_flags & Vehicle.Flags.Emergency2) == Vehicle.Flags.None) ? 0f : 10f);
 			this.TryCollectCrime(vehicleID, ref vehicleData, ref frameData);

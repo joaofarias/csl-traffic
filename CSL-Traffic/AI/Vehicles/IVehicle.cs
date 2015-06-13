@@ -4,6 +4,8 @@ namespace CSL_Traffic
 {
     interface IVehicle
     {
+        RoadManager.VehicleType VehicleType { get; }
+
         bool StartPathFind(ushort vehicleID, ref Vehicle vehicleData);
         void CalculateSegmentPosition(ushort vehicleID, ref Vehicle vehicleData, PathUnit.Position position, uint laneID, byte offset, out Vector3 pos, out Vector3 dir, out float maxSpeed);
         void CalculateSegmentPosition(ushort vehicleID, ref Vehicle vehicleData, PathUnit.Position nextPosition, PathUnit.Position position, uint laneID, byte offset, PathUnit.Position prevPos, uint prevLaneID, byte prevOffset, out Vector3 pos, out Vector3 dir, out float maxSpeed);

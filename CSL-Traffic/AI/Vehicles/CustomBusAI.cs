@@ -5,6 +5,8 @@ namespace CSL_Traffic
 {
     class CustomBusAI : BusAI, IVehicle
     {
+        public RoadManager.VehicleType VehicleType { get { return RoadManager.VehicleType.Bus; } }
+
         public override void SimulationStep(ushort vehicleID, ref Vehicle vehicleData, ref Vehicle.Frame frameData, ushort leaderID, ref Vehicle leaderData, int lodPhysics)
         {
             if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
@@ -17,7 +19,6 @@ namespace CSL_Traffic
                 CustomCarAI.sm_speedData[vehicleID].ApplySpeedMultiplier(this.m_info);
             }
             
-
             if ((vehicleData.m_flags & Vehicle.Flags.Stopped) != Vehicle.Flags.None)
             {
                 vehicleData.m_waitCounter += 1;
