@@ -15,7 +15,7 @@ namespace CSL_Traffic
      * This is the class responsible for pathfinding. It's all in here since none of the methods can be overwritten.
      * There's a lot of small changes here and there to make it generate a correct path for the service vehicles using pedestrian paths.
      */
-    class CustomPathFind : PathFind
+    sealed class CustomPathFind : PathFind
     {
         private struct BufferItem
         {

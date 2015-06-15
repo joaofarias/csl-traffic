@@ -8,7 +8,7 @@ namespace CSL_Traffic
      * The AI for garbage truck using pedestrian paths. Again, there's a few small changes to make it use them (having them in the path is not enough).
      * The movement happens on SimulationStep.
      */
-    public class CustomGarbageTruckAI : GarbageTruckAI, IVehicle
+    public sealed class CustomGarbageTruckAI : GarbageTruckAI, IVehicle
     {
         public RoadManager.VehicleType VehicleType { get { return RoadManager.VehicleType.GarbageTruck; } }
 

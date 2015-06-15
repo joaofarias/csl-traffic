@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace CSL_Traffic
 {
-    class CustomBusAI : BusAI, IVehicle
+    sealed class CustomBusAI : BusAI, IVehicle
     {
         public RoadManager.VehicleType VehicleType { get { return RoadManager.VehicleType.Bus; } }
 

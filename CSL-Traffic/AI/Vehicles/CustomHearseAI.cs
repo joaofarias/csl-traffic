@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace CSL_Traffic
 {
-    class CustomHearseAI : HearseAI, IVehicle
+    sealed class CustomHearseAI : HearseAI, IVehicle
     {
         public RoadManager.VehicleType VehicleType { get { return RoadManager.VehicleType.Hearse; } }
 

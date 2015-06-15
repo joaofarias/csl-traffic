@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace CSL_Traffic
 {
-	class CustomPassengerCarAI : PassengerCarAI, IVehicle
+    sealed class CustomPassengerCarAI : PassengerCarAI, IVehicle
 	{
         public RoadManager.VehicleType VehicleType { get { return RoadManager.VehicleType.PassengerCar; } }
 

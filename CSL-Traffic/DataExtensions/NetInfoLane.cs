@@ -1,7 +1,7 @@
 ﻿
 namespace CSL_Traffic
 {
-    class NetInfoLane : NetInfo.Lane
+    sealed class NetInfoLane : NetInfo.Lane
     {
         public enum SpecialLaneType
         {

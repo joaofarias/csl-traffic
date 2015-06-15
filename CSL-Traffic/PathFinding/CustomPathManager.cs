@@ -11,7 +11,7 @@ namespace CSL_Traffic
 	 * The PathManager is needed to use the CustomPathFind class that is where the real magic happens.
 	 * There's some work to do here as I have some old code that isn't used anymore.
 	 */
-	public class CustomPathManager : PathManager
+	public sealed class CustomPathManager : PathManager
 	{
 		CustomPathFind[] m_pathFinds;
 

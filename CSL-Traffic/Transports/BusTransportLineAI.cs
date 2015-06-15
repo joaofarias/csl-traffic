@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace CSL_Traffic
 {
-	class BusTransportLineAI : TransportLineAI
+	sealed class BusTransportLineAI : TransportLineAI
 	{
 		public override void InitializePrefab()
 		{

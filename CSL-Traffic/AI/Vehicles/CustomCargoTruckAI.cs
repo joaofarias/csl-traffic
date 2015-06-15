@@ -2,7 +2,7 @@ using ColossalFramework;
 using UnityEngine;
 namespace CSL_Traffic
 {
-	class CustomCargoTruckAI : CargoTruckAI, IVehicle
+    sealed class CustomCargoTruckAI : CargoTruckAI, IVehicle
 	{
         public RoadManager.VehicleType VehicleType { get { return RoadManager.VehicleType.CargoTruck; } }
 
