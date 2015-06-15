@@ -227,7 +227,7 @@ namespace CSL_Traffic
                     num10 = Mathf.Min(num10, CalculateMaxSpeed(num16, 0f, braking * 0.9f));
                     if (!DisableCollisionCheck(leaderID, ref leaderData))
                     {
-                        CustomCarAI.CheckOtherVehicles(carAI, vehicleID, ref vehicleData, ref frameData, ref num10, ref flag5, ref zero, num, braking * 0.9f, lodPhysics);
+                        CheckOtherVehicles(carAI, vehicleID, ref vehicleData, ref frameData, ref num10, ref flag5, ref zero, num, braking * 0.9f, lodPhysics);
                     }
                     if (flag6)
                     {
@@ -407,7 +407,7 @@ namespace CSL_Traffic
                     int num6 = 0;
                     while (num5 != 0)
                     {
-                        num5 = CustomCarAI.CheckOtherVehicle(vehicleID, ref vehicleData, ref frameData, ref maxSpeed, ref blocked, ref collisionPush, maxBraking, num5, ref instance.m_vehicles.m_buffer[(int)num5], min, max, lodPhysics);
+                        num5 = CheckOtherVehicle(vehicleID, ref vehicleData, ref frameData, ref maxSpeed, ref blocked, ref collisionPush, maxBraking, num5, ref instance.m_vehicles.m_buffer[(int)num5], min, max, lodPhysics);
                         if (++num6 > 16384)
                         {
                             CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
@@ -446,7 +446,7 @@ namespace CSL_Traffic
                                     int num13 = 0;
                                     while (num12 != 0)
                                     {
-                                        num12 = CustomCarAI.CheckCitizen(segment, num7, magnitude, ref maxSpeed, ref blocked, maxBraking, num12, ref instance2.m_instances.m_buffer[(int)num12], min, max);
+                                        num12 = CheckCitizen(segment, num7, magnitude, ref maxSpeed, ref blocked, maxBraking, num12, ref instance2.m_instances.m_buffer[(int)num12], min, max);
                                         if (++num13 > 65536)
                                         {
                                             CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);

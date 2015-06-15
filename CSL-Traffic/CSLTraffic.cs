@@ -59,7 +59,7 @@ namespace CSL_Traffic
         {
             base.OnReleased();
 
-            GameObject.Destroy(m_initializer);
+            Object.Destroy(m_initializer);
         }
     }
 }

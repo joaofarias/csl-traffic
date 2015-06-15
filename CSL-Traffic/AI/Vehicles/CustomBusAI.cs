@@ -16,13 +16,13 @@ namespace CSL_Traffic
                     CustomCarAI.sm_speedData[vehicleID].currentPath = vehicleData.m_path;
                     CustomCarAI.sm_speedData[vehicleID].SetRandomSpeedMultiplier(0.65f, 1.05f);
                 }
-                CustomCarAI.sm_speedData[vehicleID].ApplySpeedMultiplier(this.m_info);
+                CustomCarAI.sm_speedData[vehicleID].ApplySpeedMultiplier(m_info);
             }
             
             if ((vehicleData.m_flags & Vehicle.Flags.Stopped) != Vehicle.Flags.None)
             {
                 vehicleData.m_waitCounter += 1;
-                if (this.CanLeave(vehicleID, ref vehicleData))
+                if (CanLeave(vehicleID, ref vehicleData))
                 {
                     vehicleData.m_flags &= ~Vehicle.Flags.Stopped;
                     vehicleData.m_flags |= Vehicle.Flags.Leaving;
@@ -30,14 +30,14 @@ namespace CSL_Traffic
                 }
             }
             CustomCarAI.SimulationStep(this, vehicleID, ref vehicleData, ref frameData, leaderID, ref leaderData, lodPhysics);
-            if ((vehicleData.m_flags & Vehicle.Flags.GoingBack) == Vehicle.Flags.None && this.ShouldReturnToSource(vehicleID, ref vehicleData))
+            if ((vehicleData.m_flags & Vehicle.Flags.GoingBack) == Vehicle.Flags.None && ShouldReturnToSource(vehicleID, ref vehicleData))
             {
-                this.SetTransportLine(vehicleID, ref vehicleData, 0);
+                SetTransportLine(vehicleID, ref vehicleData, 0);
             }
 
             if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
             {
-                CustomCarAI.sm_speedData[vehicleID].RestoreVehicleSpeed(this.m_info);
+                CustomCarAI.sm_speedData[vehicleID].RestoreVehicleSpeed(m_info);
             }
         }
 

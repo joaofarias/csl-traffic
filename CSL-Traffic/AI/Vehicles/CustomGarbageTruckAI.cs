@@ -21,34 +21,34 @@ namespace CSL_Traffic
                     CustomCarAI.sm_speedData[vehicleID].currentPath = vehicleData.m_path;
                     CustomCarAI.sm_speedData[vehicleID].SetRandomSpeedMultiplier(0.75f, 0.95f);
                 }
-                CustomCarAI.sm_speedData[vehicleID].ApplySpeedMultiplier(this.m_info);
+                CustomCarAI.sm_speedData[vehicleID].ApplySpeedMultiplier(m_info);
             }
             
 
             if ((vehicleData.m_flags & Vehicle.Flags.TransferToSource) != Vehicle.Flags.None)
             {
-                if ((int)vehicleData.m_transferSize < this.m_cargoCapacity)
+                if ((int)vehicleData.m_transferSize < m_cargoCapacity)
                 {
-                    this.TryCollectGarbage(vehicleID, ref vehicleData, ref frameData);
+                    TryCollectGarbage(vehicleID, ref vehicleData, ref frameData);
                 }
-                if ((int)vehicleData.m_transferSize >= this.m_cargoCapacity && (vehicleData.m_flags & Vehicle.Flags.GoingBack) == Vehicle.Flags.None && vehicleData.m_targetBuilding != 0)
+                if ((int)vehicleData.m_transferSize >= m_cargoCapacity && (vehicleData.m_flags & Vehicle.Flags.GoingBack) == Vehicle.Flags.None && vehicleData.m_targetBuilding != 0)
                 {
-                    this.SetTarget(vehicleID, ref vehicleData, 0);
+                    SetTarget(vehicleID, ref vehicleData, 0);
                 }
             }
             CustomCarAI.SimulationStep(this, vehicleID, ref vehicleData, ref frameData, leaderID, ref leaderData, lodPhysics);
             if ((vehicleData.m_flags & Vehicle.Flags.Arriving) != Vehicle.Flags.None && vehicleData.m_targetBuilding != 0 && (vehicleData.m_flags & (Vehicle.Flags.WaitingPath | Vehicle.Flags.GoingBack | Vehicle.Flags.WaitingTarget)) == Vehicle.Flags.None)
             {
-                this.ArriveAtTarget(vehicleID, ref vehicleData);
+                ArriveAtTarget(vehicleID, ref vehicleData);
             }
-            if ((vehicleData.m_flags & (Vehicle.Flags.TransferToSource | Vehicle.Flags.GoingBack)) == Vehicle.Flags.TransferToSource && this.ShouldReturnToSource(vehicleID, ref vehicleData))
+            if ((vehicleData.m_flags & (Vehicle.Flags.TransferToSource | Vehicle.Flags.GoingBack)) == Vehicle.Flags.TransferToSource && ShouldReturnToSource(vehicleID, ref vehicleData))
             {
-                this.SetTarget(vehicleID, ref vehicleData, 0);
+                SetTarget(vehicleID, ref vehicleData, 0);
             }
 
             if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
             {
-                CustomCarAI.sm_speedData[vehicleID].RestoreVehicleSpeed(this.m_info);
+                CustomCarAI.sm_speedData[vehicleID].RestoreVehicleSpeed(m_info);
             }
         }
 
@@ -85,7 +85,7 @@ namespace CSL_Traffic
                     int num10 = 0;
                     while (num9 != 0)
                     {
-                        this.TryCollectGarbage(vehicleID, ref vehicleData, ref frameData, num9, ref instance.m_buildings.m_buffer[(int)num9]);
+                        TryCollectGarbage(vehicleID, ref vehicleData, ref frameData, num9, ref instance.m_buildings.m_buffer[(int)num9]);
                         num9 = instance.m_buildings.m_buffer[(int)num9].m_nextGridBuilding;
                         if (++num10 >= 32768)
                         {
@@ -102,7 +102,7 @@ namespace CSL_Traffic
             Vector3 a = building.CalculateSidewalkPosition();
             if (Vector3.SqrMagnitude(a - frameData.m_position) < 1024f)
             {
-                int num = Mathf.Min(0, (int)vehicleData.m_transferSize - this.m_cargoCapacity);
+                int num = Mathf.Min(0, (int)vehicleData.m_transferSize - m_cargoCapacity);
                 if (num == 0)
                 {
                     return;
@@ -129,7 +129,7 @@ namespace CSL_Traffic
             }
             if ((data.m_flags & Vehicle.Flags.TransferToSource) != Vehicle.Flags.None)
             {
-                num = Mathf.Min(0, (int)data.m_transferSize - this.m_cargoCapacity);
+                num = Mathf.Min(0, (int)data.m_transferSize - m_cargoCapacity);
             }
             BuildingManager instance = Singleton<BuildingManager>.instance;
             BuildingInfo info = instance.m_buildings.m_buffer[(int)data.m_targetBuilding].Info;
@@ -142,7 +142,7 @@ namespace CSL_Traffic
             {
                 data.m_transferSize += (ushort)Mathf.Max(0, -num);
             }
-            this.SetTarget(vehicleID, ref data, 0);
+            SetTarget(vehicleID, ref data, 0);
             return false;
         }
 

@@ -138,7 +138,7 @@ namespace CSL_Traffic
 
         void OnLevelWasLoaded(int level)
         {
-            this.m_level = level;
+            m_level = level;
 
             if (level == 6)
             {
@@ -484,13 +484,13 @@ namespace CSL_Traffic
                 {
 
                     CreateLaneProps();
-                    this.m_thumbnailsTextureAtlas = UI.UIUtils.LoadThumbnailsTextureAtlas("RoadThumbnails");
+                    m_thumbnailsTextureAtlas = UI.UIUtils.LoadThumbnailsTextureAtlas("RoadThumbnails");
 
                     CreatePedestrianRoad(roadsNetCollection, beautificationNetCollection);
                     CreateSmallBusway(roadsNetCollection);
                     CreateLargeRoadWithBusLanes(roadsNetCollection);
 
-                    if ((CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) != OptionsManager.ModOptions.GhostMode && this.m_level == 6)
+                    if ((CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) != OptionsManager.ModOptions.GhostMode && m_level == 6)
                     {
                         // ------------ This will be refactored -------------- //
                         // Redirect methods
@@ -657,8 +657,8 @@ namespace CSL_Traffic
             Logger.LogInfo("Replacing Path Manager");
 
             // Change PathManager to CustomPathManager
-            FieldInfo sInstance = typeof(ColossalFramework.Singleton<PathManager>).GetFieldByName("sInstance");
-            PathManager originalPathManager = ColossalFramework.Singleton<PathManager>.instance;
+            FieldInfo sInstance = typeof(Singleton<PathManager>).GetFieldByName("sInstance");
+            PathManager originalPathManager = Singleton<PathManager>.instance;
             CustomPathManager customPathManager = originalPathManager.gameObject.AddComponent<CustomPathManager>();
             customPathManager.SetOriginalValues(originalPathManager);
 
@@ -671,7 +671,7 @@ namespace CSL_Traffic
             managers.Add(customPathManager);
 
             // Destroy in 10 seconds to give time to all references to update to the new manager without crashing
-            GameObject.Destroy(originalPathManager, 10f);
+            Destroy(originalPathManager, 10f);
 
             Logger.LogInfo("Path Manager successfully replaced.");
         }
@@ -684,8 +684,8 @@ namespace CSL_Traffic
             Logger.LogInfo("Replacing Transport Manager");
 
             // Change TransportManager to CustomTransportManager
-            FieldInfo sInstance = typeof(ColossalFramework.Singleton<TransportManager>).GetFieldByName("sInstance");
-            TransportManager originalTransportManager = ColossalFramework.Singleton<TransportManager>.instance;
+            FieldInfo sInstance = typeof(Singleton<TransportManager>).GetFieldByName("sInstance");
+            TransportManager originalTransportManager = Singleton<TransportManager>.instance;
             CustomTransportManager customTransportManager = originalTransportManager.gameObject.AddComponent<CustomTransportManager>();
             customTransportManager.SetOriginalValues(originalTransportManager);
 
@@ -719,7 +719,7 @@ namespace CSL_Traffic
             }
 
             // Destroy in 10 seconds to give time to all references to update to the new manager without crashing
-            GameObject.Destroy(originalTransportManager, 10f);
+            Destroy(originalTransportManager, 10f);
 
             Logger.LogInfo("Transport Manager successfully replaced.");
         }
@@ -822,7 +822,7 @@ namespace CSL_Traffic
             if (originalPrefab == null)
                 return null;
 
-            GameObject instance = GameObject.Instantiate<GameObject>(originalPrefab.gameObject);
+            GameObject instance = Instantiate<GameObject>(originalPrefab.gameObject);
             instance.name = newName;
             instance.transform.SetParent(customPrefabsHolder);
             instance.transform.localPosition = new Vector3(-7500, -7500, -7500);
@@ -830,13 +830,13 @@ namespace CSL_Traffic
             instance.SetActive(false);
 
             MethodInfo initMethod = GetCollectionType(typeof(T).Name).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
-            Initializer.QueuePrioritizedLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { newName, new[] { newPrefab }, new string[] { replace ? prefabName : null } }));
+            QueuePrioritizedLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { newName, new[] { newPrefab }, new string[] { replace ? prefabName : null } }));
 
             if (ghostMode)
             {
                 if (newPrefab.GetType() == typeof(NetInfo))
                     (newPrefab as NetInfo).m_availableIn = ItemClass.Availability.None;
-                this.m_customPrefabs.Add(newName, originalPrefab);
+                m_customPrefabs.Add(newName, originalPrefab);
                 return null;
             }
 
@@ -1513,14 +1513,14 @@ namespace CSL_Traffic
         {
             Logger.LogInfo("Resetting " + vehicle.name + "'s AI.");
             VehicleAI vAI = vehicle.m_vehicleAI;
-            if (vAI == null || !this.m_replacedAIs.ContainsKey(vehicle.name))
+            if (vAI == null || !m_replacedAIs.ContainsKey(vehicle.name))
             {
                 Logger.LogInfo("Resetting " + vehicle.name + "'s AI failed.");
                 return;
             }
                 
-            vehicle.m_vehicleAI = this.m_replacedAIs[vehicle.name];
-            this.m_replacedAIs[vehicle.name].m_info = vehicle;
+            vehicle.m_vehicleAI = m_replacedAIs[vehicle.name];
+            m_replacedAIs[vehicle.name].m_info = vehicle;
             Destroy(vAI);
         }
 

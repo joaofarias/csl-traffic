@@ -90,19 +90,19 @@ namespace CSL_Traffic
 			if (shareButton == null)
 				return;
 
-			//// Options Button
-			//Transform shareButtonTransform = mod.transform.FindChild("Share");
-			//if (shareButtonTransform == null)
-			//{
-			//	//Logger.LogInfo("Can't find share");
-			//	return;
-			//}
+            //// Options Button
+            //Transform shareButtonTransform = mod.transform.FindChild("Share");
+            //if (shareButtonTransform == null)
+            //{
+            //	//Logger.LogInfo("Can't find share");
+            //	return;
+            //}
 
-			//UIButton shareButton = shareButtonTransform.gameObject.GetComponent<UIButton>();
-			this.m_optionsButtonGo = Instantiate<GameObject>(shareButton.gameObject);
-			this.m_optionsButtonGo.name = "Options";
-			UIButton optionsButton = mod.GetComponent<UIPanel>().AttachUIComponent(this.m_optionsButtonGo) as UIButton;
-			this.m_optionsButtonGo.transform.localPosition = shareButton.transform.localPosition;
+            //UIButton shareButton = shareButtonTransform.gameObject.GetComponent<UIButton>();
+            m_optionsButtonGo = Instantiate<GameObject>(shareButton.gameObject);
+            m_optionsButtonGo.name = "Options";
+			UIButton optionsButton = mod.GetComponent<UIPanel>().AttachUIComponent(m_optionsButtonGo) as UIButton;
+            m_optionsButtonGo.transform.localPosition = shareButton.transform.localPosition;
 			
 			optionsButton.isVisible = true;
 			optionsButton.text = "Options";
@@ -111,12 +111,12 @@ namespace CSL_Traffic
 
 			// Options Panel
 			GameObject optionsPanel = GameObject.Find("(Library) OptionsPanel");
-			this.m_optionsPanel = Instantiate<GameObject>(optionsPanel);
-			this.m_optionsPanel.transform.SetParent(GameObject.Find("(Library) ContentManagerPanel").transform);
-			GameObject.Destroy(this.m_optionsPanel.GetComponent<OptionsPanel>());
+            m_optionsPanel = Instantiate<GameObject>(optionsPanel);
+            m_optionsPanel.transform.SetParent(GameObject.Find("(Library) ContentManagerPanel").transform);
+			Destroy(m_optionsPanel.GetComponent<OptionsPanel>());
 
-			m_checkboxTemplate = this.m_optionsPanel.GetComponentsInChildren<UICheckBox>().FirstOrDefault(c => c.name == "EdgeScrolling").gameObject;
-			GameObject.Destroy(m_checkboxTemplate.GetComponent<BindProperty>());
+			m_checkboxTemplate = m_optionsPanel.GetComponentsInChildren<UICheckBox>().FirstOrDefault(c => c.name == "EdgeScrolling").gameObject;
+			Destroy(m_checkboxTemplate.GetComponent<BindProperty>());
 
 			// clear panel but keep title
 			GameObject caption = null;
@@ -125,18 +125,18 @@ namespace CSL_Traffic
 				if (transform.name == "Caption")
 					caption = transform.gameObject;
 				else
-					GameObject.Destroy(transform.gameObject);
+					Destroy(transform.gameObject);
 			}
 
-			this.m_optionsPanel.GetComponent<UIPanel>().autoFitChildrenVertically = true;
-			this.m_optionsPanel.GetComponent<UIPanel>().autoFitChildrenHorizontally = true;
+            m_optionsPanel.GetComponent<UIPanel>().autoFitChildrenVertically = true;
+            m_optionsPanel.GetComponent<UIPanel>().autoFitChildrenHorizontally = true;
 
 			// set caption
 			caption.transform.FindChild("Label").GetComponent<UILabel>().text = "Traffic++ Options";
 
 			// clear close event
 			UIButton closeButton = caption.transform.FindChild("Close").GetComponent<UIButton>();
-			GameObject.Destroy(closeButton.GetComponent<BindEvent>());
+			Destroy(closeButton.GetComponent<BindEvent>());
 			closeButton.eventClick += CloseOptionsPanel;
 
 			// set options list
@@ -145,13 +145,13 @@ namespace CSL_Traffic
 			{
 				Destroy(m_optionsList.transform.GetChild(i).gameObject);
 			}
-			m_optionsList.transform.SetParent(this.m_optionsPanel.transform);
-			m_optionsList.GetComponent<UIScrollablePanel>().AlignTo(this.m_optionsPanel.GetComponent<UIPanel>(), UIAlignAnchor.TopLeft);
+			m_optionsList.transform.SetParent(m_optionsPanel.transform);
+			m_optionsList.GetComponent<UIScrollablePanel>().AlignTo(m_optionsPanel.GetComponent<UIPanel>(), UIAlignAnchor.TopLeft);
 			m_optionsList.GetComponent<UIScrollablePanel>().position += new Vector3(caption.transform.FindChild("Label").GetComponent<UILabel>().height, -caption.transform.FindChild("Label").GetComponent<UILabel>().height * 2f);
 
 			// save button
-			GameObject save = Instantiate<GameObject>(this.m_optionsButtonGo);
-			save.transform.SetParent(this.m_optionsPanel.transform);
+			GameObject save = Instantiate<GameObject>(m_optionsButtonGo);
+			save.transform.SetParent(m_optionsPanel.transform);
 
 			UIButton saveButton = save.GetComponent<UIButton>();
 			saveButton.isVisible = true;
@@ -199,52 +199,52 @@ namespace CSL_Traffic
 		private void OpenOptionsPanel(UIComponent component, UIMouseEventParameter eventParam)
 		{
 			LoadOptions();
-			this.m_optionsPanel.GetComponent<UIPanel>().isVisible = true;
-			this.m_optionsPanel.GetComponent<UIPanel>().BringToFront();
+            m_optionsPanel.GetComponent<UIPanel>().isVisible = true;
+            m_optionsPanel.GetComponent<UIPanel>().BringToFront();
 		}
 
 		private void CloseOptionsPanel(UIComponent component, UIMouseEventParameter eventParam)
 		{
-			this.m_optionsPanel.GetComponent<UIPanel>().isVisible = false;
+            m_optionsPanel.GetComponent<UIPanel>().isVisible = false;
 		}
 
 		private void OnSave(UIComponent component, UIMouseEventParameter eventParam)
 		{
-			this.m_optionsPanel.GetComponent<UIPanel>().isVisible = false;
+            m_optionsPanel.GetComponent<UIPanel>().isVisible = false;
 
 			Options options = new Options();
 			CSLTraffic.Options = ModOptions.None;
-			if (this.m_allowTrucksCheckBox.isChecked)
+			if (m_allowTrucksCheckBox.isChecked)
 			{
 				options.allowTrucks = true;
 				CSLTraffic.Options |= ModOptions.AllowTrucksInPedestrianRoads;
 			}
-			if (this.m_allowResidentsCheckBox.isChecked)
+			if (m_allowResidentsCheckBox.isChecked)
 			{
 				options.allowResidents = true;
 				CSLTraffic.Options |= ModOptions.AllowResidentsInPedestrianRoads;
 			}
-			if (this.m_disableCentralLaneCheckBox.isChecked)
+			if (m_disableCentralLaneCheckBox.isChecked)
 			{
 				options.disableCentralLane = true;
 				CSLTraffic.Options |= ModOptions.DisableCentralLaneOnPedestrianRoads;
 			}
-			if (this.m_realisticSpeedsCheckBox.isChecked)
+			if (m_realisticSpeedsCheckBox.isChecked)
 			{
 				options.realisticSpeeds = true;
 				CSLTraffic.Options |= ModOptions.UseRealisticSpeeds;
 			}
-			if (this.m_noDespawnCheckBox.isChecked)
+			if (m_noDespawnCheckBox.isChecked)
 			{
 				options.noDespawn = true;
 				CSLTraffic.Options |= ModOptions.NoDespawn;
 			}
-			if (this.m_improvedAICheckBox.isChecked)
+			if (m_improvedAICheckBox.isChecked)
 			{
 				options.improvedAI = true;
 				CSLTraffic.Options |= ModOptions.ImprovedAI;
 			}
-			if (this.m_ghostModeCheckBox.isChecked)
+			if (m_ghostModeCheckBox.isChecked)
 			{
 				options.ghostMode = true;
 				CSLTraffic.Options |= ModOptions.GhostMode;
@@ -287,15 +287,15 @@ namespace CSL_Traffic
 				return;
 			}
 
-			if (this.m_allowTrucksCheckBox != null)
+			if (m_allowTrucksCheckBox != null)
 			{
-				this.m_allowTrucksCheckBox.isChecked = options.allowTrucks;
-				this.m_allowResidentsCheckBox.isChecked = options.allowResidents;
-				this.m_disableCentralLaneCheckBox.isChecked = options.disableCentralLane;
-				this.m_realisticSpeedsCheckBox.isChecked = options.realisticSpeeds;
-				this.m_noDespawnCheckBox.isChecked = options.noDespawn;
-				this.m_improvedAICheckBox.isChecked = options.improvedAI;
-				this.m_ghostModeCheckBox.isChecked = options.ghostMode;
+                m_allowTrucksCheckBox.isChecked = options.allowTrucks;
+                m_allowResidentsCheckBox.isChecked = options.allowResidents;
+                m_disableCentralLaneCheckBox.isChecked = options.disableCentralLane;
+                m_realisticSpeedsCheckBox.isChecked = options.realisticSpeeds;
+                m_noDespawnCheckBox.isChecked = options.noDespawn;
+                m_improvedAICheckBox.isChecked = options.improvedAI;
+                m_ghostModeCheckBox.isChecked = options.ghostMode;
 			}
 
 			if (options.allowTrucks)

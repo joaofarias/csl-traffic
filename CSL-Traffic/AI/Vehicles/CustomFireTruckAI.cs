@@ -21,7 +21,7 @@ namespace CSL_Traffic
                     else
                         CustomCarAI.sm_speedData[vehicleID].SetRandomSpeedMultiplier(0.65f, 1f);
                 }
-                CustomCarAI.sm_speedData[vehicleID].ApplySpeedMultiplier(this.m_info);
+                CustomCarAI.sm_speedData[vehicleID].ApplySpeedMultiplier(m_info);
             }
 
             if ((vehicleData.m_flags & Vehicle.Flags.Emergency2) != Vehicle.Flags.None)
@@ -50,36 +50,36 @@ namespace CSL_Traffic
                     }
                     if (vehicleData.m_blockCounter == 8 && (vehicleData.m_flags & Vehicle.Flags.Stopped) == Vehicle.Flags.None)
                     {
-                        this.ArriveAtTarget(leaderID, ref leaderData);
+                        ArriveAtTarget(leaderID, ref leaderData);
                     }
-                    if (this.ExtinguishFire(vehicleID, ref vehicleData, vehicleData.m_targetBuilding, ref Singleton<BuildingManager>.instance.m_buildings.m_buffer[(int)vehicleData.m_targetBuilding]))
+                    if (ExtinguishFire(vehicleID, ref vehicleData, vehicleData.m_targetBuilding, ref Singleton<BuildingManager>.instance.m_buildings.m_buffer[(int)vehicleData.m_targetBuilding]))
                     {
-                        this.SetTarget(vehicleID, ref vehicleData, 0);
+                        SetTarget(vehicleID, ref vehicleData, 0);
                     }
                 }
                 else
                 {
                     if (instance.m_buildings.m_buffer[(int)vehicleData.m_targetBuilding].m_fireIntensity == 0)
                     {
-                        this.SetTarget(vehicleID, ref vehicleData, 0);
+                        SetTarget(vehicleID, ref vehicleData, 0);
                     }
                 }
             }
-            if ((vehicleData.m_flags & Vehicle.Flags.Stopped) != Vehicle.Flags.None && !flag && this.CanLeave(vehicleID, ref vehicleData))
+            if ((vehicleData.m_flags & Vehicle.Flags.Stopped) != Vehicle.Flags.None && !flag && CanLeave(vehicleID, ref vehicleData))
             {
                 vehicleData.m_flags &= ~Vehicle.Flags.Stopped;
                 vehicleData.m_flags |= Vehicle.Flags.Leaving;
             }
             if ((vehicleData.m_flags & Vehicle.Flags.GoingBack) == Vehicle.Flags.None)
             {
-                if (this.ShouldReturnToSource(vehicleID, ref vehicleData))
+                if (ShouldReturnToSource(vehicleID, ref vehicleData))
                 {
-                    this.SetTarget(vehicleID, ref vehicleData, 0);
+                    SetTarget(vehicleID, ref vehicleData, 0);
                 }
             }
             else
             {
-                if ((ulong)(Singleton<SimulationManager>.instance.m_currentFrameIndex >> 4 & 15u) == (ulong)((long)(vehicleID & 15)) && !this.ShouldReturnToSource(vehicleID, ref vehicleData))
+                if ((ulong)(Singleton<SimulationManager>.instance.m_currentFrameIndex >> 4 & 15u) == (ulong)((long)(vehicleID & 15)) && !ShouldReturnToSource(vehicleID, ref vehicleData))
                 {
                     TransferManager.TransferOffer offer = default(TransferManager.TransferOffer);
                     offer.Priority = 3;
@@ -93,7 +93,7 @@ namespace CSL_Traffic
 
             if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
             {
-                CustomCarAI.sm_speedData[vehicleID].RestoreVehicleSpeed(this.m_info);
+                CustomCarAI.sm_speedData[vehicleID].RestoreVehicleSpeed(m_info);
             }
         }
 
@@ -118,15 +118,15 @@ namespace CSL_Traffic
                 Singleton<VehicleManager>.instance.ReleaseVehicle(vehicleID);
                 return true;
             }
-            for (int i = 0; i < this.m_firemanCount; i++)
+            for (int i = 0; i < m_firemanCount; i++)
             {
-                if (i < this.m_hoseCount)
+                if (i < m_hoseCount)
                 {
-                    this.CreateFireman(vehicleID, ref data, Citizen.AgePhase.Adult1);
+                    CreateFireman(vehicleID, ref data, Citizen.AgePhase.Adult1);
                 }
                 else
                 {
-                    this.CreateFireman(vehicleID, ref data, Citizen.AgePhase.Adult0);
+                    CreateFireman(vehicleID, ref data, Citizen.AgePhase.Adult0);
                 }
             }
             data.m_flags |= Vehicle.Flags.Stopped;
@@ -140,7 +140,7 @@ namespace CSL_Traffic
             int num = Mathf.Min(5000, (int)buildingData.m_fireIntensity * (width * length));
             if (num != 0 && Singleton<SimulationManager>.instance.m_randomizer.Int32(8u) == 0)
             {
-                num = Mathf.Max(num - this.m_fireFightingRate, 0);
+                num = Mathf.Max(num - m_fireFightingRate, 0);
                 num /= width * length;
                 buildingData.m_fireIntensity = (byte)num;
                 if (num == 0)
@@ -188,7 +188,7 @@ namespace CSL_Traffic
         {
             SimulationManager instance = Singleton<SimulationManager>.instance;
             CitizenManager instance2 = Singleton<CitizenManager>.instance;
-            CitizenInfo groupCitizenInfo = instance2.GetGroupCitizenInfo(ref instance.m_randomizer, this.m_info.m_class.m_service, Citizen.Gender.Male, Citizen.SubCulture.Generic, agePhase);
+            CitizenInfo groupCitizenInfo = instance2.GetGroupCitizenInfo(ref instance.m_randomizer, m_info.m_class.m_service, Citizen.Gender.Male, Citizen.SubCulture.Generic, agePhase);
             if (groupCitizenInfo != null)
             {
                 int family = instance.m_randomizer.Int32(256u);

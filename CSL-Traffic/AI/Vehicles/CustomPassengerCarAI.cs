@@ -25,13 +25,13 @@ namespace CSL_Traffic
 					CustomCarAI.sm_speedData[vehicleID].currentPath = vehicleData.m_path;
 					CustomCarAI.sm_speedData[vehicleID].SetRandomSpeedMultiplier(0.6f, 1.4f);
 				}
-				CustomCarAI.sm_speedData[vehicleID].ApplySpeedMultiplier(this.m_info);
+				CustomCarAI.sm_speedData[vehicleID].ApplySpeedMultiplier(m_info);
 			}
 			
 			if ((vehicleData.m_flags & Vehicle.Flags.Stopped) != Vehicle.Flags.None)
 			{
 				vehicleData.m_waitCounter += 1;
-				if (this.CanLeave(vehicleID, ref vehicleData))
+				if (CanLeave(vehicleID, ref vehicleData))
 				{
 					vehicleData.m_flags &= ~Vehicle.Flags.Stopped;
 					vehicleData.m_waitCounter = 0;
@@ -41,14 +41,14 @@ namespace CSL_Traffic
 
 			if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
 			{
-				CustomCarAI.sm_speedData[vehicleID].RestoreVehicleSpeed(this.m_info);
+				CustomCarAI.sm_speedData[vehicleID].RestoreVehicleSpeed(m_info);
 			}
 		}
 
 		protected override bool StartPathFind(ushort vehicleID, ref Vehicle vehicleData, Vector3 startPos, Vector3 endPos, bool startBothWays, bool endBothWays)
 		{
-			VehicleInfo info = this.m_info;
-			ushort driverInstance = this.GetDriverInstance(vehicleID, ref vehicleData);
+			VehicleInfo info = m_info;
+			ushort driverInstance = GetDriverInstance(vehicleID, ref vehicleData);
 			if (driverInstance == 0)
 			{
 				return false;
@@ -56,7 +56,7 @@ namespace CSL_Traffic
 			CitizenManager instance = Singleton<CitizenManager>.instance;
 			CitizenInfo info2 = instance.m_instances.m_buffer[(int)driverInstance].Info;
 			NetInfo.LaneType laneTypes = NetInfo.LaneType.Vehicle | NetInfo.LaneType.Pedestrian;
-			VehicleInfo.VehicleType vehicleType = this.m_info.m_vehicleType;
+			VehicleInfo.VehicleType vehicleType = m_info.m_vehicleType;
 			bool allowUnderground = (vehicleData.m_flags & Vehicle.Flags.Underground) != Vehicle.Flags.None;
 			PathUnit.Position startPosA;
 			PathUnit.Position startPosB;

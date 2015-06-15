@@ -30,92 +30,92 @@ namespace CSL_Traffic
 		// copy values from original to new path manager
 		public void SetOriginalValues(PathManager originalPathManager)
 		{
-			// members of SimulationManagerBase
-			this.m_simulationProfiler = originalPathManager.m_simulationProfiler;
-			this.m_drawCallData = originalPathManager.m_drawCallData;
-			this.m_properties = originalPathManager.m_properties;
+            // members of SimulationManagerBase
+            m_simulationProfiler = originalPathManager.m_simulationProfiler;
+            m_drawCallData = originalPathManager.m_drawCallData;
+            m_properties = originalPathManager.m_properties;
 
-			// members of PathManager
-			this.m_pathUnitCount = originalPathManager.m_pathUnitCount;
-			this.m_renderPathGizmo = originalPathManager.m_renderPathGizmo;
-			this.m_pathUnits = originalPathManager.m_pathUnits;
-			this.m_bufferLock = originalPathManager.m_bufferLock;
+            // members of PathManager
+            m_pathUnitCount = originalPathManager.m_pathUnitCount;
+            m_renderPathGizmo = originalPathManager.m_renderPathGizmo;
+            m_pathUnits = originalPathManager.m_pathUnits;
+            m_bufferLock = originalPathManager.m_bufferLock;
 		}
 
 		public bool CreatePath(out uint unit, ref Randomizer randomizer, uint buildIndex, PathUnit.Position startPos, PathUnit.Position endPos, NetInfo.LaneType laneTypes, VehicleInfo.VehicleType vehicleTypes, float maxLength, RoadManager.VehicleType vehicleType)
 		{
 			PathUnit.Position position = default(PathUnit.Position);
-			return this.CreatePath(out unit, ref randomizer, buildIndex, startPos, position, endPos, position, position, laneTypes, vehicleTypes, maxLength, false, false, false, false, vehicleType);
+			return CreatePath(out unit, ref randomizer, buildIndex, startPos, position, endPos, position, position, laneTypes, vehicleTypes, maxLength, false, false, false, false, vehicleType);
 		}
 
 		public bool CreatePath(out uint unit, ref Randomizer randomizer, uint buildIndex, PathUnit.Position startPosA, PathUnit.Position startPosB, PathUnit.Position endPosA, PathUnit.Position endPosB, NetInfo.LaneType laneTypes, VehicleInfo.VehicleType vehicleTypes, float maxLength, RoadManager.VehicleType vehicleType)
 		{
-			return this.CreatePath(out unit, ref randomizer, buildIndex, startPosA, startPosB, endPosA, endPosB, default(PathUnit.Position), laneTypes, vehicleTypes, maxLength, false, false, false, false, vehicleType);
+			return CreatePath(out unit, ref randomizer, buildIndex, startPosA, startPosB, endPosA, endPosB, default(PathUnit.Position), laneTypes, vehicleTypes, maxLength, false, false, false, false, vehicleType);
 		}
 
 		public bool CreatePath(out uint unit, ref Randomizer randomizer, uint buildIndex, PathUnit.Position startPosA, PathUnit.Position startPosB, PathUnit.Position endPosA, PathUnit.Position endPosB, NetInfo.LaneType laneTypes, VehicleInfo.VehicleType vehicleTypes, float maxLength, bool isHeavyVehicle, bool ignoreBlocked, bool stablePath, bool skipQueue, RoadManager.VehicleType vehicleType)
 		{
-			return this.CreatePath(out unit, ref randomizer, buildIndex, startPosA, startPosB, endPosA, endPosB, default(PathUnit.Position), laneTypes, vehicleTypes, maxLength, isHeavyVehicle, ignoreBlocked, stablePath, skipQueue, vehicleType);
+			return CreatePath(out unit, ref randomizer, buildIndex, startPosA, startPosB, endPosA, endPosB, default(PathUnit.Position), laneTypes, vehicleTypes, maxLength, isHeavyVehicle, ignoreBlocked, stablePath, skipQueue, vehicleType);
 		}
 
 		public bool CreatePath(out uint unit, ref Randomizer randomizer, uint buildIndex, PathUnit.Position startPosA, PathUnit.Position startPosB, PathUnit.Position endPosA, PathUnit.Position endPosB, PathUnit.Position vehiclePosition, NetInfo.LaneType laneTypes, VehicleInfo.VehicleType vehicleTypes, float maxLength, bool isHeavyVehicle, bool ignoreBlocked, bool stablePath, bool skipQueue, RoadManager.VehicleType vehicleType)
 		{
-			while (!Monitor.TryEnter(this.m_bufferLock, SimulationManager.SYNCHRONIZE_TIMEOUT))
+			while (!Monitor.TryEnter(m_bufferLock, SimulationManager.SYNCHRONIZE_TIMEOUT))
 			{
 			}
 			uint num;
 			try
 			{
-				if (!this.m_pathUnits.CreateItem(out num, ref randomizer))
+				if (!m_pathUnits.CreateItem(out num, ref randomizer))
 				{
 					unit = 0u;
 					bool result = false;
 					return result;
 				}
-				this.m_pathUnitCount = (int)(this.m_pathUnits.ItemCount() - 1u);
+                m_pathUnitCount = (int)(m_pathUnits.ItemCount() - 1u);
 			}
 			finally
 			{
-				Monitor.Exit(this.m_bufferLock);
+				Monitor.Exit(m_bufferLock);
 			}
 			unit = num;
-			this.m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_simulationFlags = 1;
+            m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_simulationFlags = 1;
 			if (isHeavyVehicle)
 			{
-				PathUnit[] expr_92_cp_0 = this.m_pathUnits.m_buffer;
+				PathUnit[] expr_92_cp_0 = m_pathUnits.m_buffer;
 				UIntPtr expr_92_cp_1 = (UIntPtr)unit;
 				expr_92_cp_0[(int)expr_92_cp_1].m_simulationFlags = (byte)(expr_92_cp_0[(int)expr_92_cp_1].m_simulationFlags | 16);
 			}
 			if (ignoreBlocked)
 			{
-				PathUnit[] expr_BB_cp_0 = this.m_pathUnits.m_buffer;
+				PathUnit[] expr_BB_cp_0 = m_pathUnits.m_buffer;
 				UIntPtr expr_BB_cp_1 = (UIntPtr)unit;
 				expr_BB_cp_0[(int)expr_BB_cp_1].m_simulationFlags = (byte)(expr_BB_cp_0[(int)expr_BB_cp_1].m_simulationFlags | 32);
 			}
 			if (stablePath)
 			{
-				PathUnit[] expr_E4_cp_0 = this.m_pathUnits.m_buffer;
+				PathUnit[] expr_E4_cp_0 = m_pathUnits.m_buffer;
 				UIntPtr expr_E4_cp_1 = (UIntPtr)unit;
 				expr_E4_cp_0[(int)expr_E4_cp_1].m_simulationFlags = (byte)(expr_E4_cp_0[(int)expr_E4_cp_1].m_simulationFlags | 64);
 			}
-			this.m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_pathFindFlags = 0;
-			this.m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_buildIndex = buildIndex;
-			this.m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_position00 = startPosA;
-			this.m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_position01 = endPosA;
-			this.m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_position02 = startPosB;
-			this.m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_position03 = endPosB;
-			this.m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_position11 = vehiclePosition;
-			this.m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_nextPathUnit = 0u;
-			this.m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_laneTypes = (byte)laneTypes;
-			this.m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_vehicleTypes = (byte)vehicleTypes;
-			this.m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_length = maxLength;
-			this.m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_positionCount = 20;
-			this.m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_referenceCount = 1;
+            m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_pathFindFlags = 0;
+            m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_buildIndex = buildIndex;
+            m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_position00 = startPosA;
+            m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_position01 = endPosA;
+            m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_position02 = startPosB;
+            m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_position03 = endPosB;
+            m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_position11 = vehiclePosition;
+            m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_nextPathUnit = 0u;
+            m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_laneTypes = (byte)laneTypes;
+            m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_vehicleTypes = (byte)vehicleTypes;
+            m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_length = maxLength;
+            m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_positionCount = 20;
+            m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_referenceCount = 1;
 			int num2 = 10000000;
 			CustomPathFind pathFind = null;
-			for (int i = 0; i < this.m_pathFinds.Length; i++)
+			for (int i = 0; i < m_pathFinds.Length; i++)
 			{
-				CustomPathFind pathFind2 = this.m_pathFinds[i];
+				CustomPathFind pathFind2 = m_pathFinds[i];
 				if (pathFind2.IsAvailable && pathFind2.m_queuedPathFindCount < num2)
 				{
 					num2 = pathFind2.m_queuedPathFindCount;
@@ -126,7 +126,7 @@ namespace CSL_Traffic
 			{
 				return true;
 			}
-			this.ReleasePath(unit);
+            ReleasePath(unit);
 			return false;
 		}
 
@@ -135,7 +135,7 @@ namespace CSL_Traffic
 			PathUnit.Position position2;
 			float num;
 			float num2;
-			return CustomPathManager.FindPathPosition(position, service, laneType, vehicleTypes, allowUnderground, maxDistance, out pathPos, out position2, out num, out num2, vehicleType);
+			return FindPathPosition(position, service, laneType, vehicleTypes, allowUnderground, maxDistance, out pathPos, out position2, out num, out num2, vehicleType);
 		}
 		public static bool FindPathPosition(Vector3 position, ItemClass.Service service, NetInfo.LaneType laneType, VehicleInfo.VehicleType vehicleTypes, bool allowUnderground, float maxDistance, out PathUnit.Position pathPosA, out PathUnit.Position pathPosB, out float distanceSqrA, out float distanceSqrB, RoadManager.VehicleType vehicleType)
 		{
@@ -177,7 +177,7 @@ namespace CSL_Traffic
 							Vector3 b2;
 							int num12;
 							float num13;
-							if ((num8 < 0f || num9 < 0f) && instance.m_segments.m_buffer[(int)num6].m_bounds.Intersects(bounds) && CustomPathManager.GetClosestLanePosition(instance.m_segments.m_buffer[(int)num6], position, laneType, vehicleTypes, out b, out num10, out num11, out b2, out num12, out num13, vehicleType))
+							if ((num8 < 0f || num9 < 0f) && instance.m_segments.m_buffer[(int)num6].m_bounds.Intersects(bounds) && GetClosestLanePosition(instance.m_segments.m_buffer[(int)num6], position, laneType, vehicleTypes, out b, out num10, out num11, out b2, out num12, out num13, vehicleType))
 							{
 								float num14 = Vector3.SqrMagnitude(position - b);
 								if (num14 < num5)

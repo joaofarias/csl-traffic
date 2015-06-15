@@ -23,14 +23,14 @@ namespace CSL_Traffic
 					CustomCarAI.sm_speedData[vehicleID].currentPath = vehicleData.m_path;
 					CustomCarAI.sm_speedData[vehicleID].SetRandomSpeedMultiplier(0.7f, 1.1f);
 				}
-				CustomCarAI.sm_speedData[vehicleID].ApplySpeedMultiplier(this.m_info);
+				CustomCarAI.sm_speedData[vehicleID].ApplySpeedMultiplier(m_info);
 			}
 
 
 			if ((vehicleData.m_flags & Vehicle.Flags.Spawned) != Vehicle.Flags.None)
 			{
 				Vehicle.Frame lastFrameData = vehicleData.GetLastFrameData();
-				if (this.m_info.m_isLargeVehicle)
+				if (m_info.m_isLargeVehicle)
 				{
 					int num = Mathf.Clamp((int)(lastFrameData.m_position.x / 320f + 27f), 0, 53);
 					int num2 = Mathf.Clamp((int)(lastFrameData.m_position.z / 320f + 27f), 0, 53);
@@ -58,14 +58,14 @@ namespace CSL_Traffic
 				}
 				if ((vehicleData.m_flags & (Vehicle.Flags.Created | Vehicle.Flags.Deleted)) == Vehicle.Flags.Created)
 				{
-					this.FrameDataUpdated(vehicleID, ref vehicleData, ref lastFrameData);
+                    FrameDataUpdated(vehicleID, ref vehicleData, ref lastFrameData);
 					vehicleData.SetFrameData(Singleton<SimulationManager>.instance.m_currentFrameIndex, lastFrameData);
 				}
 			}
 
 			if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
 			{
-				CustomCarAI.sm_speedData[vehicleID].RestoreVehicleSpeed(this.m_info);
+				CustomCarAI.sm_speedData[vehicleID].RestoreVehicleSpeed(m_info);
 			}
 		}
 
@@ -132,9 +132,9 @@ namespace CSL_Traffic
 				bool createPathResult;
 				CustomPathManager customPathManager = Singleton<PathManager>.instance as CustomPathManager;
 				if (customPathManager != null)
-					createPathResult = customPathManager.CreatePath(out path, ref Singleton<SimulationManager>.instance.m_randomizer, Singleton<SimulationManager>.instance.m_currentBuildIndex, startPosA, startPosB, endPosA, endPosB, laneTypes, vehicleTypes, 20000f, this.IsHeavyVehicle(), this.IgnoreBlocked(vehicleID, ref vehicleData), false, false, RoadManager.VehicleType.CargoTruck);
+					createPathResult = customPathManager.CreatePath(out path, ref Singleton<SimulationManager>.instance.m_randomizer, Singleton<SimulationManager>.instance.m_currentBuildIndex, startPosA, startPosB, endPosA, endPosB, laneTypes, vehicleTypes, 20000f, IsHeavyVehicle(), IgnoreBlocked(vehicleID, ref vehicleData), false, false, RoadManager.VehicleType.CargoTruck);
 				else
-					createPathResult = Singleton<PathManager>.instance.CreatePath(out path, ref Singleton<SimulationManager>.instance.m_randomizer, Singleton<SimulationManager>.instance.m_currentBuildIndex, startPosA, startPosB, endPosA, endPosB, laneTypes, vehicleTypes, 20000f, this.IsHeavyVehicle(), this.IgnoreBlocked(vehicleID, ref vehicleData), false, false);
+					createPathResult = Singleton<PathManager>.instance.CreatePath(out path, ref Singleton<SimulationManager>.instance.m_randomizer, Singleton<SimulationManager>.instance.m_currentBuildIndex, startPosA, startPosB, endPosA, endPosB, laneTypes, vehicleTypes, 20000f, IsHeavyVehicle(), IgnoreBlocked(vehicleID, ref vehicleData), false, false);
 				if (createPathResult)
 				{
 					if (vehicleData.m_path != 0u)

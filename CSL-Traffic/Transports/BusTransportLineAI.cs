@@ -10,9 +10,9 @@ namespace CSL_Traffic
 	{
 		public override void InitializePrefab()
 		{
-			// CHECKME: is this needed?
-			this.m_publicTransportAccumulation = 50;
-			this.m_netService = ItemClass.Service.Road;
+            // CHECKME: is this needed?
+            m_publicTransportAccumulation = 50;
+            m_netService = ItemClass.Service.Road;
 
 			base.InitializePrefab();
 
@@ -26,11 +26,11 @@ namespace CSL_Traffic
 			{
 				if (data.m_path == 0u || (ulong)(Singleton<SimulationManager>.instance.m_currentFrameIndex >> 8 & 15u) == (ulong)((long)(segmentID & 15)))
 				{
-					BusTransportLineAI.StartPathFind(segmentID, ref data, this.m_netService, this.m_vehicleType, false);
+					StartPathFind(segmentID, ref data, m_netService, m_vehicleType, false);
 				}
 				else
 				{
-					BusTransportLineAI.UpdatePath(segmentID, ref data, this.m_netService, this.m_vehicleType, false);
+					UpdatePath(segmentID, ref data, m_netService, m_vehicleType, false);
 				}
 			}
 		}
@@ -95,10 +95,10 @@ namespace CSL_Traffic
 			startPosB.m_offset = 128;
 			endPosA.m_offset = 128;
 			endPosB.m_offset = 128;
-			bool stopLane = BusTransportLineAI.GetStopLane(ref startPosA, vehicleType);
-			bool stopLane2 = BusTransportLineAI.GetStopLane(ref startPosB, vehicleType);
-			bool stopLane3 = BusTransportLineAI.GetStopLane(ref endPosA, vehicleType);
-			bool stopLane4 = BusTransportLineAI.GetStopLane(ref endPosB, vehicleType);
+			bool stopLane = GetStopLane(ref startPosA, vehicleType);
+			bool stopLane2 = GetStopLane(ref startPosB, vehicleType);
+			bool stopLane3 = GetStopLane(ref endPosA, vehicleType);
+			bool stopLane4 = GetStopLane(ref endPosB, vehicleType);
 			if ((!stopLane && !stopLane2) || (!stopLane3 && !stopLane4))
 			{
 				return true;
@@ -147,7 +147,7 @@ namespace CSL_Traffic
 		{
 			if (data.m_path == 0u)
 			{
-				return BusTransportLineAI.StartPathFind(segmentID, ref data, netService, vehicleType, skipQueue);
+				return StartPathFind(segmentID, ref data, netService, vehicleType, skipQueue);
 			}
 			if ((data.m_flags & NetSegment.Flags.WaitingPath) == NetSegment.Flags.None)
 			{
@@ -162,11 +162,11 @@ namespace CSL_Traffic
 				PathUnit.Position pathPos;
 				if (instance.m_pathUnits.m_buffer[(int)((UIntPtr)data.m_path)].GetPosition(0, out pathPos))
 				{
-					flag = TransportLineAI.CheckNodePosition(data.m_startNode, pathPos);
+					flag = CheckNodePosition(data.m_startNode, pathPos);
 				}
 				if (instance.m_pathUnits.m_buffer[(int)((UIntPtr)data.m_path)].GetLastPosition(out pathPos))
 				{
-					TransportLineAI.CheckNodePosition(data.m_endNode, pathPos);
+					CheckNodePosition(data.m_endNode, pathPos);
 				}
 				float length = instance.m_pathUnits.m_buffer[(int)((UIntPtr)data.m_path)].m_length;
 				if (length != data.m_averageLength)
@@ -252,7 +252,7 @@ namespace CSL_Traffic
 								if (!TransportLine.CalculatePathSegmentCount(path, ref num2, ref num3, ref num4))
 								{
 									TransportInfo info = transportLine.Info;
-									BusTransportLineAI.StartPathFind(segment, ref instance2.m_segments.m_buffer[(int)segment], info.m_netService, info.m_vehicleType, (transportLine.m_flags & TransportLine.Flags.Temporary) != TransportLine.Flags.None);
+									StartPathFind(segment, ref instance2.m_segments.m_buffer[(int)segment], info.m_netService, info.m_vehicleType, (transportLine.m_flags & TransportLine.Flags.Temporary) != TransportLine.Flags.None);
 									flag = false;
 								}
 							}
@@ -377,7 +377,7 @@ namespace CSL_Traffic
 					if (segment != 0 && instance.m_segments.m_buffer[(int)segment].m_startNode == num)
 					{
 						TransportInfo info = transportLine.Info;
-						if (!BusTransportLineAI.UpdatePath(segment, ref instance.m_segments.m_buffer[(int)segment], info.m_netService, info.m_vehicleType, (transportLine.m_flags & TransportLine.Flags.Temporary) != TransportLine.Flags.None))
+						if (!UpdatePath(segment, ref instance.m_segments.m_buffer[(int)segment], info.m_netService, info.m_vehicleType, (transportLine.m_flags & TransportLine.Flags.Temporary) != TransportLine.Flags.None))
 						{
 							flag = false;
 						}

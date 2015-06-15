@@ -18,55 +18,55 @@ namespace CSL_Traffic
         {
             get
             {
-                return (ushort[])this.fi_lineNumber.GetValue(this);
+                return (ushort[])fi_lineNumber.GetValue(this);
             }
             set
             {
-                this.fi_lineNumber.SetValue(this, value);
+                fi_lineNumber.SetValue(this, value);
             }
         }
         private bool m_linesVisible
         {
             get
             {
-                return (bool)this.fi_linesVisible.GetValue(this);
+                return (bool)fi_linesVisible.GetValue(this);
             }
             set
             {
-                this.fi_linesVisible.SetValue(this, value);
+                fi_linesVisible.SetValue(this, value);
             }
         }
         private Camera m_undergroundCamera
         {
             get
             {
-                return (Camera)this.fi_undergroundCamera.GetValue(this);
+                return (Camera)fi_undergroundCamera.GetValue(this);
             }
             set
             {
-                this.fi_undergroundCamera.SetValue(this, value);
+                fi_undergroundCamera.SetValue(this, value);
             }
         }
         private TransportPatch[] m_patches
         {
             get
             {
-                return (TransportPatch[])this.fi_patches.GetValue(this);
+                return (TransportPatch[])fi_patches.GetValue(this);
             }
             set
             {
-                this.fi_patches.SetValue(this, value);
+                fi_patches.SetValue(this, value);
             }
         }
         private bool m_patchesDirty
         {
             get
             {
-                return (bool)this.fi_patchesDirty.GetValue(this);
+                return (bool)fi_patchesDirty.GetValue(this);
             }
             set
             {
-                this.fi_patchesDirty.SetValue(this, value);
+                fi_patchesDirty.SetValue(this, value);
             }
         }
 
@@ -75,37 +75,37 @@ namespace CSL_Traffic
             base.Awake();
 
             Type transportManagerType = typeof(TransportManager);
-            this.fi_lineNumber = transportManagerType.GetFieldByName("m_lineNumber");
-            this.fi_linesVisible = transportManagerType.GetFieldByName("m_linesVisible");
-            this.fi_undergroundCamera = transportManagerType.GetFieldByName("m_undergroundCamera");
-            this.fi_patches = transportManagerType.GetFieldByName("m_patches");
-            this.fi_patchesDirty = transportManagerType.GetFieldByName("m_patchesDirty");
+            fi_lineNumber = transportManagerType.GetFieldByName("m_lineNumber");
+            fi_linesVisible = transportManagerType.GetFieldByName("m_linesVisible");
+            fi_undergroundCamera = transportManagerType.GetFieldByName("m_undergroundCamera");
+            fi_patches = transportManagerType.GetFieldByName("m_patches");
+            fi_patchesDirty = transportManagerType.GetFieldByName("m_patchesDirty");
         }
 
         public void SetOriginalValues(TransportManager originalTransportManager)
         {
-            this.m_simulationProfiler = originalTransportManager.m_simulationProfiler;
-            this.m_drawCallData = originalTransportManager.m_drawCallData;
-            this.m_properties = originalTransportManager.m_properties;
-            this.m_lineCount = originalTransportManager.m_lineCount;
-            this.m_infoCount = originalTransportManager.m_infoCount;
-            this.m_passengers = originalTransportManager.m_passengers;
-            this.m_lineNumber = (ushort[])this.fi_lineNumber.GetValue(originalTransportManager);
-            this.m_linesVisible = (bool)this.fi_linesVisible.GetValue(originalTransportManager);
-            this.m_undergroundCamera = (Camera)this.fi_undergroundCamera.GetValue(originalTransportManager);
-            this.m_patches = (TransportPatch[])this.fi_patches.GetValue(originalTransportManager);
-            this.m_patchesDirty = (bool)this.fi_patchesDirty.GetValue(originalTransportManager);
+            m_simulationProfiler = originalTransportManager.m_simulationProfiler;
+            m_drawCallData = originalTransportManager.m_drawCallData;
+            m_properties = originalTransportManager.m_properties;
+            m_lineCount = originalTransportManager.m_lineCount;
+            m_infoCount = originalTransportManager.m_infoCount;
+            m_passengers = originalTransportManager.m_passengers;
+            m_lineNumber = (ushort[])fi_lineNumber.GetValue(originalTransportManager);
+            m_linesVisible = (bool)fi_linesVisible.GetValue(originalTransportManager);
+            m_undergroundCamera = (Camera)fi_undergroundCamera.GetValue(originalTransportManager);
+            m_patches = (TransportPatch[])fi_patches.GetValue(originalTransportManager);
+            m_patchesDirty = (bool)fi_patchesDirty.GetValue(originalTransportManager);
         }
 
         protected override void SimulationStepImpl(int subStep)
         {
-            if (this.m_linesUpdated)
+            if (m_linesUpdated)
             {
-                this.m_linesUpdated = false;
-                int num = this.m_updatedLines.Length;
+                m_linesUpdated = false;
+                int num = m_updatedLines.Length;
                 for (int i = 0; i < num; i++)
                 {
-                    ulong num2 = this.m_updatedLines[i];
+                    ulong num2 = m_updatedLines[i];
                     if (num2 != 0uL)
                     {
                         for (int j = 0; j < 64; j++)
@@ -113,9 +113,9 @@ namespace CSL_Traffic
                             if ((num2 & 1uL << j) != 0uL)
                             {
                                 ushort num3 = (ushort)(i << 6 | j);
-                                if (this.m_lines.m_buffer[(int)num3].m_flags != TransportLine.Flags.None)
+                                if (m_lines.m_buffer[(int)num3].m_flags != TransportLine.Flags.None)
                                 {
-                                    if (BusTransportLineAI.UpdatePaths(ref this.m_lines.m_buffer[(int)num3], num3) && BusTransportLineAI.UpdateMeshData(ref this.m_lines.m_buffer[(int)num3], num3))
+                                    if (BusTransportLineAI.UpdatePaths(ref m_lines.m_buffer[(int)num3], num3) && BusTransportLineAI.UpdateMeshData(ref m_lines.m_buffer[(int)num3], num3))
                                     //if (this.m_lines.m_buffer[(int)num3].UpdatePaths(num3) && this.m_lines.m_buffer[(int)num3].UpdateMeshData(num3))
                                     {
                                         num2 &= ~(1uL << j);
@@ -127,21 +127,21 @@ namespace CSL_Traffic
                                 }
                             }
                         }
-                        this.m_updatedLines[i] = num2;
+                        m_updatedLines[i] = num2;
                         if (num2 != 0uL)
                         {
-                            this.m_linesUpdated = true;
+                            m_linesUpdated = true;
                         }
                     }
                 }
             }
-            if (this.m_patchesDirty)
+            if (m_patchesDirty)
             {
-                this.m_patchesDirty = false;
-                int num4 = this.m_patches.Length;
+                m_patchesDirty = false;
+                int num4 = m_patches.Length;
                 for (int k = 0; k < num4; k++)
                 {
-                    TransportPatch transportPatch = this.m_patches[k];
+                    TransportPatch transportPatch = m_patches[k];
                     int num5 = 0;
                     while (transportPatch != null)
                     {
@@ -165,10 +165,10 @@ namespace CSL_Traffic
                 int num8 = (num6 + 1) * 1 - 1;
                 for (int l = num7; l <= num8; l++)
                 {
-                    TransportLine.Flags flags = this.m_lines.m_buffer[l].m_flags;
+                    TransportLine.Flags flags = m_lines.m_buffer[l].m_flags;
                     if ((flags & (TransportLine.Flags.Created | TransportLine.Flags.Temporary)) == TransportLine.Flags.Created)
                     {
-                        this.m_lines.m_buffer[l].SimulationStep((ushort)l);
+                        m_lines.m_buffer[l].SimulationStep((ushort)l);
                     }
                 }
                 if ((Singleton<SimulationManager>.instance.m_currentFrameIndex & 4095u) == 0u)
@@ -177,9 +177,9 @@ namespace CSL_Traffic
                     StatisticBase statisticBase = instance.Acquire<StatisticArray>(StatisticType.AveragePassengers);
                     for (int m = 0; m < 5; m++)
                     {
-                        this.m_passengers[m].Update();
-                        this.m_passengers[m].Reset();
-                        statisticBase.Acquire<StatisticInt32>(m, 5).Set((int)(this.m_passengers[m].m_residentPassengers.m_averageCount + this.m_passengers[m].m_touristPassengers.m_averageCount));
+                        m_passengers[m].Update();
+                        m_passengers[m].Reset();
+                        statisticBase.Acquire<StatisticInt32>(m, 5).Set((int)(m_passengers[m].m_residentPassengers.m_averageCount + m_passengers[m].m_touristPassengers.m_averageCount));
                     }
                 }
             }
@@ -220,11 +220,11 @@ namespace CSL_Traffic
             NetManager instance = Singleton<NetManager>.instance;
             for (int i = 1; i < 256; i++)
             {
-                if ((this.m_lines.m_buffer[i].m_flags & (TransportLine.Flags.Created | TransportLine.Flags.Temporary)) == TransportLine.Flags.Created && this.m_lines.m_buffer[i].m_bounds.IntersectRay(ray))
+                if ((m_lines.m_buffer[i].m_flags & (TransportLine.Flags.Created | TransportLine.Flags.Temporary)) == TransportLine.Flags.Created && m_lines.m_buffer[i].m_bounds.IntersectRay(ray))
                 {
-                    TransportManager.LineSegment[] array = this.m_lineSegments[i];
-                    Bezier3[] array2 = this.m_lineCurves[i];
-                    ushort stops = this.m_lines.m_buffer[i].m_stops;
+                    LineSegment[] array = m_lineSegments[i];
+                    Bezier3[] array2 = m_lineCurves[i];
+                    ushort stops = m_lines.m_buffer[i].m_stops;
                     ushort num7 = stops;
                     int num8 = 0;
                     while (num7 != 0)

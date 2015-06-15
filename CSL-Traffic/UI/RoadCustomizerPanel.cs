@@ -53,19 +53,19 @@ namespace CSL_Traffic.UI
 
         private void Awake()
         {
-            this.m_atlas = UIUtils.LoadThumbnailsTextureAtlas("UIThumbnails");
-            this.m_scrollablePanel = GetComponentInChildren<UIScrollablePanel>();
-            this.m_scrollablePanel.autoLayoutStart = LayoutStart.TopLeft;
-            UIScrollbar scrollbar = this.GetComponentInChildren<UIScrollbar>();
+            m_atlas = UIUtils.LoadThumbnailsTextureAtlas("UIThumbnails");
+            m_scrollablePanel = GetComponentInChildren<UIScrollablePanel>();
+            m_scrollablePanel.autoLayoutStart = LayoutStart.TopLeft;
+            UIScrollbar scrollbar = GetComponentInChildren<UIScrollbar>();
             if (scrollbar != null)
                 scrollbar.incrementAmount = 109;
-            this.m_objectIndex = m_selectedIndex = 0;
-            this.m_panelType = Panel.Unset;
+            m_objectIndex = m_selectedIndex = 0;
+            m_panelType = Panel.Unset;
         }
 
         private void OnEnable()
-        {				
-            this.RefreshPanel();
+        {
+            RefreshPanel();
             RoadCustomizerTool rct = ToolsModifierControl.GetTool<RoadCustomizerTool>();
             if (rct != null)
             {
@@ -89,15 +89,15 @@ namespace CSL_Traffic.UI
 
         void Update()
         {
-            if (this.m_panelType == Panel.SpeedRestrictions && this.m_scrollablePanel.isVisible)
+            if (m_panelType == Panel.SpeedRestrictions && m_scrollablePanel.isVisible)
             {
-                (this.m_scrollablePanel.components[m_selectedIndex] as UIButton).state = UIButton.ButtonState.Focused;
+                (m_scrollablePanel.components[m_selectedIndex] as UIButton).state = UIButton.ButtonState.Focused;
             }
         }
 
         public void SetPanel(Panel panel)
         {
-            this.m_panelType = panel;
+            m_panelType = panel;
             //OnEnable();
         }
 
@@ -109,11 +109,11 @@ namespace CSL_Traffic.UI
                 RoadManager.VehicleType restrictions = rct.GetCurrentVehicleRestrictions();
                 float speed = rct.GetCurrentSpeedRestrictions()*50f;
                 
-                for (int i = 0; i < this.m_scrollablePanel.components.Count; i++)
+                for (int i = 0; i < m_scrollablePanel.components.Count; i++)
                 {
-                    UIButton btn = this.m_scrollablePanel.components[i] as UIButton;
+                    UIButton btn = m_scrollablePanel.components[i] as UIButton;
 
-                    if (this.m_panelType == Panel.VehicleRestrictions)
+                    if (m_panelType == Panel.VehicleRestrictions)
                     {
                         RoadManager.VehicleType vehicleType = (RoadManager.VehicleType)btn.objectUserData;
 
@@ -142,7 +142,7 @@ namespace CSL_Traffic.UI
                         }
                         btn.state = UIButton.ButtonState.Normal;
                     }
-                    else if (this.m_panelType == Panel.SpeedRestrictions)
+                    else if (m_panelType == Panel.SpeedRestrictions)
                     {
                         if (Mathf.Approximately((int)btn.objectUserData, speed))
                             m_selectedIndex = i;
@@ -156,9 +156,9 @@ namespace CSL_Traffic.UI
 
         void DisableIcons()
         {
-            for (int i = 0; i < this.m_scrollablePanel.components.Count; i++)
+            for (int i = 0; i < m_scrollablePanel.components.Count; i++)
             {
-                UIButton btn = this.m_scrollablePanel.components[i] as UIButton;
+                UIButton btn = m_scrollablePanel.components[i] as UIButton;
                 btn.state = UIButton.ButtonState.Disabled;
                 btn.isEnabled = false;
             }
@@ -167,38 +167,38 @@ namespace CSL_Traffic.UI
 
         public void RefreshPanel()
         {
-            this.PopulateAssets();
+            PopulateAssets();
         }
 
         public void PopulateAssets()
         {
-            this.m_objectIndex = 0;
+            m_objectIndex = 0;
             //if (this.m_panelType == Panel.VehicleRestrictions)
             if (m_panelIndex == 0)
             {
-                this.m_panelType = Panel.VehicleRestrictions;
-                this.SpawnEntry("PassengerCar", "PassengerCar", null, null, false, false).objectUserData = RoadManager.VehicleType.PassengerCar;
-                this.SpawnEntry("Bus", "Bus", null, null, false, false).objectUserData = RoadManager.VehicleType.Bus;
-                this.SpawnEntry("CargoTruck", "CargoTruck", null, null, false, false).objectUserData = RoadManager.VehicleType.CargoTruck;
-                this.SpawnEntry("GarbageTruck", "GarbageTruck", null, null, false, false).objectUserData = RoadManager.VehicleType.GarbageTruck;
-                this.SpawnEntry("Hearse", "Hearse", null, null, false, false).objectUserData = RoadManager.VehicleType.Hearse;
-                this.SpawnEntry("Emergency", "Emergency", null, null, false, false).objectUserData = RoadManager.VehicleType.EmergencyVehicles;
+                m_panelType = Panel.VehicleRestrictions;
+                SpawnEntry("PassengerCar", "PassengerCar", null, null, false, false).objectUserData = RoadManager.VehicleType.PassengerCar;
+                SpawnEntry("Bus", "Bus", null, null, false, false).objectUserData = RoadManager.VehicleType.Bus;
+                SpawnEntry("CargoTruck", "CargoTruck", null, null, false, false).objectUserData = RoadManager.VehicleType.CargoTruck;
+                SpawnEntry("GarbageTruck", "GarbageTruck", null, null, false, false).objectUserData = RoadManager.VehicleType.GarbageTruck;
+                SpawnEntry("Hearse", "Hearse", null, null, false, false).objectUserData = RoadManager.VehicleType.Hearse;
+                SpawnEntry("Emergency", "Emergency", null, null, false, false).objectUserData = RoadManager.VehicleType.EmergencyVehicles;
             }
             //else if (this.m_panelType == Panel.SpeedRestrictions)
             else if (m_panelIndex == 1)
             {
-                this.m_panelType = Panel.SpeedRestrictions;
-                this.SpawnEntry("15", "15 km/h", null, null, false, true).objectUserData = 15;
-                this.SpawnEntry("30", "30 km/h", null, null, false, true).objectUserData = 30;
-                this.SpawnEntry("40", "40 km/h", null, null, false, true).objectUserData = 40;
-                this.SpawnEntry("50", "50 km/h", null, null, false, true).objectUserData = 50;
-                this.SpawnEntry("60", "60 km/h", null, null, false, true).objectUserData = 60;
-                this.SpawnEntry("70", "70 km/h", null, null, false, true).objectUserData = 70;
-                this.SpawnEntry("80", "80 km/h", null, null, false, true).objectUserData = 80;
-                this.SpawnEntry("90", "90 km/h", null, null, false, true).objectUserData = 90;
-                this.SpawnEntry("100", "100 km/h", null, null, false, true).objectUserData = 100;
-                this.SpawnEntry("120", "120 km/h", null, null, false, true).objectUserData = 120;
-                this.SpawnEntry("140", "140 km/h", null, null, false, true).objectUserData = 140;
+                m_panelType = Panel.SpeedRestrictions;
+                SpawnEntry("15", "15 km/h", null, null, false, true).objectUserData = 15;
+                SpawnEntry("30", "30 km/h", null, null, false, true).objectUserData = 30;
+                SpawnEntry("40", "40 km/h", null, null, false, true).objectUserData = 40;
+                SpawnEntry("50", "50 km/h", null, null, false, true).objectUserData = 50;
+                SpawnEntry("60", "60 km/h", null, null, false, true).objectUserData = 60;
+                SpawnEntry("70", "70 km/h", null, null, false, true).objectUserData = 70;
+                SpawnEntry("80", "80 km/h", null, null, false, true).objectUserData = 80;
+                SpawnEntry("90", "90 km/h", null, null, false, true).objectUserData = 90;
+                SpawnEntry("100", "100 km/h", null, null, false, true).objectUserData = 100;
+                SpawnEntry("120", "120 km/h", null, null, false, true).objectUserData = 120;
+                SpawnEntry("140", "140 km/h", null, null, false, true).objectUserData = 140;
             }
 
             m_panelIndex = (m_panelIndex + 1) % 2; 
@@ -208,26 +208,26 @@ namespace CSL_Traffic.UI
         {
             if (atlas == null)
             {
-                atlas = this.m_atlas;
+                atlas = m_atlas;
             }
             if (string.IsNullOrEmpty(thumbnail) || atlas[thumbnail] == null)
             {
                 thumbnail = "ThumbnailBuildingDefault";
             }
-            return this.CreateButton(name, tooltip, name, -1, atlas, null, enabled, grouped);
+            return CreateButton(name, tooltip, name, -1, atlas, null, enabled, grouped);
         }
 
         protected UIButton CreateButton(string name, string tooltip, string baseIconName, int index, UITextureAtlas atlas, UIComponent tooltipBox, bool enabled, bool grouped)
         {
             UIButton btn;
-            if (this.m_scrollablePanel.childCount > this.m_objectIndex)
+            if (m_scrollablePanel.childCount > m_objectIndex)
             {
-                btn = (this.m_scrollablePanel.components[this.m_objectIndex] as UIButton);
+                btn = (m_scrollablePanel.components[m_objectIndex] as UIButton);
             }
             else
             {
-                GameObject asGameObject = UITemplateManager.GetAsGameObject(RoadCustomizerPanel.kItemTemplate);
-                btn = (this.m_scrollablePanel.AttachUIComponent(asGameObject) as UIButton);
+                GameObject asGameObject = UITemplateManager.GetAsGameObject(kItemTemplate);
+                btn = (m_scrollablePanel.AttachUIComponent(asGameObject) as UIButton);
                 btn.eventClick += OnClick;
             }
             btn.gameObject.GetComponent<TutorialUITag>().tutorialTag = name;
@@ -271,8 +271,8 @@ namespace CSL_Traffic.UI
             btn.state = UIButton.ButtonState.Disabled;
             btn.tooltip = tooltip;
             btn.tooltipBox = tooltipBox;
-            btn.group = grouped ? this.m_scrollablePanel : null;
-            this.m_objectIndex++;
+            btn.group = grouped ? m_scrollablePanel : null;
+            m_objectIndex++;
             return btn;
         }
 
@@ -396,10 +396,10 @@ namespace CSL_Traffic.UI
         {
             p.Use();
             UIButton uIButton = comp as UIButton;
-            if (uIButton != null && uIButton.parent == this.m_scrollablePanel)
+            if (uIButton != null && uIButton.parent == m_scrollablePanel)
             {
-                this.OnButtonClicked(uIButton);
-                this.m_selectedIndex = this.m_scrollablePanel.components.IndexOf(uIButton);
+                OnButtonClicked(uIButton);
+                m_selectedIndex = m_scrollablePanel.components.IndexOf(uIButton);
             }
         }
 
@@ -409,7 +409,7 @@ namespace CSL_Traffic.UI
             do
             {
                 yield return new WaitForEndOfFrame();
-                while (this.m_scrollablePanel.isVisible)
+                while (m_scrollablePanel.isVisible)
                 {
                     if (btn.normalFgSprite == btn.name || btn.normalFgSprite.Contains("Lights"))
                         btn.normalFgSprite = btn.name + "Lights" + n;
@@ -420,7 +420,7 @@ namespace CSL_Traffic.UI
 
                     yield return new WaitForSeconds(0.25f);
                 }
-            } while (!this.m_scrollablePanel.isVisible);
+            } while (!m_scrollablePanel.isVisible);
         }
     }
 }
