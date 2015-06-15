@@ -27,11 +27,11 @@ namespace CSL_Traffic
 
             if ((vehicleData.m_flags & Vehicle.Flags.TransferToSource) != Vehicle.Flags.None)
             {
-                if ((int)vehicleData.m_transferSize < m_cargoCapacity)
+                if (vehicleData.m_transferSize < m_cargoCapacity)
                 {
                     TryCollectGarbage(vehicleID, ref vehicleData, ref frameData);
                 }
-                if ((int)vehicleData.m_transferSize >= m_cargoCapacity && (vehicleData.m_flags & Vehicle.Flags.GoingBack) == Vehicle.Flags.None && vehicleData.m_targetBuilding != 0)
+                if (vehicleData.m_transferSize >= m_cargoCapacity && (vehicleData.m_flags & Vehicle.Flags.GoingBack) == Vehicle.Flags.None && vehicleData.m_targetBuilding != 0)
                 {
                     SetTarget(vehicleID, ref vehicleData, 0);
                 }
@@ -85,8 +85,8 @@ namespace CSL_Traffic
                     int num10 = 0;
                     while (num9 != 0)
                     {
-                        TryCollectGarbage(vehicleID, ref vehicleData, ref frameData, num9, ref instance.m_buildings.m_buffer[(int)num9]);
-                        num9 = instance.m_buildings.m_buffer[(int)num9].m_nextGridBuilding;
+                        TryCollectGarbage(vehicleID, ref vehicleData, ref frameData, num9, ref instance.m_buildings.m_buffer[num9]);
+                        num9 = instance.m_buildings.m_buffer[num9].m_nextGridBuilding;
                         if (++num10 >= 32768)
                         {
                             CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
@@ -102,7 +102,7 @@ namespace CSL_Traffic
             Vector3 a = building.CalculateSidewalkPosition();
             if (Vector3.SqrMagnitude(a - frameData.m_position) < 1024f)
             {
-                int num = Mathf.Min(0, (int)vehicleData.m_transferSize - m_cargoCapacity);
+                int num = Mathf.Min(0, vehicleData.m_transferSize - m_cargoCapacity);
                 if (num == 0)
                 {
                     return;
@@ -125,18 +125,18 @@ namespace CSL_Traffic
             int num = 0;
             if ((data.m_flags & Vehicle.Flags.TransferToTarget) != Vehicle.Flags.None)
             {
-                num = (int)data.m_transferSize;
+                num = data.m_transferSize;
             }
             if ((data.m_flags & Vehicle.Flags.TransferToSource) != Vehicle.Flags.None)
             {
-                num = Mathf.Min(0, (int)data.m_transferSize - m_cargoCapacity);
+                num = Mathf.Min(0, data.m_transferSize - m_cargoCapacity);
             }
             BuildingManager instance = Singleton<BuildingManager>.instance;
-            BuildingInfo info = instance.m_buildings.m_buffer[(int)data.m_targetBuilding].Info;
-            info.m_buildingAI.ModifyMaterialBuffer(data.m_targetBuilding, ref instance.m_buildings.m_buffer[(int)data.m_targetBuilding], (TransferManager.TransferReason)data.m_transferType, ref num);
+            BuildingInfo info = instance.m_buildings.m_buffer[data.m_targetBuilding].Info;
+            info.m_buildingAI.ModifyMaterialBuffer(data.m_targetBuilding, ref instance.m_buildings.m_buffer[data.m_targetBuilding], (TransferManager.TransferReason)data.m_transferType, ref num);
             if ((data.m_flags & Vehicle.Flags.TransferToTarget) != Vehicle.Flags.None)
             {
-                data.m_transferSize = (ushort)Mathf.Clamp((int)data.m_transferSize - num, 0, (int)data.m_transferSize);
+                data.m_transferSize = (ushort)Mathf.Clamp(data.m_transferSize - num, 0, data.m_transferSize);
             }
             if ((data.m_flags & Vehicle.Flags.TransferToSource) != Vehicle.Flags.None)
             {
@@ -151,7 +151,7 @@ namespace CSL_Traffic
             if (data.m_sourceBuilding != 0)
             {
                 BuildingManager instance = Singleton<BuildingManager>.instance;
-                if ((instance.m_buildings.m_buffer[(int)data.m_sourceBuilding].m_productionRate == 0 || (instance.m_buildings.m_buffer[(int)data.m_sourceBuilding].m_flags & (Building.Flags.Downgrading | Building.Flags.BurnedDown)) != Building.Flags.None) && instance.m_buildings.m_buffer[(int)data.m_sourceBuilding].m_fireIntensity == 0)
+                if ((instance.m_buildings.m_buffer[data.m_sourceBuilding].m_productionRate == 0 || (instance.m_buildings.m_buffer[data.m_sourceBuilding].m_flags & (Building.Flags.Downgrading | Building.Flags.BurnedDown)) != Building.Flags.None) && instance.m_buildings.m_buffer[data.m_sourceBuilding].m_fireIntensity == 0)
                 {
                     return true;
                 }

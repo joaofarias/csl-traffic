@@ -238,7 +238,7 @@ namespace CSL_Traffic
                         int hoverSegmentIndex;
                         if ((Singleton<TransportManager>.instance as CustomTransportManager).RayCast(m_mouseRay, m_mouseRayLength, out vector, out num, out hoverStopIndex, out hoverSegmentIndex))
                         {
-                            TransportInfo info = Singleton<TransportManager>.instance.m_lines.m_buffer[(int)num].Info;
+                            TransportInfo info = Singleton<TransportManager>.instance.m_lines.m_buffer[num].Info;
                             bool flag = info == prefab;
                             if (flag)
                             {
@@ -336,9 +336,9 @@ namespace CSL_Traffic
                             if (m_line != 0)
                             {
                                 TransportManager instance = Singleton<TransportManager>.instance;
-                                if (!instance.m_lines.m_buffer[(int)m_line].Complete)
+                                if (!instance.m_lines.m_buffer[m_line].Complete)
                                 {
-                                    firstStop = instance.m_lines.m_buffer[(int)m_line].m_stops;
+                                    firstStop = instance.m_lines.m_buffer[m_line].m_stops;
                                 }
                             }
                             flag3 = GetStopPosition(prefab, raycastOutput2.m_netSegment, raycastOutput2.m_building, firstStop, ref raycastOutput2.m_hitPos, out fixedPlatform2);
@@ -436,12 +436,12 @@ namespace CSL_Traffic
 
         private bool CanMoveStop(TransportInfo info, ushort sourceLine, int moveIndex, Vector3 movePos)
         {
-            return sourceLine != 0 && Singleton<TransportManager>.instance.m_lines.m_buffer[(int)sourceLine].CanMoveStop(sourceLine, moveIndex, movePos);
+            return sourceLine != 0 && Singleton<TransportManager>.instance.m_lines.m_buffer[sourceLine].CanMoveStop(sourceLine, moveIndex, movePos);
         }
 
         private bool CanAddStop(TransportInfo info, ushort sourceLine, int addIndex, Vector3 addPos)
         {
-            return sourceLine == 0 || Singleton<TransportManager>.instance.m_lines.m_buffer[(int)sourceLine].CanAddStop(sourceLine, addIndex, addPos);
+            return sourceLine == 0 || Singleton<TransportManager>.instance.m_lines.m_buffer[sourceLine].CanAddStop(sourceLine, addIndex, addPos);
         }
 
         private bool GetStopPosition(TransportInfo info, ushort segment, ushort building, ushort firstStop, ref Vector3 hitPos, out bool fixedPlatform)
@@ -451,7 +451,7 @@ namespace CSL_Traffic
             if (segment != 0)
             {
                 NetManager instance = Singleton<NetManager>.instance;
-                if (!toggleSnapTarget && (instance.m_segments.m_buffer[(int)segment].m_flags & NetSegment.Flags.Untouchable) != NetSegment.Flags.None)
+                if (!toggleSnapTarget && (instance.m_segments.m_buffer[segment].m_flags & NetSegment.Flags.Untouchable) != NetSegment.Flags.None)
                 {
                     building = NetSegment.FindOwnerBuilding(segment, 363f);
                     if (building != 0)
@@ -465,25 +465,25 @@ namespace CSL_Traffic
                 Vector3 vector;
                 int num3;
                 float num4;
-                if (segment != 0 && instance.m_segments.m_buffer[(int)segment].GetClosestLanePosition(hitPos, NetInfo.LaneType.Pedestrian, VehicleInfo.VehicleType.None, out point, out num, out num2) && instance.m_segments.m_buffer[(int)segment].GetClosestLanePosition(point, NetInfo.LaneType.Vehicle | (NetInfo.LaneType)((byte)32) | ((NetInfo.LaneType)((byte)64)), info.m_vehicleType, out vector, out num3, out num4))
+                if (segment != 0 && instance.m_segments.m_buffer[segment].GetClosestLanePosition(hitPos, NetInfo.LaneType.Pedestrian, VehicleInfo.VehicleType.None, out point, out num, out num2) && instance.m_segments.m_buffer[segment].GetClosestLanePosition(point, NetInfo.LaneType.Vehicle | (NetInfo.LaneType)32 | ((NetInfo.LaneType)64), info.m_vehicleType, out vector, out num3, out num4))
                 {
                     PathUnit.Position pathPos;
                     pathPos.m_segment = segment;
                     pathPos.m_lane = (byte)num3;
                     pathPos.m_offset = 128;
-                    NetInfo.Lane lane = instance.m_segments.m_buffer[(int)segment].Info.m_lanes[num3];
+                    NetInfo.Lane lane = instance.m_segments.m_buffer[segment].Info.m_lanes[num3];
                     if (!lane.m_allowStop)
                     {
                         return false;
                     }
                     float num5 = lane.m_stopOffset;
-                    if ((instance.m_segments.m_buffer[(int)segment].m_flags & NetSegment.Flags.Invert) != NetSegment.Flags.None)
+                    if ((instance.m_segments.m_buffer[segment].m_flags & NetSegment.Flags.Invert) != NetSegment.Flags.None)
                     {
                         num5 = -num5;
                     }
                     uint laneID = PathManager.GetLaneID(pathPos);
                     Vector3 vector2;
-                    instance.m_lanes.m_buffer[(int)((UIntPtr)laneID)].CalculateStopPositionAndDirection((float)pathPos.m_offset * 0.003921569f, num5, out hitPos, out vector2);
+                    instance.m_lanes.m_buffer[(int)((UIntPtr)laneID)].CalculateStopPositionAndDirection(pathPos.m_offset * 0.003921569f, num5, out hitPos, out vector2);
                     fixedPlatform = true;
                     return true;
                 }
@@ -494,16 +494,16 @@ namespace CSL_Traffic
                 if (randomVehicleInfo != null)
                 {
                     BuildingManager instance2 = Singleton<BuildingManager>.instance;
-                    BuildingInfo info2 = instance2.m_buildings.m_buffer[(int)building].Info;
+                    BuildingInfo info2 = instance2.m_buildings.m_buffer[building].Info;
                     if (info2.m_buildingAI.GetTransportLineInfo() != null)
                     {
-                        Randomizer randomizer = new Randomizer((int)building);
+                        Randomizer randomizer = new Randomizer(building);
                         Vector3 vector3;
                         Vector3 vector4;
-                        info2.m_buildingAI.CalculateSpawnPosition(building, ref instance2.m_buildings.m_buffer[(int)building], ref randomizer, randomVehicleInfo, out vector3, out vector4);
+                        info2.m_buildingAI.CalculateSpawnPosition(building, ref instance2.m_buildings.m_buffer[building], ref randomizer, randomVehicleInfo, out vector3, out vector4);
                         if (firstStop != 0)
                         {
-                            Vector3 position = Singleton<NetManager>.instance.m_nodes.m_buffer[(int)firstStop].m_position;
+                            Vector3 position = Singleton<NetManager>.instance.m_nodes.m_buffer[firstStop].m_position;
                             if (Vector3.SqrMagnitude(position - vector3) < 16384f && instance2.FindBuilding(vector3, 128f, info.m_class.m_service, info.m_class.m_subService, Building.Flags.None, Building.Flags.None) == building)
                             {
                                 hitPos = position;
@@ -524,12 +524,12 @@ namespace CSL_Traffic
             TransportManager instance = Singleton<TransportManager>.instance;
             if (m_tempLine != 0)
             {
-                if ((instance.m_lines.m_buffer[(int)m_tempLine].m_flags & TransportLine.Flags.Temporary) == TransportLine.Flags.None)
+                if ((instance.m_lines.m_buffer[m_tempLine].m_flags & TransportLine.Flags.Temporary) == TransportLine.Flags.None)
                 {
                     m_tempLine = 0;
                     SetEditLine(0, true);
                 }
-                else if (instance.m_lines.m_buffer[(int)m_tempLine].Info != info)
+                else if (instance.m_lines.m_buffer[m_tempLine].Info != info)
                 {
                     instance.ReleaseLine(m_tempLine);
                     m_tempLine = 0;
@@ -562,7 +562,7 @@ namespace CSL_Traffic
             {
                 TransportLine[] expr_141_cp_0 = instance.m_lines.m_buffer;
                 ushort expr_141_cp_1 = m_tempLine;
-                expr_141_cp_0[(int)expr_141_cp_1].m_flags = (expr_141_cp_0[(int)expr_141_cp_1].m_flags | TransportLine.Flags.Temporary);
+                expr_141_cp_0[expr_141_cp_1].m_flags = (expr_141_cp_0[expr_141_cp_1].m_flags | TransportLine.Flags.Temporary);
                 SetEditLine(sourceLine, true);
             }
             if (m_tempLine != 0)
@@ -570,45 +570,45 @@ namespace CSL_Traffic
                 SetEditLine(sourceLine, false);
                 if (m_lastMoveIndex != moveIndex || m_lastAddIndex != addIndex || m_lastAddPos != addPos)
                 {
-                    if (m_lastAddIndex != -2 && instance.m_lines.m_buffer[(int)m_tempLine].RemoveStop(m_tempLine, m_lastAddIndex))
+                    if (m_lastAddIndex != -2 && instance.m_lines.m_buffer[m_tempLine].RemoveStop(m_tempLine, m_lastAddIndex))
                     {
                         m_lastAddIndex = -2;
                         m_lastAddPos = Vector3.zero;
                     }
-                    if (m_lastMoveIndex != -2 && instance.m_lines.m_buffer[(int)m_tempLine].MoveStop(m_tempLine, m_lastMoveIndex, m_lastMovePos, fixedPlatform))
+                    if (m_lastMoveIndex != -2 && instance.m_lines.m_buffer[m_tempLine].MoveStop(m_tempLine, m_lastMoveIndex, m_lastMovePos, fixedPlatform))
                     {
                         m_lastMoveIndex = -2;
                         m_lastMovePos = Vector3.zero;
                     }
-                    instance.m_lines.m_buffer[(int)m_tempLine].CopyMissingPaths(sourceLine);
+                    instance.m_lines.m_buffer[m_tempLine].CopyMissingPaths(sourceLine);
                     Vector3 lastMovePos;
-                    if (moveIndex != -2 && instance.m_lines.m_buffer[(int)m_tempLine].MoveStop(m_tempLine, moveIndex, addPos, fixedPlatform, out lastMovePos))
+                    if (moveIndex != -2 && instance.m_lines.m_buffer[m_tempLine].MoveStop(m_tempLine, moveIndex, addPos, fixedPlatform, out lastMovePos))
                     {
                         m_lastMoveIndex = moveIndex;
                         m_lastMovePos = lastMovePos;
                         m_lastAddPos = addPos;
                     }
-                    if (addIndex != -2 && instance.m_lines.m_buffer[(int)m_tempLine].AddStop(m_tempLine, addIndex, addPos, fixedPlatform))
+                    if (addIndex != -2 && instance.m_lines.m_buffer[m_tempLine].AddStop(m_tempLine, addIndex, addPos, fixedPlatform))
                     {
                         m_lastAddIndex = addIndex;
                         m_lastAddPos = addPos;
                     }
                 }
-                instance.m_lines.m_buffer[(int)m_tempLine].m_color = instance.m_lines.m_buffer[(int)sourceLine].m_color;
+                instance.m_lines.m_buffer[m_tempLine].m_color = instance.m_lines.m_buffer[sourceLine].m_color;
                 TransportLine[] expr_327_cp_0 = instance.m_lines.m_buffer;
                 ushort expr_327_cp_1 = m_tempLine;
-                expr_327_cp_0[(int)expr_327_cp_1].m_flags = (expr_327_cp_0[(int)expr_327_cp_1].m_flags & ~TransportLine.Flags.Hidden);
-                if ((instance.m_lines.m_buffer[(int)sourceLine].m_flags & TransportLine.Flags.CustomColor) != TransportLine.Flags.None)
+                expr_327_cp_0[expr_327_cp_1].m_flags = (expr_327_cp_0[expr_327_cp_1].m_flags & ~TransportLine.Flags.Hidden);
+                if ((instance.m_lines.m_buffer[sourceLine].m_flags & TransportLine.Flags.CustomColor) != TransportLine.Flags.None)
                 {
                     TransportLine[] expr_36C_cp_0 = instance.m_lines.m_buffer;
                     ushort expr_36C_cp_1 = m_tempLine;
-                    expr_36C_cp_0[(int)expr_36C_cp_1].m_flags = (expr_36C_cp_0[(int)expr_36C_cp_1].m_flags | TransportLine.Flags.CustomColor);
+                    expr_36C_cp_0[expr_36C_cp_1].m_flags = (expr_36C_cp_0[expr_36C_cp_1].m_flags | TransportLine.Flags.CustomColor);
                 }
                 else
                 {
                     TransportLine[] expr_398_cp_0 = instance.m_lines.m_buffer;
                     ushort expr_398_cp_1 = m_tempLine;
-                    expr_398_cp_0[(int)expr_398_cp_1].m_flags = (expr_398_cp_0[(int)expr_398_cp_1].m_flags & ~TransportLine.Flags.CustomColor);
+                    expr_398_cp_0[expr_398_cp_1].m_flags = (expr_398_cp_0[expr_398_cp_1].m_flags & ~TransportLine.Flags.CustomColor);
                 }
                 return true;
             }
@@ -625,7 +625,7 @@ namespace CSL_Traffic
                 {
                     TransportLine[] expr_39_cp_0 = instance.m_lines.m_buffer;
                     ushort expr_39_cp_1 = m_lastEditLine;
-                    expr_39_cp_0[(int)expr_39_cp_1].m_flags = (expr_39_cp_0[(int)expr_39_cp_1].m_flags & ~(TransportLine.Flags.Hidden | TransportLine.Flags.Selected));
+                    expr_39_cp_0[expr_39_cp_1].m_flags = (expr_39_cp_0[expr_39_cp_1].m_flags & ~(TransportLine.Flags.Hidden | TransportLine.Flags.Selected));
                 }
                 m_lastEditLine = line;
                 m_lastMoveIndex = -2;
@@ -636,12 +636,12 @@ namespace CSL_Traffic
                 {
                     TransportLine[] expr_95_cp_0 = instance.m_lines.m_buffer;
                     ushort expr_95_cp_1 = m_lastEditLine;
-                    expr_95_cp_0[(int)expr_95_cp_1].m_flags = (expr_95_cp_0[(int)expr_95_cp_1].m_flags | (TransportLine.Flags.Hidden | TransportLine.Flags.Selected));
+                    expr_95_cp_0[expr_95_cp_1].m_flags = (expr_95_cp_0[expr_95_cp_1].m_flags | (TransportLine.Flags.Hidden | TransportLine.Flags.Selected));
                 }
                 if (m_tempLine != 0)
                 {
-                    instance.m_lines.m_buffer[(int)m_tempLine].CloneLine(m_tempLine, m_lastEditLine);
-                    BusTransportLineAI.UpdateMeshData(ref instance.m_lines.m_buffer[(int)m_tempLine], m_tempLine);
+                    instance.m_lines.m_buffer[m_tempLine].CloneLine(m_tempLine, m_lastEditLine);
+                    BusTransportLineAI.UpdateMeshData(ref instance.m_lines.m_buffer[m_tempLine], m_tempLine);
                 }
             }
         }
@@ -677,10 +677,10 @@ namespace CSL_Traffic
                     {
                         if (lastEditLine != 0)
                         {
-                            ushort stops = Singleton<TransportManager>.instance.m_lines.m_buffer[(int)lastEditLine].m_stops;
+                            ushort stops = Singleton<TransportManager>.instance.m_lines.m_buffer[lastEditLine].m_stops;
                             if (stops != 0)
                             {
-                                Vector3 position = Singleton<NetManager>.instance.m_nodes.m_buffer[(int)stops].m_position;
+                                Vector3 position = Singleton<NetManager>.instance.m_nodes.m_buffer[stops].m_position;
                                 if (Vector3.SqrMagnitude(hitPosition - position) < 6.25f)
                                 {
                                     text = Locale.Get("TOOL_CLOSE_LINE");

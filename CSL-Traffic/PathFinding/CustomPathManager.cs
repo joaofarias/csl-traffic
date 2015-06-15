@@ -162,13 +162,13 @@ namespace CSL_Traffic
 					int num7 = 0;
 					while (num6 != 0)
 					{
-						NetInfo info = instance.m_segments.m_buffer[(int)num6].Info;
-						if (info.m_class.m_service == service && (instance.m_segments.m_buffer[(int)num6].m_flags & NetSegment.Flags.Flooded) == NetSegment.Flags.None && (allowUnderground || !info.m_netAI.IsUnderground()))
+						NetInfo info = instance.m_segments.m_buffer[num6].Info;
+						if (info.m_class.m_service == service && (instance.m_segments.m_buffer[num6].m_flags & NetSegment.Flags.Flooded) == NetSegment.Flags.None && (allowUnderground || !info.m_netAI.IsUnderground()))
 						{
-							ushort startNode = instance.m_segments.m_buffer[(int)num6].m_startNode;
-							ushort endNode = instance.m_segments.m_buffer[(int)num6].m_endNode;
-							Vector3 position2 = instance.m_nodes.m_buffer[(int)startNode].m_position;
-							Vector3 position3 = instance.m_nodes.m_buffer[(int)endNode].m_position;
+							ushort startNode = instance.m_segments.m_buffer[num6].m_startNode;
+							ushort endNode = instance.m_segments.m_buffer[num6].m_endNode;
+							Vector3 position2 = instance.m_nodes.m_buffer[startNode].m_position;
+							Vector3 position3 = instance.m_nodes.m_buffer[endNode].m_position;
 							float num8 = Mathf.Max(Mathf.Max(bounds.min.x - 64f - position2.x, bounds.min.z - 64f - position2.z), Mathf.Max(position2.x - bounds.max.x - 64f, position2.z - bounds.max.z - 64f));
 							float num9 = Mathf.Max(Mathf.Max(bounds.min.x - 64f - position3.x, bounds.min.z - 64f - position3.z), Mathf.Max(position3.x - bounds.max.x - 64f, position3.z - bounds.max.z - 64f));
 							Vector3 b;
@@ -177,7 +177,7 @@ namespace CSL_Traffic
 							Vector3 b2;
 							int num12;
 							float num13;
-							if ((num8 < 0f || num9 < 0f) && instance.m_segments.m_buffer[(int)num6].m_bounds.Intersects(bounds) && GetClosestLanePosition(instance.m_segments.m_buffer[(int)num6], position, laneType, vehicleTypes, out b, out num10, out num11, out b2, out num12, out num13, vehicleType))
+							if ((num8 < 0f || num9 < 0f) && instance.m_segments.m_buffer[num6].m_bounds.Intersects(bounds) && GetClosestLanePosition(instance.m_segments.m_buffer[num6], position, laneType, vehicleTypes, out b, out num10, out num11, out b2, out num12, out num13, vehicleType))
 							{
 								float num14 = Vector3.SqrMagnitude(position - b);
 								if (num14 < num5)
@@ -205,7 +205,7 @@ namespace CSL_Traffic
 								}
 							}
 						}
-						num6 = instance.m_segments.m_buffer[(int)num6].m_nextGridSegment;
+						num6 = instance.m_segments.m_buffer[num6].m_nextGridSegment;
 						if (++num7 >= 32768)
 						{
 							CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);

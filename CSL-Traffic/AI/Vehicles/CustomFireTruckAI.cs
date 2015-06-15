@@ -35,7 +35,7 @@ namespace CSL_Traffic
             if (vehicleData.m_targetBuilding != 0)
             {
                 BuildingManager instance = Singleton<BuildingManager>.instance;
-                Vector3 a = instance.m_buildings.m_buffer[(int)vehicleData.m_targetBuilding].CalculateSidewalkPosition();
+                Vector3 a = instance.m_buildings.m_buffer[vehicleData.m_targetBuilding].CalculateSidewalkPosition();
                 flag = ((a - frameData.m_position).sqrMagnitude < 4096f);
                 bool flag2 = (vehicleData.m_flags & Vehicle.Flags.Stopped) != Vehicle.Flags.None || frameData.m_velocity.sqrMagnitude < 0.0100000007f;
                 if (flag && (vehicleData.m_flags & Vehicle.Flags.Emergency2) != Vehicle.Flags.None)
@@ -52,14 +52,14 @@ namespace CSL_Traffic
                     {
                         ArriveAtTarget(leaderID, ref leaderData);
                     }
-                    if (ExtinguishFire(vehicleID, ref vehicleData, vehicleData.m_targetBuilding, ref Singleton<BuildingManager>.instance.m_buildings.m_buffer[(int)vehicleData.m_targetBuilding]))
+                    if (ExtinguishFire(vehicleID, ref vehicleData, vehicleData.m_targetBuilding, ref Singleton<BuildingManager>.instance.m_buildings.m_buffer[vehicleData.m_targetBuilding]))
                     {
                         SetTarget(vehicleID, ref vehicleData, 0);
                     }
                 }
                 else
                 {
-                    if (instance.m_buildings.m_buffer[(int)vehicleData.m_targetBuilding].m_fireIntensity == 0)
+                    if (instance.m_buildings.m_buffer[vehicleData.m_targetBuilding].m_fireIntensity == 0)
                     {
                         SetTarget(vehicleID, ref vehicleData, 0);
                     }
@@ -79,7 +79,7 @@ namespace CSL_Traffic
             }
             else
             {
-                if ((ulong)(Singleton<SimulationManager>.instance.m_currentFrameIndex >> 4 & 15u) == (ulong)((long)(vehicleID & 15)) && !ShouldReturnToSource(vehicleID, ref vehicleData))
+                if ((Singleton<SimulationManager>.instance.m_currentFrameIndex >> 4 & 15u) == (ulong)(vehicleID & 15) && !ShouldReturnToSource(vehicleID, ref vehicleData))
                 {
                     TransferManager.TransferOffer offer = default(TransferManager.TransferOffer);
                     offer.Priority = 3;
@@ -137,7 +137,7 @@ namespace CSL_Traffic
         {
             int width = buildingData.Width;
             int length = buildingData.Length;
-            int num = Mathf.Min(5000, (int)buildingData.m_fireIntensity * (width * length));
+            int num = Mathf.Min(5000, buildingData.m_fireIntensity * (width * length));
             if (num != 0 && Singleton<SimulationManager>.instance.m_randomizer.Int32(8u) == 0)
             {
                 num = Mathf.Max(num - m_fireFightingRate, 0);
@@ -147,8 +147,8 @@ namespace CSL_Traffic
                 {
                     if (data.m_sourceBuilding != 0)
                     {
-                        int tempExport = (int)Singleton<BuildingManager>.instance.m_buildings.m_buffer[(int)data.m_sourceBuilding].m_tempExport;
-                        Singleton<BuildingManager>.instance.m_buildings.m_buffer[(int)data.m_sourceBuilding].m_tempExport = (byte)Mathf.Min(tempExport + 1, 255);
+                        int tempExport = Singleton<BuildingManager>.instance.m_buildings.m_buffer[(int)data.m_sourceBuilding].m_tempExport;
+                        Singleton<BuildingManager>.instance.m_buildings.m_buffer[data.m_sourceBuilding].m_tempExport = (byte)Mathf.Min(tempExport + 1, 255);
                     }
                     Building.Flags flags = buildingData.m_flags;
                     if (buildingData.m_productionRate != 0)
@@ -176,7 +176,7 @@ namespace CSL_Traffic
             if (data.m_sourceBuilding != 0)
             {
                 BuildingManager instance = Singleton<BuildingManager>.instance;
-                if ((instance.m_buildings.m_buffer[(int)data.m_sourceBuilding].m_flags & Building.Flags.Active) == Building.Flags.None && instance.m_buildings.m_buffer[(int)data.m_sourceBuilding].m_fireIntensity == 0)
+                if ((instance.m_buildings.m_buffer[data.m_sourceBuilding].m_flags & Building.Flags.Active) == Building.Flags.None && instance.m_buildings.m_buffer[data.m_sourceBuilding].m_fireIntensity == 0)
                 {
                     return true;
                 }
@@ -199,8 +199,8 @@ namespace CSL_Traffic
                     if (instance2.CreateCitizenInstance(out num2, ref instance.m_randomizer, groupCitizenInfo, num))
                     {
                         Vector3 randomDoorPosition = data.GetRandomDoorPosition(ref instance.m_randomizer, VehicleInfo.DoorType.Exit);
-                        groupCitizenInfo.m_citizenAI.SetCurrentVehicle(num2, ref instance2.m_instances.m_buffer[(int)num2], 0, 0u, randomDoorPosition);
-                        groupCitizenInfo.m_citizenAI.SetTarget(num2, ref instance2.m_instances.m_buffer[(int)num2], data.m_targetBuilding);
+                        groupCitizenInfo.m_citizenAI.SetCurrentVehicle(num2, ref instance2.m_instances.m_buffer[num2], 0, 0u, randomDoorPosition);
+                        groupCitizenInfo.m_citizenAI.SetTarget(num2, ref instance2.m_instances.m_buffer[num2], data.m_targetBuilding);
                         instance2.m_citizens.m_buffer[(int)((UIntPtr)num)].SetVehicle(num, vehicleID, 0u);
                     }
                     else

@@ -54,7 +54,7 @@ namespace CSL_Traffic
 				return false;
 			}
 			CitizenManager instance = Singleton<CitizenManager>.instance;
-			CitizenInfo info2 = instance.m_instances.m_buffer[(int)driverInstance].Info;
+			CitizenInfo info2 = instance.m_instances.m_buffer[driverInstance].Info;
 			NetInfo.LaneType laneTypes = NetInfo.LaneType.Vehicle | NetInfo.LaneType.Pedestrian;
 			VehicleInfo.VehicleType vehicleType = m_info.m_vehicleType;
 			bool allowUnderground = (vehicleData.m_flags & Vehicle.Flags.Underground) != Vehicle.Flags.None;
@@ -63,7 +63,7 @@ namespace CSL_Traffic
 			float num;
 			float num2;
 			PathUnit.Position endPosA;
-			if (CustomPathManager.FindPathPosition(startPos, ItemClass.Service.Road, NetInfo.LaneType.Vehicle, info.m_vehicleType, allowUnderground, 32f, out startPosA, out startPosB, out num, out num2, RoadManager.VehicleType.PassengerCar) && FindPathPosition(driverInstance, ref instance.m_instances.m_buffer[(int)driverInstance], endPos, laneTypes, vehicleType, false, out endPosA))
+			if (CustomPathManager.FindPathPosition(startPos, ItemClass.Service.Road, NetInfo.LaneType.Vehicle, info.m_vehicleType, allowUnderground, 32f, out startPosA, out startPosB, out num, out num2, RoadManager.VehicleType.PassengerCar) && FindPathPosition(driverInstance, ref instance.m_instances.m_buffer[driverInstance], endPos, laneTypes, vehicleType, false, out endPosA))
 			{
 				if (!startBothWays || num < 10f)
 				{

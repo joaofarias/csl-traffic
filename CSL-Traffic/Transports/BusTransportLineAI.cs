@@ -22,9 +22,9 @@ namespace CSL_Traffic
 		public override void SimulationStep(ushort segmentID, ref NetSegment data)
 		{
 			NetManager instance = Singleton<NetManager>.instance;
-			if ((instance.m_nodes.m_buffer[(int)data.m_startNode].m_flags & NetNode.Flags.Temporary) == NetNode.Flags.None)
+			if ((instance.m_nodes.m_buffer[data.m_startNode].m_flags & NetNode.Flags.Temporary) == NetNode.Flags.None)
 			{
-				if (data.m_path == 0u || (ulong)(Singleton<SimulationManager>.instance.m_currentFrameIndex >> 8 & 15u) == (ulong)((long)(segmentID & 15)))
+				if (data.m_path == 0u || (Singleton<SimulationManager>.instance.m_currentFrameIndex >> 8 & 15u) == (ulong)(segmentID & 15))
 				{
 					StartPathFind(segmentID, ref data, m_netService, m_vehicleType, false);
 				}
@@ -43,30 +43,30 @@ namespace CSL_Traffic
 				data.m_path = 0u;
 			}
 			NetManager instance = Singleton<NetManager>.instance;
-			if ((instance.m_nodes.m_buffer[(int)data.m_startNode].m_flags & NetNode.Flags.Ambiguous) != NetNode.Flags.None)
+			if ((instance.m_nodes.m_buffer[data.m_startNode].m_flags & NetNode.Flags.Ambiguous) != NetNode.Flags.None)
 			{
 				for (int i = 0; i < 8; i++)
 				{
-					ushort segment = instance.m_nodes.m_buffer[(int)data.m_startNode].GetSegment(i);
-					if (segment != 0 && segment != segmentID && instance.m_segments.m_buffer[(int)segment].m_path != 0u)
+					ushort segment = instance.m_nodes.m_buffer[data.m_startNode].GetSegment(i);
+					if (segment != 0 && segment != segmentID && instance.m_segments.m_buffer[segment].m_path != 0u)
 					{
 						return true;
 					}
 				}
 			}
-			if ((instance.m_nodes.m_buffer[(int)data.m_endNode].m_flags & NetNode.Flags.Ambiguous) != NetNode.Flags.None)
+			if ((instance.m_nodes.m_buffer[data.m_endNode].m_flags & NetNode.Flags.Ambiguous) != NetNode.Flags.None)
 			{
 				for (int j = 0; j < 8; j++)
 				{
-					ushort segment2 = instance.m_nodes.m_buffer[(int)data.m_endNode].GetSegment(j);
-					if (segment2 != 0 && segment2 != segmentID && instance.m_segments.m_buffer[(int)segment2].m_path != 0u)
+					ushort segment2 = instance.m_nodes.m_buffer[data.m_endNode].GetSegment(j);
+					if (segment2 != 0 && segment2 != segmentID && instance.m_segments.m_buffer[segment2].m_path != 0u)
 					{
 						return true;
 					}
 				}
 			}
-			Vector3 position = instance.m_nodes.m_buffer[(int)data.m_startNode].m_position;
-			Vector3 position2 = instance.m_nodes.m_buffer[(int)data.m_endNode].m_position;
+			Vector3 position = instance.m_nodes.m_buffer[data.m_startNode].m_position;
+			Vector3 position2 = instance.m_nodes.m_buffer[data.m_endNode].m_position;
 			PathUnit.Position startPosA;
 			PathUnit.Position startPosB;
 			float num;
@@ -83,11 +83,11 @@ namespace CSL_Traffic
 			{
 				return true;
 			}
-			if ((instance.m_nodes.m_buffer[(int)data.m_startNode].m_flags & NetNode.Flags.Fixed) != NetNode.Flags.None)
+			if ((instance.m_nodes.m_buffer[data.m_startNode].m_flags & NetNode.Flags.Fixed) != NetNode.Flags.None)
 			{
 				startPosB = default(PathUnit.Position);
 			}
-			if ((instance.m_nodes.m_buffer[(int)data.m_endNode].m_flags & NetNode.Flags.Fixed) != NetNode.Flags.None)
+			if ((instance.m_nodes.m_buffer[data.m_endNode].m_flags & NetNode.Flags.Fixed) != NetNode.Flags.None)
 			{
 				endPosB = default(PathUnit.Position);
 			}
@@ -116,25 +116,25 @@ namespace CSL_Traffic
 				{
 					NetNode[] expr_2D9_cp_0 = instance.m_nodes.m_buffer;
 					ushort expr_2D9_cp_1 = data.m_startNode;
-					expr_2D9_cp_0[(int)expr_2D9_cp_1].m_flags = (expr_2D9_cp_0[(int)expr_2D9_cp_1].m_flags | NetNode.Flags.Ambiguous);
+					expr_2D9_cp_0[expr_2D9_cp_1].m_flags = (expr_2D9_cp_0[expr_2D9_cp_1].m_flags | NetNode.Flags.Ambiguous);
 				}
 				else
 				{
 					NetNode[] expr_305_cp_0 = instance.m_nodes.m_buffer;
 					ushort expr_305_cp_1 = data.m_startNode;
-					expr_305_cp_0[(int)expr_305_cp_1].m_flags = (expr_305_cp_0[(int)expr_305_cp_1].m_flags & ~NetNode.Flags.Ambiguous);
+					expr_305_cp_0[expr_305_cp_1].m_flags = (expr_305_cp_0[expr_305_cp_1].m_flags & ~NetNode.Flags.Ambiguous);
 				}
 				if (endPosA.m_segment != 0 && endPosB.m_segment != 0)
 				{
 					NetNode[] expr_344_cp_0 = instance.m_nodes.m_buffer;
 					ushort expr_344_cp_1 = data.m_endNode;
-					expr_344_cp_0[(int)expr_344_cp_1].m_flags = (expr_344_cp_0[(int)expr_344_cp_1].m_flags | NetNode.Flags.Ambiguous);
+					expr_344_cp_0[expr_344_cp_1].m_flags = (expr_344_cp_0[expr_344_cp_1].m_flags | NetNode.Flags.Ambiguous);
 				}
 				else
 				{
 					NetNode[] expr_370_cp_0 = instance.m_nodes.m_buffer;
 					ushort expr_370_cp_1 = data.m_endNode;
-					expr_370_cp_0[(int)expr_370_cp_1].m_flags = (expr_370_cp_0[(int)expr_370_cp_1].m_flags & ~NetNode.Flags.Ambiguous);
+					expr_370_cp_0[expr_370_cp_1].m_flags = (expr_370_cp_0[expr_370_cp_1].m_flags & ~NetNode.Flags.Ambiguous);
 				}
 				data.m_path = path;
 				data.m_flags |= NetSegment.Flags.WaitingPath;
@@ -172,7 +172,7 @@ namespace CSL_Traffic
 				if (length != data.m_averageLength)
 				{
 					data.m_averageLength = length;
-					ushort transportLine = instance2.m_nodes.m_buffer[(int)data.m_startNode].m_transportLine;
+					ushort transportLine = instance2.m_nodes.m_buffer[data.m_startNode].m_transportLine;
 					if (transportLine != 0)
 					{
 						Singleton<TransportManager>.instance.UpdateLine(transportLine);
@@ -190,8 +190,8 @@ namespace CSL_Traffic
 			{
 				if (data.m_averageLength == 0f)
 				{
-					Vector3 position = instance2.m_nodes.m_buffer[(int)data.m_startNode].m_position;
-					Vector3 position2 = instance2.m_nodes.m_buffer[(int)data.m_endNode].m_position;
+					Vector3 position = instance2.m_nodes.m_buffer[data.m_startNode].m_position;
+					Vector3 position2 = instance2.m_nodes.m_buffer[data.m_endNode].m_position;
 					data.m_averageLength = Vector3.Distance(position, position2);
 				}
 				data.m_flags &= ~NetSegment.Flags.WaitingPath;
@@ -208,7 +208,7 @@ namespace CSL_Traffic
 				NetManager instance = Singleton<NetManager>.instance;
 				int num;
 				uint num2;
-				if (instance.m_segments.m_buffer[(int)pos.m_segment].GetClosestLane((int)pos.m_lane, NetInfo.LaneType.Vehicle, vehicleType, out num, out num2))
+				if (instance.m_segments.m_buffer[pos.m_segment].GetClosestLane(pos.m_lane, NetInfo.LaneType.Vehicle, vehicleType, out num, out num2))
 				{
 					pos.m_lane = (byte)num;
 					return true;
@@ -240,10 +240,10 @@ namespace CSL_Traffic
 				ushort num7 = 0;
 				for (int i = 0; i < 8; i++)
 				{
-					ushort segment = instance2.m_nodes.m_buffer[(int)num5].GetSegment(i);
-					if (segment != 0 && instance2.m_segments.m_buffer[(int)segment].m_startNode == num5)
+					ushort segment = instance2.m_nodes.m_buffer[num5].GetSegment(i);
+					if (segment != 0 && instance2.m_segments.m_buffer[segment].m_startNode == num5)
 					{
-						uint path = instance2.m_segments.m_buffer[(int)segment].m_path;
+						uint path = instance2.m_segments.m_buffer[segment].m_path;
 						if (path != 0u)
 						{
 							byte pathFindFlags = instance3.m_pathUnits.m_buffer[(int)((UIntPtr)path)].m_pathFindFlags;
@@ -252,7 +252,7 @@ namespace CSL_Traffic
 								if (!TransportLine.CalculatePathSegmentCount(path, ref num2, ref num3, ref num4))
 								{
 									TransportInfo info = transportLine.Info;
-									StartPathFind(segment, ref instance2.m_segments.m_buffer[(int)segment], info.m_netService, info.m_vehicleType, (transportLine.m_flags & TransportLine.Flags.Temporary) != TransportLine.Flags.None);
+									StartPathFind(segment, ref instance2.m_segments.m_buffer[segment], info.m_netService, info.m_vehicleType, (transportLine.m_flags & TransportLine.Flags.Temporary) != TransportLine.Flags.None);
 									flag = false;
 								}
 							}
@@ -261,7 +261,7 @@ namespace CSL_Traffic
 								flag = false;
 							}
 						}
-						num7 = instance2.m_segments.m_buffer[(int)segment].m_endNode;
+						num7 = instance2.m_segments.m_buffer[segment].m_endNode;
 						break;
 					}
 				}
@@ -310,10 +310,10 @@ namespace CSL_Traffic
 				ushort num12 = 0;
 				for (int j = 0; j < 8; j++)
 				{
-					ushort segment2 = instance2.m_nodes.m_buffer[(int)num5].GetSegment(j);
-					if (segment2 != 0 && instance2.m_segments.m_buffer[(int)segment2].m_startNode == num5)
+					ushort segment2 = instance2.m_nodes.m_buffer[num5].GetSegment(j);
+					if (segment2 != 0 && instance2.m_segments.m_buffer[segment2].m_startNode == num5)
 					{
-						uint path2 = instance2.m_segments.m_buffer[(int)segment2].m_path;
+						uint path2 = instance2.m_segments.m_buffer[segment2].m_path;
 						if (path2 != 0u && (instance3.m_pathUnits.m_buffer[(int)((UIntPtr)path2)].m_pathFindFlags & 4) != 0)
 						{
 							array[num8].m_curveStart = num10;
@@ -325,11 +325,11 @@ namespace CSL_Traffic
 							array[num8].m_bounds.SetMinMax(vector3, vector4);
 							array[num8].m_curveEnd = num10;
 						}
-						num12 = instance2.m_segments.m_buffer[(int)segment2].m_endNode;
+						num12 = instance2.m_segments.m_buffer[segment2].m_endNode;
 						break;
 					}
 				}
-				TransportLine.FillPathNode(instance2.m_nodes.m_buffer[(int)num5].m_position, meshData, num9);
+				TransportLine.FillPathNode(instance2.m_nodes.m_buffer[num5].m_position, meshData, num9);
 				num8++;
 				num9++;
 				num5 = num12;
@@ -348,9 +348,9 @@ namespace CSL_Traffic
 			}
 			try
 			{
-				instance.m_lineMeshData[(int)lineID] = meshData;
-				instance.m_lineSegments[(int)lineID] = array;
-				instance.m_lineCurves[(int)lineID] = array2;
+				instance.m_lineMeshData[lineID] = meshData;
+				instance.m_lineSegments[lineID] = array;
+				instance.m_lineCurves[lineID] = array2;
 				transportLine.m_bounds.SetMinMax(vector, vector2);
 			}
 			finally
@@ -373,15 +373,15 @@ namespace CSL_Traffic
 				ushort num3 = 0;
 				for (int i = 0; i < 8; i++)
 				{
-					ushort segment = instance.m_nodes.m_buffer[(int)num].GetSegment(i);
-					if (segment != 0 && instance.m_segments.m_buffer[(int)segment].m_startNode == num)
+					ushort segment = instance.m_nodes.m_buffer[num].GetSegment(i);
+					if (segment != 0 && instance.m_segments.m_buffer[segment].m_startNode == num)
 					{
 						TransportInfo info = transportLine.Info;
-						if (!UpdatePath(segment, ref instance.m_segments.m_buffer[(int)segment], info.m_netService, info.m_vehicleType, (transportLine.m_flags & TransportLine.Flags.Temporary) != TransportLine.Flags.None))
+						if (!UpdatePath(segment, ref instance.m_segments.m_buffer[segment], info.m_netService, info.m_vehicleType, (transportLine.m_flags & TransportLine.Flags.Temporary) != TransportLine.Flags.None))
 						{
 							flag = false;
 						}
-						num3 = instance.m_segments.m_buffer[(int)segment].m_endNode;
+						num3 = instance.m_segments.m_buffer[segment].m_endNode;
 						break;
 					}
 				}

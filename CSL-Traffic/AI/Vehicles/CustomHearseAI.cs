@@ -51,7 +51,7 @@ namespace CSL_Traffic
             if (data.m_sourceBuilding != 0)
             {
                 BuildingManager instance = Singleton<BuildingManager>.instance;
-                if ((instance.m_buildings.m_buffer[(int)data.m_sourceBuilding].m_flags & (Building.Flags.Active | Building.Flags.Downgrading)) != Building.Flags.Active && instance.m_buildings.m_buffer[(int)data.m_sourceBuilding].m_fireIntensity == 0)
+                if ((instance.m_buildings.m_buffer[data.m_sourceBuilding].m_flags & (Building.Flags.Active | Building.Flags.Downgrading)) != Building.Flags.Active && instance.m_buildings.m_buffer[data.m_sourceBuilding].m_fireIntensity == 0)
                 {
                     return true;
                 }

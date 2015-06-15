@@ -20,7 +20,7 @@ namespace CSL_Traffic
             float sqrMagnitude = vector.sqrMagnitude;
             float num = (magnitude + acceleration) * (0.5f + 0.5f * (magnitude + acceleration) / braking) + carAI.m_info.m_generatedInfo.m_size.z * 0.5f;
             float num2 = Mathf.Max(magnitude + acceleration, 5f);
-            if (lodPhysics >= 2 && (ulong)(currentFrameIndex >> 4 & 3u) == (ulong)((long)(vehicleID & 3)))
+            if (lodPhysics >= 2 && (currentFrameIndex >> 4 & 3u) == (ulong)(vehicleID & 3))
             {
                 num2 *= 2f;
             }
@@ -90,14 +90,14 @@ namespace CSL_Traffic
                 PathUnit.Position pathPos;
                 if (instance2.m_pathUnits.m_buffer[(int)((UIntPtr)leaderData.m_path)].GetPosition(b >> 1, out pathPos))
                 {
-                    instance.m_segments.m_buffer[(int)pathPos.m_segment].AddTraffic(Mathf.RoundToInt(num7 * 2.5f));
+                    instance.m_segments.m_buffer[pathPos.m_segment].AddTraffic(Mathf.RoundToInt(num7 * 2.5f));
                     bool flag2 = false;
                     if ((b & 1) == 0 || lastPathOffset == 0)
                     {
                         uint laneID = PathManager.GetLaneID(pathPos);
                         if (laneID != 0u)
                         {
-                            Vector3 b2 = instance.m_lanes.m_buffer[(int)((UIntPtr)laneID)].CalculatePosition((float)pathPos.m_offset * 0.003921569f);
+                            Vector3 b2 = instance.m_lanes.m_buffer[(int)((UIntPtr)laneID)].CalculatePosition(pathPos.m_offset * 0.003921569f);
                             float num8 = 0.5f * magnitude * magnitude / carAI.m_info.m_braking + carAI.m_info.m_generatedInfo.m_size.z * 0.5f;
                             if (Vector3.Distance(frameData.m_position, b2) >= num8 - 1f)
                             {
@@ -115,7 +115,7 @@ namespace CSL_Traffic
                         }
                     }
                 }
-                if ((ulong)(currentFrameIndex >> 4 & 15u) == (ulong)((long)(leaderID & 15)))
+                if ((currentFrameIndex >> 4 & 15u) == (ulong)(leaderID & 15))
                 {
                     bool flag3 = false;
                     uint path = leaderData.m_path;
@@ -263,7 +263,7 @@ namespace CSL_Traffic
             }
             if (flag5)
             {
-                vehicleData.m_blockCounter = (byte)Mathf.Min((int)(vehicleData.m_blockCounter + 1), 255);
+                vehicleData.m_blockCounter = (byte)Mathf.Min(vehicleData.m_blockCounter + 1, 255);
                 if ((vehicleData.m_blockCounter == 100 || vehicleData.m_blockCounter == 150) && (CSLTraffic.Options & OptionsManager.ModOptions.NoDespawn) == OptionsManager.ModOptions.NoDespawn)
                     vehicleData.m_blockCounter++;
             }
@@ -282,7 +282,7 @@ namespace CSL_Traffic
                 Vector3 b4 = Vector3.ClampMagnitude(vector * 0.5f - vector2, braking);
                 vector3 = vector2 + b4;
             }
-            bool flag7 = (currentFrameIndex + (uint)leaderID & 16u) != 0u;
+            bool flag7 = (currentFrameIndex + leaderID & 16u) != 0u;
             Vector3 a2 = vector3 - vector2;
             Vector3 vector5 = frameData.m_rotation * vector3;
             frameData.m_velocity = vector5 + zero;
@@ -407,7 +407,7 @@ namespace CSL_Traffic
                     int num6 = 0;
                     while (num5 != 0)
                     {
-                        num5 = CheckOtherVehicle(vehicleID, ref vehicleData, ref frameData, ref maxSpeed, ref blocked, ref collisionPush, maxBraking, num5, ref instance.m_vehicles.m_buffer[(int)num5], min, max, lodPhysics);
+                        num5 = CheckOtherVehicle(vehicleID, ref vehicleData, ref frameData, ref maxSpeed, ref blocked, ref collisionPush, maxBraking, num5, ref instance.m_vehicles.m_buffer[num5], min, max, lodPhysics);
                         if (++num6 > 16384)
                         {
                             CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
@@ -446,7 +446,7 @@ namespace CSL_Traffic
                                     int num13 = 0;
                                     while (num12 != 0)
                                     {
-                                        num12 = CheckCitizen(segment, num7, magnitude, ref maxSpeed, ref blocked, maxBraking, num12, ref instance2.m_instances.m_buffer[(int)num12], min, max);
+                                        num12 = CheckCitizen(segment, num7, magnitude, ref maxSpeed, ref blocked, maxBraking, num12, ref instance2.m_instances.m_buffer[num12], min, max);
                                         if (++num13 > 65536)
                                         {
                                             CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
@@ -546,7 +546,7 @@ namespace CSL_Traffic
                                             blocked = true;
                                         }
                                         Vector3 rhs = Vector3.Normalize(otherData.m_targetPos0 - (Vector4)otherData.m_segment.a);
-                                        float num12 = 1.2f - 1f / ((float)vehicleData.m_blockCounter * 0.02f + 0.5f);
+                                        float num12 = 1.2f - 1f / (vehicleData.m_blockCounter * 0.02f + 0.5f);
                                         if (Vector3.Dot(vector5, rhs) > num12 * magnitude)
                                         {
                                             maxSpeed = Mathf.Min(maxSpeed, num11);

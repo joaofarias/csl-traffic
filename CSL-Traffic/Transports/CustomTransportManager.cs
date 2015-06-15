@@ -113,9 +113,9 @@ namespace CSL_Traffic
                             if ((num2 & 1uL << j) != 0uL)
                             {
                                 ushort num3 = (ushort)(i << 6 | j);
-                                if (m_lines.m_buffer[(int)num3].m_flags != TransportLine.Flags.None)
+                                if (m_lines.m_buffer[num3].m_flags != TransportLine.Flags.None)
                                 {
-                                    if (BusTransportLineAI.UpdatePaths(ref m_lines.m_buffer[(int)num3], num3) && BusTransportLineAI.UpdateMeshData(ref m_lines.m_buffer[(int)num3], num3))
+                                    if (BusTransportLineAI.UpdatePaths(ref m_lines.m_buffer[num3], num3) && BusTransportLineAI.UpdateMeshData(ref m_lines.m_buffer[num3], num3))
                                     //if (this.m_lines.m_buffer[(int)num3].UpdatePaths(num3) && this.m_lines.m_buffer[(int)num3].UpdateMeshData(num3))
                                     {
                                         num2 &= ~(1uL << j);
@@ -229,7 +229,7 @@ namespace CSL_Traffic
                     int num8 = 0;
                     while (num7 != 0)
                     {
-                        Vector3 position = instance.m_nodes.m_buffer[(int)num7].m_position;
+                        Vector3 position = instance.m_nodes.m_buffer[num7].m_position;
                         float num9 = Line3.DistanceSqr(ray.direction, ray.origin - position);
                         if (num9 < num5)
                         {

@@ -758,10 +758,10 @@ namespace CSL_Traffic
                 int num2 = 0;
                 while (num != 0)
                 {
-                    ushort nextLaneNode = netManager.m_nodes.m_buffer[(int)num].m_nextLaneNode;
-                    netManager.m_nodes.m_buffer[(int)num].m_nextLaneNode = 0;
-                    netManager.m_nodes.m_buffer[(int)num].m_lane = 0u;
-                    netManager.m_nodes.m_buffer[(int)num].m_laneOffset = 0;
+                    ushort nextLaneNode = netManager.m_nodes.m_buffer[num].m_nextLaneNode;
+                    netManager.m_nodes.m_buffer[num].m_nextLaneNode = 0;
+                    netManager.m_nodes.m_buffer[num].m_lane = 0u;
+                    netManager.m_nodes.m_buffer[num].m_laneOffset = 0;
                     netManager.UpdateNode(num, 0, 10);
                     num = nextLaneNode;
                     if (++num2 > 32768)

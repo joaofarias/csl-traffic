@@ -36,14 +36,14 @@ namespace CSL_Traffic
                 (vehicleAI as IVehicle).InvalidPath(vehicleID, ref vehicleData, vehicleID, ref vehicleData);
                 return;
             }
-            NetInfo info = instance2.m_segments.m_buffer[(int)position.m_segment].Info;
-            if (info.m_lanes.Length <= (int)position.m_lane)
+            NetInfo info = instance2.m_segments.m_buffer[position.m_segment].Info;
+            if (info.m_lanes.Length <= position.m_lane)
             {
                 (vehicleAI as IVehicle).InvalidPath(vehicleID, ref vehicleData, vehicleID, ref vehicleData);
                 return;
             }
             uint num3 = PathManager.GetLaneID(position);
-            NetInfo.Lane lane = info.m_lanes[(int)position.m_lane];
+            NetInfo.Lane lane = info.m_lanes[position.m_lane];
             Bezier3 bezier;
             while (true)
             {
@@ -72,13 +72,13 @@ namespace CSL_Traffic
                                 }
                                 if (b2 > position.m_offset)
                                 {
-                                    b2 = (byte)Mathf.Max((int)b2 - num5, (int)position.m_offset);
+                                    b2 = (byte)Mathf.Max(b2 - num5, position.m_offset);
                                 }
                                 else
                                 {
                                     if (b2 < position.m_offset)
                                     {
-                                        b2 = (byte)Mathf.Min((int)b2 + num5, (int)position.m_offset);
+                                        b2 = (byte)Mathf.Min(b2 + num5, position.m_offset);
                                     }
                                 }
                             }
@@ -116,7 +116,7 @@ namespace CSL_Traffic
                 }
                 int num6 = (b >> 1) + 1;
                 uint num7 = num2;
-                if (num6 >= (int)instance.m_pathUnits.m_buffer[(int)((UIntPtr)num2)].m_positionCount)
+                if (num6 >= instance.m_pathUnits.m_buffer[(int)((UIntPtr)num2)].m_positionCount)
                 {
                     num6 = 0;
                     num7 = instance.m_pathUnits.m_buffer[(int)((UIntPtr)num2)].m_nextPathUnit;
@@ -138,19 +138,19 @@ namespace CSL_Traffic
                     (vehicleAI as IVehicle).InvalidPath(vehicleID, ref vehicleData, vehicleID, ref vehicleData);
                     return;
                 }
-                NetInfo info2 = instance2.m_segments.m_buffer[(int)position2.m_segment].Info;
-                if (info2.m_lanes.Length <= (int)position2.m_lane)
+                NetInfo info2 = instance2.m_segments.m_buffer[position2.m_segment].Info;
+                if (info2.m_lanes.Length <= position2.m_lane)
                 {
                     (vehicleAI as IVehicle).InvalidPath(vehicleID, ref vehicleData, vehicleID, ref vehicleData);
                     return;
                 }
                 uint laneID = PathManager.GetLaneID(position2);
-                NetInfo.Lane lane2 = info2.m_lanes[(int)position2.m_lane];
-                ushort startNode = instance2.m_segments.m_buffer[(int)position.m_segment].m_startNode;
-                ushort endNode = instance2.m_segments.m_buffer[(int)position.m_segment].m_endNode;
-                ushort startNode2 = instance2.m_segments.m_buffer[(int)position2.m_segment].m_startNode;
-                ushort endNode2 = instance2.m_segments.m_buffer[(int)position2.m_segment].m_endNode;
-                if (startNode2 != startNode && startNode2 != endNode && endNode2 != startNode && endNode2 != endNode && ((instance2.m_nodes.m_buffer[(int)startNode].m_flags | instance2.m_nodes.m_buffer[(int)endNode].m_flags) & NetNode.Flags.Disabled) == NetNode.Flags.None && ((instance2.m_nodes.m_buffer[(int)startNode2].m_flags | instance2.m_nodes.m_buffer[(int)endNode2].m_flags) & NetNode.Flags.Disabled) != NetNode.Flags.None)
+                NetInfo.Lane lane2 = info2.m_lanes[position2.m_lane];
+                ushort startNode = instance2.m_segments.m_buffer[position.m_segment].m_startNode;
+                ushort endNode = instance2.m_segments.m_buffer[position.m_segment].m_endNode;
+                ushort startNode2 = instance2.m_segments.m_buffer[position2.m_segment].m_startNode;
+                ushort endNode2 = instance2.m_segments.m_buffer[position2.m_segment].m_endNode;
+                if (startNode2 != startNode && startNode2 != endNode && endNode2 != startNode && endNode2 != endNode && ((instance2.m_nodes.m_buffer[startNode].m_flags | instance2.m_nodes.m_buffer[endNode].m_flags) & NetNode.Flags.Disabled) == NetNode.Flags.None && ((instance2.m_nodes.m_buffer[startNode2].m_flags | instance2.m_nodes.m_buffer[endNode2].m_flags) & NetNode.Flags.Disabled) != NetNode.Flags.None)
                 {
                     (vehicleAI as IVehicle).InvalidPath(vehicleID, ref vehicleData, vehicleID, ref vehicleData);
                     return;
@@ -167,7 +167,7 @@ namespace CSL_Traffic
                             {
                                 if (index <= 0)
                                 {
-                                    vehicleData.m_pathPositionIndex = (byte)((int)vehicleData.m_pathPositionIndex & -2);
+                                    vehicleData.m_pathPositionIndex = (byte)(vehicleData.m_pathPositionIndex & -2);
                                     vehicleData.m_lastPathOffset = offset;
                                 }
                                 position.m_offset = offset2;
@@ -263,7 +263,7 @@ namespace CSL_Traffic
                             (vehicleAI as IVehicle).CalculateSegmentPosition(vehicleID, ref vehicleData, position2, laneID, b4, out bezier.d, out vector4, out num9);
                             num9 = RestrictSpeed(num9, laneID, vehicleData.Info);
                         }
-                        if (num9 < 0.01f || (instance2.m_segments.m_buffer[(int)position2.m_segment].m_flags & NetSegment.Flags.Flooded) != NetSegment.Flags.None)
+                        if (num9 < 0.01f || (instance2.m_segments.m_buffer[position2.m_segment].m_flags & NetSegment.Flags.Flooded) != NetSegment.Flags.None)
                         {
                             if (index <= 0)
                             {
@@ -293,13 +293,13 @@ namespace CSL_Traffic
                             ushort num11;
                             if (b4 == 0)
                             {
-                                num11 = instance2.m_segments.m_buffer[(int)position2.m_segment].m_startNode;
+                                num11 = instance2.m_segments.m_buffer[position2.m_segment].m_startNode;
                             }
                             else
                             {
                                 if (b4 == 255)
                                 {
-                                    num11 = instance2.m_segments.m_buffer[(int)position2.m_segment].m_endNode;
+                                    num11 = instance2.m_segments.m_buffer[position2.m_segment].m_endNode;
                                 }
                                 else
                                 {
@@ -324,8 +324,8 @@ namespace CSL_Traffic
                                 {
                                     num14 = 8 + Mathf.CeilToInt(num13 * 256f / (num10 + 1f));
                                 }
-                                b2 = (byte)Mathf.Min((int)b2 + num14, 255);
-                                Vector3 a2 = bezier.Position((float)b2 * 0.003921569f);
+                                b2 = (byte)Mathf.Min(b2 + num14, 255);
+                                Vector3 a2 = bezier.Position(b2 * 0.003921569f);
                                 vector.Set(a2.x, a2.y, a2.z, Mathf.Min(vector.w, num9));
                                 float sqrMagnitude2 = (a2 - refPos).sqrMagnitude;
                                 if (sqrMagnitude2 >= num)
@@ -336,7 +336,7 @@ namespace CSL_Traffic
                                     }
                                     if (num11 != 0)
                                     {
-                                        (vehicleAI as IVehicle).UpdateNodeTargetPos(vehicleID, ref vehicleData, num11, ref instance2.m_nodes.m_buffer[(int)num11], ref vector, index);
+                                        (vehicleAI as IVehicle).UpdateNodeTargetPos(vehicleID, ref vehicleData, num11, ref instance2.m_nodes.m_buffer[num11], ref vector, index);
                                     }
                                     vehicleData.SetTargetPos(index++, vector);
                                     num = minSqrDistanceB;
@@ -361,7 +361,7 @@ namespace CSL_Traffic
                     {
                         Singleton<PathManager>.instance.ReleaseFirstUnit(ref vehicleData.m_path);
                     }
-                    if (num6 >= (int)(instance.m_pathUnits.m_buffer[(int)((UIntPtr)num7)].m_positionCount - 1) && instance.m_pathUnits.m_buffer[(int)((UIntPtr)num7)].m_nextPathUnit == 0u && vehicleID != 0)
+                    if (num6 >= instance.m_pathUnits.m_buffer[(int)((UIntPtr)num7)].m_positionCount - 1 && instance.m_pathUnits.m_buffer[(int)((UIntPtr)num7)].m_nextPathUnit == 0u && vehicleID != 0)
                     {
                         (vehicleAI as IVehicle).ArrivingToDestination(vehicleID, ref vehicleData);
                     }

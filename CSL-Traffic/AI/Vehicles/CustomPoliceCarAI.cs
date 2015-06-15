@@ -95,8 +95,8 @@ namespace CSL_Traffic
 					int num10 = 0;
 					while (num9 != 0)
 					{
-                        TryCollectCrime(vehicleID, ref vehicleData, ref frameData, num9, ref instance.m_buildings.m_buffer[(int)num9]);
-						num9 = instance.m_buildings.m_buffer[(int)num9].m_nextGridBuilding;
+                        TryCollectCrime(vehicleID, ref vehicleData, ref frameData, num9, ref instance.m_buildings.m_buffer[num9]);
+						num9 = instance.m_buildings.m_buffer[num9].m_nextGridBuilding;
 						if (++num10 >= 32768)
 						{
 							CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
@@ -117,7 +117,7 @@ namespace CSL_Traffic
 				info.m_buildingAI.ModifyMaterialBuffer(buildingID, ref building, TransferManager.TransferReason.Crime, ref num);
 				if (num != 0)
 				{
-					num = Mathf.Clamp(num, (int)vehicleData.m_transferSize - m_crimeCapacity, 0);
+					num = Mathf.Clamp(num, vehicleData.m_transferSize - m_crimeCapacity, 0);
 					vehicleData.m_transferSize += (ushort)Mathf.Max(0, -num);
 				}
 			}
@@ -132,14 +132,14 @@ namespace CSL_Traffic
 			int num = 0;
 			if ((data.m_flags & Vehicle.Flags.TransferToTarget) != Vehicle.Flags.None)
 			{
-				num = (int)data.m_transferSize;
+				num = data.m_transferSize;
 			}
 			if ((data.m_flags & Vehicle.Flags.TransferToSource) != Vehicle.Flags.None)
 			{
-				num = Mathf.Min(0, (int)data.m_transferSize - m_crimeCapacity);
+				num = Mathf.Min(0, data.m_transferSize - m_crimeCapacity);
 			}
-			BuildingInfo info = Singleton<BuildingManager>.instance.m_buildings.m_buffer[(int)data.m_targetBuilding].Info;
-			info.m_buildingAI.ModifyMaterialBuffer(data.m_targetBuilding, ref Singleton<BuildingManager>.instance.m_buildings.m_buffer[(int)data.m_targetBuilding], (TransferManager.TransferReason)data.m_transferType, ref num);
+			BuildingInfo info = Singleton<BuildingManager>.instance.m_buildings.m_buffer[data.m_targetBuilding].Info;
+			info.m_buildingAI.ModifyMaterialBuffer(data.m_targetBuilding, ref Singleton<BuildingManager>.instance.m_buildings.m_buffer[data.m_targetBuilding], (TransferManager.TransferReason)data.m_transferType, ref num);
 			data.m_transferSize += (ushort)Mathf.Max(0, -num);
 			if ((data.m_flags & Vehicle.Flags.Emergency2) != Vehicle.Flags.None)
 			{
@@ -158,7 +158,7 @@ namespace CSL_Traffic
 			if (data.m_sourceBuilding != 0)
 			{
 				BuildingManager instance = Singleton<BuildingManager>.instance;
-				if ((instance.m_buildings.m_buffer[(int)data.m_sourceBuilding].m_flags & Building.Flags.Active) == Building.Flags.None && instance.m_buildings.m_buffer[(int)data.m_sourceBuilding].m_fireIntensity == 0)
+				if ((instance.m_buildings.m_buffer[data.m_sourceBuilding].m_flags & Building.Flags.Active) == Building.Flags.None && instance.m_buildings.m_buffer[data.m_sourceBuilding].m_fireIntensity == 0)
 				{
 					return true;
 				}
@@ -181,8 +181,8 @@ namespace CSL_Traffic
 					if (instance2.CreateCitizenInstance(out num2, ref instance.m_randomizer, groupCitizenInfo, num))
 					{
 						Vector3 randomDoorPosition = data.GetRandomDoorPosition(ref instance.m_randomizer, VehicleInfo.DoorType.Exit);
-						groupCitizenInfo.m_citizenAI.SetCurrentVehicle(num2, ref instance2.m_instances.m_buffer[(int)num2], 0, 0u, randomDoorPosition);
-						groupCitizenInfo.m_citizenAI.SetTarget(num2, ref instance2.m_instances.m_buffer[(int)num2], data.m_targetBuilding);
+						groupCitizenInfo.m_citizenAI.SetCurrentVehicle(num2, ref instance2.m_instances.m_buffer[num2], 0, 0u, randomDoorPosition);
+						groupCitizenInfo.m_citizenAI.SetTarget(num2, ref instance2.m_instances.m_buffer[num2], data.m_targetBuilding);
 						instance2.m_citizens.m_buffer[(int)((UIntPtr)num)].SetVehicle(num, vehicleID, 0u);
 					}
 					else
