@@ -738,7 +738,7 @@ namespace CSL_Traffic
                 netManager.m_lanes.m_buffer[firstLane].m_flags = (ushort)(netManager.m_lanes.m_buffer[firstLane].m_flags & ~Lane.CONTROL_BIT);
                 ReleaseLaneImplementation(firstLane, ref netManager.m_lanes.m_buffer[(int)((UIntPtr)firstLane)]);
                 firstLane = nextLane;
-                if (++num > 262144)
+                if (++num > NetManager.MAX_LANE_COUNT)
                 {
                     CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
                     break;

@@ -97,7 +97,7 @@ namespace CSL_Traffic
                         uint laneID = PathManager.GetLaneID(pathPos);
                         if (laneID != 0u)
                         {
-                            Vector3 b2 = instance.m_lanes.m_buffer[(int)((UIntPtr)laneID)].CalculatePosition(pathPos.m_offset * 0.003921569f);
+                            Vector3 b2 = instance.m_lanes.m_buffer[(int)((UIntPtr)laneID)].CalculatePosition(pathPos.m_offset * CustomPathFind.WEIGHT_FACTOR);
                             float num8 = 0.5f * magnitude * magnitude / carAI.m_info.m_braking + carAI.m_info.m_generatedInfo.m_size.z * 0.5f;
                             if (Vector3.Distance(frameData.m_position, b2) >= num8 - 1f)
                             {

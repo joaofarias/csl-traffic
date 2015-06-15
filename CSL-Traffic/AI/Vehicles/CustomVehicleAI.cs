@@ -325,7 +325,7 @@ namespace CSL_Traffic
                                     num14 = 8 + Mathf.CeilToInt(num13 * 256f / (num10 + 1f));
                                 }
                                 b2 = (byte)Mathf.Min(b2 + num14, 255);
-                                Vector3 a2 = bezier.Position(b2 * 0.003921569f);
+                                Vector3 a2 = bezier.Position(b2 * CustomPathFind.WEIGHT_FACTOR);
                                 vector.Set(a2.x, a2.y, a2.z, Mathf.Min(vector.w, num9));
                                 float sqrMagnitude2 = (a2 - refPos).sqrMagnitude;
                                 if (sqrMagnitude2 >= num)

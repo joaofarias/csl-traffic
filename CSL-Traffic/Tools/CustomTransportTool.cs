@@ -483,7 +483,7 @@ namespace CSL_Traffic
                     }
                     uint laneID = PathManager.GetLaneID(pathPos);
                     Vector3 vector2;
-                    instance.m_lanes.m_buffer[(int)((UIntPtr)laneID)].CalculateStopPositionAndDirection(pathPos.m_offset * 0.003921569f, num5, out hitPos, out vector2);
+                    instance.m_lanes.m_buffer[(int)((UIntPtr)laneID)].CalculateStopPositionAndDirection(pathPos.m_offset * CustomPathFind.WEIGHT_FACTOR, num5, out hitPos, out vector2);
                     fixedPlatform = true;
                     return true;
                 }
