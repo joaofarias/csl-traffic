@@ -416,7 +416,7 @@ namespace CSL_Traffic
                     }
                 }
             }
-            if (lodPhysics == 0)
+            if (lodPhysics == 0 && (CSLTraffic.Options & OptionsManager.ModOptions.noStopForCrossing) != OptionsManager.ModOptions.noStopForCrossing)
             {
                 CitizenManager instance2 = Singleton<CitizenManager>.instance;
                 float num7 = 0f;
