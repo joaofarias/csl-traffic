@@ -20,7 +20,7 @@ namespace CSL_Traffic
 			UseRealisticSpeeds = 8,
 			NoDespawn = 16,
 			ImprovedAI = 32,
-
+			noStopForCrossing = 33,
 			// bits 55 to 62 reserved for beta tests that won't have their own option
 			//BetaTestNewRoads = 1L << 54,
 			BetaTestRoadCustomizerTool = 1L << 55,
@@ -50,6 +50,7 @@ namespace CSL_Traffic
 		UICheckBox m_improvedAICheckBox = null;
 		UICheckBox m_betaTestRoadCustomizerCheckBox = null;
 		UICheckBox m_ghostModeCheckBox = null;
+		UICheckBox m_noStopForCrossing = null;
 
 		bool m_initialized;
 
@@ -171,6 +172,7 @@ namespace CSL_Traffic
 			m_realisticSpeedsCheckBox = AddOptionCheckbox("Beta Test: Realistic Speeds", 4);
 			m_betaTestRoadCustomizerCheckBox = AddOptionCheckbox("Beta Test: Road Customizer Tool", 5);
 			m_improvedAICheckBox = AddOptionCheckbox("Beta Test: Improved AI", 6);
+			m_noStopForCrossing = AddOptionCheckbox("Beta Test: Cars drive trough pedestrian crossings", 7);
 
 			m_ghostModeCheckBox = AddOptionCheckbox("Ghost Mode (disables all mod functionality leaving only enough logic to load the map)");
 			m_ghostModeCheckBox.gameObject.transform.SetParent(m_optionsPanel.transform);
@@ -251,6 +253,11 @@ namespace CSL_Traffic
 				options.betaTestRoadCustomizer = true;
 				CSLTraffic.Options |= ModOptions.BetaTestRoadCustomizerTool;
 			}
+			if (this.m_noStopForCrossing.isChecked)
+			{
+				options.noStopForCrossing = true;
+				CSLTraffic.Options |= ModOptions.noStopForCrossing;
+			}
 			if (this.m_ghostModeCheckBox.isChecked)
 			{
 				options.ghostMode = true;
@@ -304,6 +311,7 @@ namespace CSL_Traffic
 				this.m_improvedAICheckBox.isChecked = options.improvedAI;
 				this.m_betaTestRoadCustomizerCheckBox.isChecked = options.betaTestRoadCustomizer;
 				this.m_ghostModeCheckBox.isChecked = options.ghostMode;
+				this.m_noStopForCrossing.isChecked = options.noStopForCrossing;
 			}
 
 			if (options.allowTrucks)
@@ -323,6 +331,9 @@ namespace CSL_Traffic
 
 			if (options.improvedAI)
 				CSLTraffic.Options |= ModOptions.ImprovedAI;
+
+			if (options.noStopForCrossing)
+				CSLTraffic.Options |= ModOptions.noStopForCrossing;
 
 			if (options.betaTestRoadCustomizer)
 				CSLTraffic.Options |= ModOptions.BetaTestRoadCustomizerTool;
@@ -359,6 +370,8 @@ namespace CSL_Traffic
 			public bool realisticSpeeds;
 			public bool noDespawn;
 			public bool improvedAI;
+
+			public bool noStopForCrossing;
 
 			public bool betaTestRoadCustomizer;
 
