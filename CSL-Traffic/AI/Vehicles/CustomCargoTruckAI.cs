@@ -125,7 +125,7 @@ namespace CSL_Traffic
 					endPosB = default(PathUnit.Position);
 				}
 				NetInfo.LaneType laneTypes = NetInfo.LaneType.Vehicle | NetInfo.LaneType.CargoVehicle;
-				VehicleInfo.VehicleType vehicleTypes = VehicleInfo.VehicleType.Car | VehicleInfo.VehicleType.Train | VehicleInfo.VehicleType.Ship;
+                VehicleInfo.VehicleType vehicleTypes = VehicleInfo.VehicleType.Car | VehicleInfo.VehicleType.Train | VehicleInfo.VehicleType.Ship;
 				uint path;
 				bool createPathResult;
 				CustomPathManager customPathManager = Singleton<PathManager>.instance as CustomPathManager;
