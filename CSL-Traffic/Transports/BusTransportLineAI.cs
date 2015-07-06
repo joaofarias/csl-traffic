@@ -71,7 +71,7 @@ namespace CSL_Traffic
 			PathUnit.Position startPosB;
 			float num;
 			float num2;
-			if (!PathManager.FindPathPosition(position, netService, NetInfo.LaneType.Pedestrian, VehicleInfo.VehicleType.None, true, 32f, out startPosA, out startPosB, out num, out num2))
+			if (!PathManager.FindPathPosition(position, netService, NetInfo.LaneType.Pedestrian, VehicleInfo.VehicleType.None, true, false, 32f, out startPosA, out startPosB, out num, out num2))
 			{
 				return true;
 			}
@@ -79,7 +79,7 @@ namespace CSL_Traffic
 			PathUnit.Position endPosB;
 			float num3;
 			float num4;
-			if (!PathManager.FindPathPosition(position2, netService, NetInfo.LaneType.Pedestrian, VehicleInfo.VehicleType.None, true, 32f, out endPosA, out endPosB, out num3, out num4))
+			if (!PathManager.FindPathPosition(position2, netService, NetInfo.LaneType.Pedestrian, VehicleInfo.VehicleType.None, true, false, 32f, out endPosA, out endPosB, out num3, out num4))
 			{
 				return true;
 			}
