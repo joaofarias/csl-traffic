@@ -61,7 +61,8 @@ namespace CSL_Traffic
 			float num;
 			float num2;
 			PathUnit.Position endPosA;
-			if (CustomPathManager.FindPathPosition(startPos, ItemClass.Service.Road, NetInfo.LaneType.Vehicle, info.m_vehicleType, allowUnderground, 32f, out startPosA, out startPosB, out num, out num2, RoadManager.VehicleType.PassengerCar) && FindPathPosition(driverInstance, ref instance.m_instances.m_buffer[(int)driverInstance], endPos, laneTypes, vehicleType, false, out endPosA))
+            //    if (PathManager.FindPathPosition(startPos, ItemClass.Service.Road, NetInfo.LaneType.Vehicle | NetInfo.LaneType.TransportVehicle, info.m_vehicleType, allowUnderground, false, 32f, out startPosA, out startPosB, out num, out num2)                     && info2.m_citizenAI.FindPathPosition(driverInstance, ref instance.m_instances.m_buffer[(int)driverInstance], endPos, laneTypes, vehicleType, false, out endPosA))
+            if (CustomPathManager.FindPathPosition(startPos, ItemClass.Service.Road, NetInfo.LaneType.Vehicle | NetInfo.LaneType.TransportVehicle, info.m_vehicleType, allowUnderground, false, 32f, out startPosA, out startPosB, out num, out num2, RoadManager.VehicleType.PassengerCar) && FindPathPosition(driverInstance, ref instance.m_instances.m_buffer[(int)driverInstance], endPos, laneTypes, vehicleType, false, out endPosA))
 			{
 				if (!startBothWays || num < 10f)
 				{
@@ -99,7 +100,7 @@ namespace CSL_Traffic
 			PathUnit.Position position3;
 			float num2;
 			float num3;
-			if (CustomPathManager.FindPathPosition(pos, ItemClass.Service.Road, laneTypes, vehicleTypes, allowUnderground, 32f, out position2, out position3, out num2, out num3, RoadManager.VehicleType.PassengerCar) && num2 < num)
+			if (CustomPathManager.FindPathPosition(pos, ItemClass.Service.Road, laneTypes, vehicleTypes, allowUnderground, false, 32f, out position2, out position3, out num2, out num3, RoadManager.VehicleType.PassengerCar) && num2 < num)
 			{
 				num = num2;
 				position = position2;
@@ -108,7 +109,7 @@ namespace CSL_Traffic
 			PathUnit.Position position5;
 			float num4;
 			float num5;
-			if (CustomPathManager.FindPathPosition(pos, ItemClass.Service.Beautification, laneTypes, vehicleTypes, allowUnderground, 32f, out position4, out position5, out num4, out num5, RoadManager.VehicleType.PassengerCar) && num4 < num)
+            if (CustomPathManager.FindPathPosition(pos, ItemClass.Service.Beautification, laneTypes, vehicleTypes, allowUnderground, false, 32f, out position4, out position5, out num4, out num5, RoadManager.VehicleType.PassengerCar) && num4 < num)
 			{
 				num = num4;
 				position = position4;
@@ -117,7 +118,7 @@ namespace CSL_Traffic
 			PathUnit.Position position7;
 			float num6;
 			float num7;
-			if ((citizenData.m_flags & CitizenInstance.Flags.CannotUseTransport) == CitizenInstance.Flags.None && CustomPathManager.FindPathPosition(pos, ItemClass.Service.PublicTransport, laneTypes, vehicleTypes, allowUnderground, 32f, out position6, out position7, out num6, out num7, RoadManager.VehicleType.PassengerCar) && num6 < num)
+            if ((citizenData.m_flags & CitizenInstance.Flags.CannotUseTransport) == CitizenInstance.Flags.None && CustomPathManager.FindPathPosition(pos, ItemClass.Service.PublicTransport, laneTypes, vehicleTypes, allowUnderground, false, 32f, out position6, out position7, out num6, out num7, RoadManager.VehicleType.PassengerCar) && num6 < num)
 			{
 				position = position6;
 			}

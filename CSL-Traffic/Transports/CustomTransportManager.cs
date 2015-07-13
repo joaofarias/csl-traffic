@@ -175,11 +175,11 @@ namespace CSL_Traffic
                 {
                     StatisticsManager instance = Singleton<StatisticsManager>.instance;
                     StatisticBase statisticBase = instance.Acquire<StatisticArray>(StatisticType.AveragePassengers);
-                    for (int m = 0; m < 5; m++)
+                    for (int m = 0; m < 8; m++)
                     {
                         this.m_passengers[m].Update();
                         this.m_passengers[m].Reset();
-                        statisticBase.Acquire<StatisticInt32>(m, 5).Set((int)(this.m_passengers[m].m_residentPassengers.m_averageCount + this.m_passengers[m].m_touristPassengers.m_averageCount));
+                        statisticBase.Acquire<StatisticInt32>(m, 8).Set((int)(this.m_passengers[m].m_residentPassengers.m_averageCount + this.m_passengers[m].m_touristPassengers.m_averageCount));
                     }
                 }
             }

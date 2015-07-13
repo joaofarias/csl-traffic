@@ -774,6 +774,7 @@ namespace CSL_Traffic
             instance.transform.SetParent(customPrefabsHolder);
             instance.transform.localPosition = new Vector3(-7500, -7500, -7500);
             T newPrefab = instance.GetComponent<T>();
+            instance.SetActive(false);
 
             MethodInfo initMethod = GetCollectionType(typeof(T).Name).GetMethod("InitializePrefabs", BindingFlags.Static | BindingFlags.NonPublic);
             Initializer.QueuePrioritizedLoadingAction((IEnumerator)initMethod.Invoke(null, new object[] { newName, new[] { newPrefab }, new string[] { replace ? prefabName : null } }));

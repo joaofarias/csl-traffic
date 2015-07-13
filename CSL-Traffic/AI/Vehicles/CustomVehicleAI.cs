@@ -68,7 +68,7 @@ namespace CSL_Traffic
                                 }
                                 else
                                 {
-                                    num5 = 4 + Mathf.CeilToInt(num4 * 256f / (instance2.m_lanes.m_buffer[(int)((UIntPtr)num3)].m_length + 1f));
+                                    num5 = 4 + Mathf.Max(0, Mathf.CeilToInt(num4 * 256f / (instance2.m_lanes.m_buffer[(int)((UIntPtr)num3)].m_length + 1f)));
                                 }
                                 if (b2 > position.m_offset)
                                 {
@@ -182,7 +182,7 @@ namespace CSL_Traffic
                     }
                     return;
                 }
-                if ((byte)(lane2.m_laneType & (NetInfo.LaneType.Vehicle | NetInfo.LaneType.CargoVehicle | ((NetInfo.LaneType)((byte)32)) | ((NetInfo.LaneType)((byte)64)))) == 0)
+                if ((byte)(lane2.m_laneType & (NetInfo.LaneType.Vehicle | NetInfo.LaneType.CargoVehicle | NetInfo.LaneType.TransportVehicle)) == 0)
                 {
                     (vehicleAI as IVehicle).InvalidPath(vehicleID, ref vehicleData, vehicleID, ref vehicleData);
                     return;
@@ -316,7 +316,7 @@ namespace CSL_Traffic
                                 }
                                 else
                                 {
-                                    num14 = 8 + Mathf.CeilToInt(num13 * 256f / (num10 + 1f));
+                                    num14 = 8 + Mathf.Max(0, Mathf.CeilToInt(num13 * 256f / (num10 + 1f)));
                                 }
                                 b2 = (byte)Mathf.Min((int)b2 + num14, 255);
                                 Vector3 a2 = bezier.Position((float)b2 * 0.003921569f);

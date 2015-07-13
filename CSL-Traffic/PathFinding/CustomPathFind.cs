@@ -89,6 +89,7 @@ namespace CSL_Traffic
 		private bool m_isHeavyVehicle;
 		private bool m_ignoreBlocked;
 		private bool m_stablePath;
+        private bool m_transportVehicle;
 		private Randomizer m_pathRandomizer;
 		private uint m_pathFindIndex;
 		private NetInfo.LaneType m_laneTypes;
@@ -223,6 +224,11 @@ namespace CSL_Traffic
 			this.m_isHeavyVehicle = ((this.m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_simulationFlags & 16) != 0);
 			this.m_ignoreBlocked = ((this.m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_simulationFlags & 32) != 0);
 			this.m_stablePath = ((this.m_pathUnits.m_buffer[(int)((UIntPtr)unit)].m_simulationFlags & 64) != 0);
+            this.m_transportVehicle = ((byte)(this.m_laneTypes & NetInfo.LaneType.TransportVehicle) != 0);
+            if ((byte)(this.m_laneTypes & NetInfo.LaneType.Vehicle) != 0)
+            {
+                this.m_laneTypes |= NetInfo.LaneType.TransportVehicle;
+            }
 
 			if (!m_pathVehicleType.TryGetValue(unit, out m_vehicleType))
 			{
@@ -667,7 +673,10 @@ namespace CSL_Traffic
 				}
 				NetInfo.LaneType laneType = this.m_laneTypes & ~NetInfo.LaneType.Pedestrian;
 				VehicleInfo.VehicleType vehicleType = this.m_vehicleTypes & ~VehicleInfo.VehicleType.Bicycle;
-				laneType &= ~(item.m_lanesUsed & NetInfo.LaneType.Vehicle);
+                if ((byte)(item.m_lanesUsed & (NetInfo.LaneType.Vehicle | NetInfo.LaneType.TransportVehicle)) != 0)
+                {
+                    laneType &= ~(NetInfo.LaneType.Vehicle | NetInfo.LaneType.TransportVehicle);
+                }
 				int num15;
 				uint lane4;
 				if (laneType != NetInfo.LaneType.None && vehicleType != VehicleInfo.VehicleType.None && instance.m_segments.m_buffer[(int)segment2].GetClosestLane(lane2, laneType, vehicleType, out num15, out lane4))
@@ -810,6 +819,10 @@ namespace CSL_Traffic
 				//num3 = lane2.m_speedLimit;
 				num3 = RoadManager.GetLaneSpeed(l);
 				laneType = lane2.m_laneType;
+                if ((byte)(laneType & (NetInfo.LaneType.Vehicle | NetInfo.LaneType.TransportVehicle)) != 0)
+                {
+                    laneType = (NetInfo.LaneType.Vehicle | NetInfo.LaneType.TransportVehicle);
+                }
 				num4 = this.CalculateLaneSpeed(connectOffset, item.m_position.m_offset, ref instance.m_segments.m_buffer[(int)item.m_position.m_segment], lane2, l);
 			}
 			float averageLength = instance.m_segments.m_buffer[(int)item.m_position.m_segment].m_averageLength;
@@ -831,7 +844,7 @@ namespace CSL_Traffic
 						item2.m_position.m_segment = segmentID;
 						item2.m_position.m_lane = (byte)num8;
 						item2.m_position.m_offset = offset;
-						if (laneType != lane3.m_laneType)
+                        if ((byte)(lane3.m_laneType & laneType) == 0)
 						{
 							item2.m_methodDistance = 0f;
 						}
@@ -942,6 +955,14 @@ namespace CSL_Traffic
 			{
 				num7 *= 10f;
 			}
+            if (this.m_transportVehicle && laneType == NetInfo.LaneType.TransportVehicle)
+            {
+                num7 *= 0.95f;
+            }
+            if ((byte)(laneType & (NetInfo.LaneType.Vehicle | NetInfo.LaneType.TransportVehicle)) != 0)
+            {
+                laneType = (NetInfo.LaneType.Vehicle | NetInfo.LaneType.TransportVehicle);
+            }
 			float num8 = (float)Mathf.Abs((int)(connectOffset - item.m_position.m_offset)) * 0.003921569f * num7;
 			float num9 = item.m_methodDistance + num8;
 			float num10 = item.m_comparisonValue + num8 / (num6 * this.m_maxLength);
@@ -955,7 +976,7 @@ namespace CSL_Traffic
 				vehicleType2 &= VehicleInfo.VehicleType.Bicycle;
 				if (vehicleType2 == VehicleInfo.VehicleType.None)
 				{
-					laneType2 &= ~NetInfo.LaneType.Vehicle;
+                    laneType2 &= ~(NetInfo.LaneType.Vehicle | NetInfo.LaneType.TransportVehicle);
 				}
 			}
 			if (!enablePedestrian)
@@ -997,7 +1018,7 @@ namespace CSL_Traffic
 						item2.m_position.m_segment = segmentID;
 						item2.m_position.m_lane = (byte)num12;
 						item2.m_position.m_offset = (byte)(((direction & NetInfo.Direction.Forward) == 0) ? 0 : 255);
-						if (laneType != lane2.m_laneType)
+                        if ((byte)(lane2.m_laneType & laneType) == 0)
 						{
 							item2.m_methodDistance = 0f;
 						}
@@ -1020,7 +1041,7 @@ namespace CSL_Traffic
 								float num18 = (float)Mathf.Abs((int)(item2.m_position.m_offset - this.m_startOffsetB)) * 0.003921569f;
 								item2.m_comparisonValue += num18 * segment.m_averageLength / (num17 * this.m_maxLength);
 							}
-							if (!this.m_ignoreBlocked && (segment.m_flags & NetSegment.Flags.Blocked) != NetSegment.Flags.None && lane2.m_laneType == NetInfo.LaneType.Vehicle)
+                            if (!this.m_ignoreBlocked && (segment.m_flags & NetSegment.Flags.Blocked) != NetSegment.Flags.None && (byte)(lane2.m_laneType & (NetInfo.LaneType.Vehicle | NetInfo.LaneType.TransportVehicle)) != 0)
 							{
 								item2.m_comparisonValue += 0.1f;
 								result = true;
@@ -1028,7 +1049,7 @@ namespace CSL_Traffic
 							item2.m_direction = direction;
 							item2.m_lanesUsed = (item.m_lanesUsed | lane2.m_laneType);
 							item2.m_laneID = num2;
-							if (lane2.m_laneType == laneType && lane2.m_vehicleType == vehicleType)
+                            if ((byte)(lane2.m_laneType & laneType) != 0 && lane2.m_vehicleType == vehicleType)
 							{
 								int firstTarget = (int)instance.m_lanes.m_buffer[(int)((UIntPtr)num2)].m_firstTarget;
 								int lastTarget = (int)instance.m_lanes.m_buffer[(int)((UIntPtr)num2)].m_lastTarget;
@@ -1036,12 +1057,16 @@ namespace CSL_Traffic
 								{
 									item2.m_comparisonValue += Mathf.Max(1f, num13 * 3f - 3f) / ((num5 + RoadManager.GetLaneSpeed(num2)/* lane2.m_speedLimit*/) * 0.5f * this.m_maxLength);
 								}
+                                if (!this.m_transportVehicle && lane2.m_laneType == NetInfo.LaneType.TransportVehicle)
+                                {
+                                    item2.m_comparisonValue += 20f / ((num5 + lane2.m_speedLimit) * 0.5f * this.m_maxLength);
+                                }
 							}
 							this.AddBufferItem(item2, item.m_position);
 						}
 					}
 				}
-				else if (lane2.m_laneType == laneType && lane2.m_vehicleType == vehicleType)
+                else if ((byte)(lane2.m_laneType & laneType) != 0 && lane2.m_vehicleType == vehicleType)
 				{
 					num11++;
 				}
@@ -1099,6 +1124,10 @@ namespace CSL_Traffic
 				//num3 = lane2.m_speedLimit;
 				num3 = RoadManager.GetLaneSpeed(l);
 				laneType = lane2.m_laneType;
+                if ((byte)(laneType & (NetInfo.LaneType.Vehicle | NetInfo.LaneType.TransportVehicle)) != 0)
+                {
+                    laneType = (NetInfo.LaneType.Vehicle | NetInfo.LaneType.TransportVehicle);
+                }
 				num4 = this.CalculateLaneSpeed(connectOffset, item.m_position.m_offset, ref instance.m_segments.m_buffer[(int)item.m_position.m_segment], lane2, l);
 			}
 			float averageLength = instance.m_segments.m_buffer[(int)item.m_position.m_segment].m_averageLength;
@@ -1112,7 +1141,7 @@ namespace CSL_Traffic
 				item2.m_position.m_segment = segmentID;
 				item2.m_position.m_lane = (byte)laneIndex;
 				item2.m_position.m_offset = offset;
-				if (laneType != lane3.m_laneType)
+                if ((byte)(lane3.m_laneType & laneType) == 0)
 				{
 					item2.m_methodDistance = 0f;
 				}

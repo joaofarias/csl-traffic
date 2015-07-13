@@ -130,14 +130,15 @@ namespace CSL_Traffic
 			return false;
 		}
 
-		public static bool FindPathPosition(Vector3 position, ItemClass.Service service, NetInfo.LaneType laneType, VehicleInfo.VehicleType vehicleTypes, bool allowUnderground, float maxDistance, out PathUnit.Position pathPos, RoadManager.VehicleType vehicleType)
+        public static bool FindPathPosition(Vector3 position, ItemClass.Service service, NetInfo.LaneType laneType, VehicleInfo.VehicleType vehicleTypes, bool allowUnderground, bool requireConnect, float maxDistance, out PathUnit.Position pathPos, RoadManager.VehicleType vehicleType)
 		{
 			PathUnit.Position position2;
 			float num;
 			float num2;
-			return CustomPathManager.FindPathPosition(position, service, laneType, vehicleTypes, allowUnderground, maxDistance, out pathPos, out position2, out num, out num2, vehicleType);
+			return CustomPathManager.FindPathPosition(position, service, laneType, vehicleTypes, allowUnderground, requireConnect, maxDistance, out pathPos, out position2, out num, out num2, vehicleType);
 		}
-		public static bool FindPathPosition(Vector3 position, ItemClass.Service service, NetInfo.LaneType laneType, VehicleInfo.VehicleType vehicleTypes, bool allowUnderground, float maxDistance, out PathUnit.Position pathPosA, out PathUnit.Position pathPosB, out float distanceSqrA, out float distanceSqrB, RoadManager.VehicleType vehicleType)
+
+		public static bool FindPathPosition(Vector3 position, ItemClass.Service service, NetInfo.LaneType laneType, VehicleInfo.VehicleType vehicleTypes, bool allowUnderground, bool requireConnect, float maxDistance, out PathUnit.Position pathPosA, out PathUnit.Position pathPosB, out float distanceSqrA, out float distanceSqrB, RoadManager.VehicleType vehicleType)
 		{
 			Bounds bounds = new Bounds(position, new Vector3(maxDistance * 2f, maxDistance * 2f, maxDistance * 2f));
 			int num = Mathf.Max((int)((bounds.min.x - 64f) / 64f + 135f), 0);
@@ -177,7 +178,7 @@ namespace CSL_Traffic
 							Vector3 b2;
 							int num12;
 							float num13;
-							if ((num8 < 0f || num9 < 0f) && instance.m_segments.m_buffer[(int)num6].m_bounds.Intersects(bounds) && CustomPathManager.GetClosestLanePosition(instance.m_segments.m_buffer[(int)num6], position, laneType, vehicleTypes, out b, out num10, out num11, out b2, out num12, out num13, vehicleType))
+							if ((num8 < 0f || num9 < 0f) && instance.m_segments.m_buffer[(int)num6].m_bounds.Intersects(bounds) && CustomPathManager.GetClosestLanePosition(instance.m_segments.m_buffer[(int)num6], position, laneType, vehicleTypes, requireConnect, out b, out num10, out num11, out b2, out num12, out num13, vehicleType))
 							{
 								float num14 = Vector3.SqrMagnitude(position - b);
 								if (num14 < num5)
@@ -218,7 +219,7 @@ namespace CSL_Traffic
 		}
 
 		// NetSegment.GetClosestLane -- it's only called by the PathManager
-		public static bool GetClosestLanePosition(NetSegment seg, Vector3 point, NetInfo.LaneType laneTypes, VehicleInfo.VehicleType vehicleTypes, out Vector3 positionA, out int laneIndexA, out float laneOffsetA, out Vector3 positionB, out int laneIndexB, out float laneOffsetB, RoadManager.VehicleType vehicleType)
+		public static bool GetClosestLanePosition(NetSegment seg, Vector3 point, NetInfo.LaneType laneTypes, VehicleInfo.VehicleType vehicleTypes, bool requireConnect, out Vector3 positionA, out int laneIndexA, out float laneOffsetA, out Vector3 positionB, out int laneIndexB, out float laneOffsetB, RoadManager.VehicleType vehicleType)
 		{
 			positionA = point;
 			laneIndexA = -1;
@@ -238,7 +239,7 @@ namespace CSL_Traffic
 					while (num4 < info.m_lanes.Length && num3 != 0u)
 					{
 						NetInfo.Lane lane = info.m_lanes[num4];
-						if (lane.CheckType(laneTypes, vehicleTypes) && RoadManager.CanUseLane(vehicleType, num3))
+                        if (lane.CheckType(laneTypes, vehicleTypes) && (lane.m_allowConnect || !requireConnect) && RoadManager.CanUseLane(vehicleType, num3))
 						{
 							Vector3 vector;
 							float num5;

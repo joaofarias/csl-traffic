@@ -336,7 +336,7 @@ namespace CSL_Traffic
             PathUnit.Position endPosB;
             float num3;
             float num4;
-            if (CustomPathManager.FindPathPosition(startPos, ItemClass.Service.Road, NetInfo.LaneType.Vehicle, info.m_vehicleType, allowUnderground, 32f, out startPosA, out startPosB, out num, out num2, vehicleType) && CustomPathManager.FindPathPosition(endPos, ItemClass.Service.Road, NetInfo.LaneType.Vehicle, info.m_vehicleType, false, 32f, out endPosA, out endPosB, out num3, out num4, vehicleType))
+            if (CustomPathManager.FindPathPosition(startPos, ItemClass.Service.Road, NetInfo.LaneType.Vehicle | NetInfo.LaneType.TransportVehicle, info.m_vehicleType, allowUnderground, false, 32f, out startPosA, out startPosB, out num, out num2, vehicleType) && CustomPathManager.FindPathPosition(endPos, ItemClass.Service.Road, NetInfo.LaneType.Vehicle | NetInfo.LaneType.TransportVehicle, info.m_vehicleType, false, false, 32f, out endPosA, out endPosB, out num3, out num4, vehicleType))
             {
                 if (!startBothWays || num < 10f)
                 {
@@ -416,7 +416,7 @@ namespace CSL_Traffic
                     }
                 }
             }
-            if (lodPhysics == 0 && (CSLTraffic.Options & OptionsManager.ModOptions.noStopForCrossing) != OptionsManager.ModOptions.noStopForCrossing)
+            if (lodPhysics == 0/* && (CSLTraffic.Options & OptionsManager.ModOptions.noStopForCrossing) != OptionsManager.ModOptions.noStopForCrossing*/)
             {
                 CitizenManager instance2 = Singleton<CitizenManager>.instance;
                 float num7 = 0f;
@@ -446,7 +446,7 @@ namespace CSL_Traffic
                                     int num13 = 0;
                                     while (num12 != 0)
                                     {
-                                        num12 = CustomCarAI.CheckCitizen(segment, num7, magnitude, ref maxSpeed, ref blocked, maxBraking, num12, ref instance2.m_instances.m_buffer[(int)num12], min, max);
+                                        num12 = CustomCarAI.CheckCitizen(vehicleID, ref vehicleData, segment, num7, magnitude, ref maxSpeed, ref blocked, maxBraking, num12, ref instance2.m_instances.m_buffer[(int)num12], min, max);
                                         if (++num13 > 65536)
                                         {
                                             CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
@@ -470,6 +470,10 @@ namespace CSL_Traffic
             {
                 VehicleInfo info = otherData.Info;
                 if (info.m_vehicleType == VehicleInfo.VehicleType.Bicycle)
+                {
+                    return otherData.m_nextGridVehicle;
+                }
+                if (((vehicleData.m_flags | otherData.m_flags) & Vehicle.Flags.Transition) == Vehicle.Flags.None && (vehicleData.m_flags & Vehicle.Flags.Underground) != (otherData.m_flags & Vehicle.Flags.Underground))
                 {
                     return otherData.m_nextGridVehicle;
                 }
@@ -632,8 +636,13 @@ namespace CSL_Traffic
         }
 
         // CHECKME: check if this method allows to make people get away from traffic
-        private static ushort CheckCitizen(Segment3 segment, float lastLen, float nextLen, ref float maxSpeed, ref bool blocked, float maxBraking, ushort otherID, ref CitizenInstance otherData, Vector3 min, Vector3 max)
+        private static ushort CheckCitizen(ushort vehicleID, ref Vehicle vehicleData, Segment3 segment, float lastLen, float nextLen, ref float maxSpeed, ref bool blocked, float maxBraking, ushort otherID, ref CitizenInstance otherData, Vector3 min, Vector3 max)
         {
+            if ((vehicleData.m_flags & Vehicle.Flags.Transition) == Vehicle.Flags.None && (otherData.m_flags & CitizenInstance.Flags.Transition) == CitizenInstance.Flags.None && (vehicleData.m_flags & Vehicle.Flags.Underground) != Vehicle.Flags.None != ((otherData.m_flags & CitizenInstance.Flags.Underground) != CitizenInstance.Flags.None))
+            {
+                return otherData.m_nextGridInstance;
+            }
+
             CitizenInfo info = otherData.Info;
             CitizenInstance.Frame lastFrameData = otherData.GetLastFrameData();
             Vector3 position = lastFrameData.m_position;

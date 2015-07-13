@@ -78,12 +78,12 @@ namespace CSL_Traffic
 			PathUnit.Position startPosB;
 			float num;
 			float num2;
-			bool flag = CustomPathManager.FindPathPosition(startPos, ItemClass.Service.Road, NetInfo.LaneType.Vehicle, VehicleInfo.VehicleType.Car, allowUnderground, 32f, out startPosA, out startPosB, out num, out num2, RoadManager.VehicleType.CargoTruck);
+            bool flag = CustomPathManager.FindPathPosition(startPos, ItemClass.Service.Road, NetInfo.LaneType.Vehicle | NetInfo.LaneType.TransportVehicle, VehicleInfo.VehicleType.Car, allowUnderground, false, 32f, out startPosA, out startPosB, out num, out num2, RoadManager.VehicleType.CargoTruck);
 			PathUnit.Position position;
 			PathUnit.Position position2;
 			float num3;
 			float num4;
-			if (CustomPathManager.FindPathPosition(startPos, ItemClass.Service.PublicTransport, NetInfo.LaneType.Vehicle, VehicleInfo.VehicleType.Train | VehicleInfo.VehicleType.Ship, allowUnderground, 32f, out position, out position2, out num3, out num4, RoadManager.VehicleType.CargoTruck))
+			if (CustomPathManager.FindPathPosition(startPos, ItemClass.Service.PublicTransport, NetInfo.LaneType.Vehicle, VehicleInfo.VehicleType.Train | VehicleInfo.VehicleType.Ship, allowUnderground, false, 32f, out position, out position2, out num3, out num4, RoadManager.VehicleType.CargoTruck))
 			{
 				if (!flag || num3 < num)
 				{
@@ -98,12 +98,12 @@ namespace CSL_Traffic
 			PathUnit.Position endPosB;
 			float num5;
 			float num6;
-			bool flag2 = CustomPathManager.FindPathPosition(endPos, ItemClass.Service.Road, NetInfo.LaneType.Vehicle, VehicleInfo.VehicleType.Car, false, 32f, out endPosA, out endPosB, out num5, out num6, RoadManager.VehicleType.CargoTruck);
+            bool flag2 = CustomPathManager.FindPathPosition(endPos, ItemClass.Service.Road, NetInfo.LaneType.Vehicle | NetInfo.LaneType.TransportVehicle, VehicleInfo.VehicleType.Car, false, false, 32f, out endPosA, out endPosB, out num5, out num6, RoadManager.VehicleType.CargoTruck);
 			PathUnit.Position position3;
 			PathUnit.Position position4;
 			float num7;
 			float num8;
-			if (CustomPathManager.FindPathPosition(endPos, ItemClass.Service.PublicTransport, NetInfo.LaneType.Vehicle, VehicleInfo.VehicleType.Train | VehicleInfo.VehicleType.Ship, false, 32f, out position3, out position4, out num7, out num8, RoadManager.VehicleType.CargoTruck))
+			if (CustomPathManager.FindPathPosition(endPos, ItemClass.Service.PublicTransport, NetInfo.LaneType.Vehicle, VehicleInfo.VehicleType.Train | VehicleInfo.VehicleType.Ship, false, false, 32f, out position3, out position4, out num7, out num8, RoadManager.VehicleType.CargoTruck))
 			{
 				if (!flag2 || num7 < num5)
 				{

@@ -8,27 +8,26 @@ namespace CSL_Traffic
         public const ulong WORKSHOP_ID = 409184143ul;
 
         public static OptionsManager.ModOptions Options = OptionsManager.ModOptions.None;
-        static GameObject sm_optionsManager;
+        static OptionsManager sm_optionsManager;
         
         GameObject m_initializer;
 
         public string Name
         {
-            get
-            {
-                if (sm_optionsManager == null)
-                {
-                    sm_optionsManager = new GameObject("OptionsManager");
-                    sm_optionsManager.AddComponent<OptionsManager>();
-                }
-
-                return "Traffic++";
-            }
+            get { return "Traffic++"; }
         }
 
         public string Description
         {
             get { return "Adds zonable pedestrian paths and other traffic improvements."; }
+        }
+
+        public void OnSettingsUI(UIHelperBase helper)
+        {
+            if (sm_optionsManager == null)
+                sm_optionsManager = new GameObject("OptionsManager").AddComponent<OptionsManager>();
+
+            sm_optionsManager.CreateSettings(helper);
         }
 
         public override void OnCreated(ILoading loading)
@@ -37,7 +36,7 @@ namespace CSL_Traffic
 
             if (sm_optionsManager != null)
             {
-                sm_optionsManager.GetComponent<OptionsManager>().LoadOptions();
+                sm_optionsManager.LoadOptions();
             }
 
             if (m_initializer == null)

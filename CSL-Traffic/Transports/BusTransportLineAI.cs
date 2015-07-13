@@ -107,9 +107,9 @@ namespace CSL_Traffic
 			bool createPathResult;
 			CustomPathManager customPathManager = Singleton<PathManager>.instance as CustomPathManager;
 			if (customPathManager != null)
-				createPathResult = customPathManager.CreatePath(out path, ref Singleton<SimulationManager>.instance.m_randomizer, Singleton<SimulationManager>.instance.m_currentBuildIndex, startPosA, startPosB, endPosA, endPosB, NetInfo.LaneType.Vehicle, vehicleType, 20000f, false, true, true, skipQueue, RoadManager.VehicleType.Bus);
+				createPathResult = customPathManager.CreatePath(out path, ref Singleton<SimulationManager>.instance.m_randomizer, Singleton<SimulationManager>.instance.m_currentBuildIndex, startPosA, startPosB, endPosA, endPosB, NetInfo.LaneType.Vehicle | NetInfo.LaneType.TransportVehicle, vehicleType, 20000f, false, true, true, skipQueue, RoadManager.VehicleType.Bus);
 			else
-				createPathResult = Singleton<PathManager>.instance.CreatePath(out path, ref Singleton<SimulationManager>.instance.m_randomizer, Singleton<SimulationManager>.instance.m_currentBuildIndex, startPosA, startPosB, endPosA, endPosB, NetInfo.LaneType.Vehicle, vehicleType, 20000f, false, true, true, skipQueue);
+                createPathResult = Singleton<PathManager>.instance.CreatePath(out path, ref Singleton<SimulationManager>.instance.m_randomizer, Singleton<SimulationManager>.instance.m_currentBuildIndex, startPosA, startPosB, endPosA, endPosB, NetInfo.LaneType.Vehicle | NetInfo.LaneType.TransportVehicle, vehicleType, 20000f, false, true, true, skipQueue);
 			if (createPathResult)
 			{
 				if (startPosA.m_segment != 0 && startPosB.m_segment != 0)
@@ -208,7 +208,7 @@ namespace CSL_Traffic
 				NetManager instance = Singleton<NetManager>.instance;
 				int num;
 				uint num2;
-				if (instance.m_segments.m_buffer[(int)pos.m_segment].GetClosestLane((int)pos.m_lane, NetInfo.LaneType.Vehicle, vehicleType, out num, out num2))
+                if (instance.m_segments.m_buffer[(int)pos.m_segment].GetClosestLane((int)pos.m_lane, NetInfo.LaneType.Vehicle | NetInfo.LaneType.TransportVehicle, vehicleType, out num, out num2))
 				{
 					pos.m_lane = (byte)num;
 					return true;
