@@ -27,15 +27,15 @@ namespace CSL_Traffic
 			typeof(PathManager).GetFieldByName("m_pathfinds").SetValue(this, m_pathFinds);
 		}
 
-		// copy values from original to new path manager
+		// Copy values from original to new path manager.
 		public void SetOriginalValues(PathManager originalPathManager)
 		{
-			// members of SimulationManagerBase
+			// Members of SimulationManagerBase.
 			this.m_simulationProfiler = originalPathManager.m_simulationProfiler;
 			this.m_drawCallData = originalPathManager.m_drawCallData;
 			this.m_properties = originalPathManager.m_properties;
 
-			// members of PathManager
+			// Members of PathManager.
 			this.m_pathUnitCount = originalPathManager.m_pathUnitCount;
 			this.m_renderPathGizmo = originalPathManager.m_renderPathGizmo;
 			this.m_pathUnits = originalPathManager.m_pathUnits;

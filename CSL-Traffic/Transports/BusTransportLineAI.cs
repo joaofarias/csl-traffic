@@ -223,7 +223,6 @@ namespace CSL_Traffic
 
 		public static bool UpdateMeshData(ref TransportLine transportLine, ushort lineID)
 		{
-			//return transportLine.UpdateMeshData(lineID);
 			bool flag = true;
 			int num = 0;
 			int num2 = 0;

@@ -63,8 +63,8 @@ namespace CSL_Traffic
 							return;
 						}
 					}
-				}                
-				
+				}
+
 				// split bezier in 10 parts to correctly raycast curves
 				Bezier3 bezier;
 				int amount = 10;
@@ -73,12 +73,12 @@ namespace CSL_Traffic
 				for (int i = 0; i < amount; i++)
 				{
 					bezier = m_bezier.Cut(i * size, (i+1) * size);
-					
+
 					Bounds bounds = bezier.GetBounds();
 					bounds.Expand(1f);
 					m_bounds[i] = bounds;
 				}
-				
+
 			}
 		}
 
@@ -90,7 +90,7 @@ namespace CSL_Traffic
 
 		ushort m_hoveredSegment;
 		ushort m_hoveredNode;
-		ushort m_selectedNode;        
+		ushort m_selectedNode;
 		NodeLaneMarker m_selectedMarker;
 		Dictionary<ushort, FastList<NodeLaneMarker>> m_nodeMarkers = new Dictionary<ushort, FastList<NodeLaneMarker>>();
 		Dictionary<ushort, Segment> m_segments = new Dictionary<ushort, Segment>();
@@ -131,12 +131,12 @@ namespace CSL_Traffic
 					if (OnEndLaneCustomization != null)
 						OnEndLaneCustomization();
 				}
-					
+
 				m_segments.Clear();
 				m_hoveredLaneMarkers.Clear();
 				return;
 			}
-				
+
 
 			if (m_hoveredSegment != 0)
 			{
@@ -144,7 +144,7 @@ namespace CSL_Traffic
 				NetNode startNode = NetManager.instance.m_nodes.m_buffer[segment.m_startNode];
 				NetNode endNode = NetManager.instance.m_nodes.m_buffer[segment.m_endNode];
 				Ray mouseRay = Camera.main.ScreenPointToRay(Input.mousePosition);
-					
+
 				if (startNode.CountSegments() > 1)
 				{
 					Bounds bounds = startNode.m_bounds;
@@ -186,7 +186,7 @@ namespace CSL_Traffic
 					if (OnEndLaneCustomization != null)
 						OnEndLaneCustomization();
 				}
-						
+
 			}
 			else if (m_hoveredNode != 0 && NetManager.instance.m_nodes.m_buffer[m_hoveredNode].CountSegments() < 2)
 			{
@@ -338,11 +338,7 @@ namespace CSL_Traffic
 		protected override void OnDisable()
 		{
 			base.OnDisable();
-
 			time = Time.realtimeSinceStartup;
-			//m_selectedLaneMarkers.Clear();
-			//if (OnEndLaneCustomization != null)
-			//	OnEndLaneCustomization();
 		}
 
 		bool IsActive(NodeLaneMarker marker)
@@ -413,7 +409,7 @@ namespace CSL_Traffic
 						});
 					}
 
-					laneId = NetManager.instance.m_lanes.m_buffer[laneId].m_nextLane;   
+					laneId = NetManager.instance.m_lanes.m_buffer[laneId].m_nextLane;
 				}
 
 				segmentId = segment.GetRightSegment(nodeId);
@@ -471,7 +467,7 @@ namespace CSL_Traffic
 				for (int j = 0; j < laneCount && laneId != 0; j++)
 				{
 					NetLane lane = NetManager.instance.m_lanes.m_buffer[laneId];
-					
+
 					if ((info.m_lanes[j].m_laneType & NetInfo.LaneType.Vehicle) == NetInfo.LaneType.Vehicle)
 					{
 						Bezier3 bezier = lane.m_bezier;
@@ -509,7 +505,7 @@ namespace CSL_Traffic
 			NetNode node = NetManager.instance.m_nodes.m_buffer[segment.m_startNode];
 			if (node.CountSegments() == 2)
 				SetSegments(node.m_segment0 == segmentId ? node.m_segment1 : node.m_segment0, infoIndex, ref seg);
-			
+
 			node = NetManager.instance.m_nodes.m_buffer[segment.m_endNode];
 			if (node.CountSegments() == 2)
 				SetSegments(node.m_segment0 == segmentId ? node.m_segment1 : node.m_segment0, infoIndex, ref seg);
@@ -531,12 +527,12 @@ namespace CSL_Traffic
 			{
 				nextNode = segment.m_endNode;
 				seg.m_targetNode = segment.m_startNode == previousSeg.m_targetNode ? segment.m_endNode : segment.m_startNode;
-			}            
+			}
 			else
 			{
 				nextNode = segment.m_startNode;
 				seg.m_targetNode = segment.m_endNode == previousSeg.m_targetNode ? segment.m_startNode : segment.m_endNode;
-			}    
+			}
 
 			m_segments[segmentId] = seg;
 
@@ -591,7 +587,6 @@ namespace CSL_Traffic
 					for (int i = 0; i < laneMarkers.m_size; i++)
 					{
 						RenderManager.instance.OverlayEffect.DrawBezier(cameraInfo, new Color(0f, 0f, 1f, 0.75f), laneMarkers.m_buffer[i].m_bezier, renderBig ? 2f : laneMarkers.m_buffer[i].m_size, 0, 0, -1f, 1280f, false, false);
-						//RenderUndergroundLane(laneMarkers.m_buffer[i].m_bezier, new Color(0f, 0f, 1f, 0.75f), renderBig ? 2f : laneMarkers.m_buffer[i].m_size);
 					}
 				}
 
@@ -617,9 +612,9 @@ namespace CSL_Traffic
 					for (int j = 0; j < laneMarker.m_connections.m_size; j++)
 					{
 						if (((NetLane.Flags)NetManager.instance.m_lanes.m_buffer[laneMarker.m_connections.m_buffer[j].m_lane].m_flags & NetLane.Flags.Created) == NetLane.Flags.Created)
-							RenderLane(cameraInfo, laneMarker.m_position, laneMarker.m_connections.m_buffer[j].m_position, nodePos, color);                            
+							RenderLane(cameraInfo, laneMarker.m_position, laneMarker.m_connections.m_buffer[j].m_position, nodePos, color);
 					}
-						
+
 				}
 			}
 
@@ -676,7 +671,7 @@ namespace CSL_Traffic
 					start + side * (-size / 2f) + Vector3.up * 0.1f,
 					end + side * (size / 2f) + Vector3.up * 0.1f,
 					end + side * (-size / 2f) + Vector3.up * 0.1f,
-				};				
+				};
 				quadMesh.vertices = vertices;
 
 				int[] tri = new int[]
@@ -694,10 +689,6 @@ namespace CSL_Traffic
 
 				if (mat.SetPass(0))
 					Graphics.DrawMeshNow(quadMesh, Matrix4x4.identity);
-				//else
-				//	System.IO.File.AppendAllText("RenderMesh.txt", "NO GO!!\n");
-					//Graphics.DrawMesh(quadMesh, Vector3.zero, Quaternion.identity, mat);
-
 				start = end;
 			}
 		}
@@ -829,15 +820,13 @@ namespace CSL_Traffic
 			panel.AddComponent<RoadCustomizerGroupPanel>();
 
 			// add RoadCustomizerPanel to scrollablePanel
-			vehiclePanel.AddComponent<RoadCustomizerPanel>();//.SetPanel(RoadCustomizerPanel.Panel.VehicleRestrictions);
-			speedPanel.AddComponent<RoadCustomizerPanel>();//.SetPanel(RoadCustomizerPanel.Panel.SpeedRestrictions);
+			vehiclePanel.AddComponent<RoadCustomizerPanel>();
+			speedPanel.AddComponent<RoadCustomizerPanel>();
 
 			button.eventClick += delegate(UIComponent component, UIMouseEventParameter eventParam)
 			{
-				//roadsPanel.isVisible = false;
 				panel.SetActive(true);
 				panel.GetComponent<UIPanel>().isVisible = true;
-				//vehiclePanel.GetComponent<UIPanel>().isVisible = true;
 			};
 
 			return true;
@@ -857,8 +846,6 @@ namespace CSL_Traffic
 		}
 #endif
 
-		//int laneButtonsStart, laneButtonsWidth, laneButtonsHeight, laneButtonsSpacing;
-		//int screenWidth, screenHeight;
 		protected override void OnToolGUI()
 		{
 			base.OnToolGUI();
@@ -869,79 +856,6 @@ namespace CSL_Traffic
 				StartCoroutine(RenderVehicle());
 			}
 #endif
-
-			//if (m_toolButton == null)
-			//	m_toolButton = TryCreateToolButton();
-
-			//if (m_selectedLaneMarkers.Count == 0)
-			//	return;
-
-			//if (screenWidth != Screen.width || screenHeight != Screen.height)
-			//{
-			//	screenWidth = Screen.width;
-			//	screenHeight = Screen.height;
-			//	laneButtonsStart = (700 * screenHeight) / 1080;
-			//	laneButtonsWidth = 150; // font doesn't scale, so width must remain the same for every resolution
-			//	laneButtonsHeight = (20 * screenHeight) / 1080; // only causes problems in very low resolutions
-			//	laneButtonsSpacing = (5 * screenHeight) / 1080;
-			//}
-
-			//RoadManager.VehicleType vehicleRestrictions = RoadManager.GetVehicleRestrictions(m_selectedLaneMarkers[0].m_lane);
-			//bool apply = false;
-			//int i = 1;
-			//if (GUI.Button(new Rect(10, laneButtonsStart, laneButtonsWidth, laneButtonsHeight), "Ambulances: " + ((vehicleRestrictions & RoadManager.VehicleType.Ambulance) == RoadManager.VehicleType.Ambulance ? "On" : "Off")))
-			//{
-			//	vehicleRestrictions ^= RoadManager.VehicleType.Ambulance;
-			//	apply = true;
-			//}
-			//if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Bus: " + ((vehicleRestrictions & RoadManager.VehicleType.Bus) == RoadManager.VehicleType.Bus ? "On" : "Off")))
-			//{
-			//	vehicleRestrictions ^= RoadManager.VehicleType.Bus;
-			//	apply = true;
-			//}
-			//if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Cargo Trucks: " + ((vehicleRestrictions & RoadManager.VehicleType.CargoTruck) == RoadManager.VehicleType.CargoTruck ? "On" : "Off")))
-			//{
-			//	vehicleRestrictions ^= RoadManager.VehicleType.CargoTruck;
-			//	apply = true;
-			//}
-			//if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Fire Trucks: " + ((vehicleRestrictions & RoadManager.VehicleType.FireTruck) == RoadManager.VehicleType.FireTruck ? "On" : "Off")))
-			//{
-			//	vehicleRestrictions ^= RoadManager.VehicleType.FireTruck;
-			//	apply = true;
-			//}
-			//if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Garbage Trucks: " + ((vehicleRestrictions & RoadManager.VehicleType.GarbageTruck) == RoadManager.VehicleType.GarbageTruck ? "On" : "Off")))
-			//{
-			//	vehicleRestrictions ^= RoadManager.VehicleType.GarbageTruck;
-			//	apply = true;
-			//}
-			//if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Hearses: " + ((vehicleRestrictions & RoadManager.VehicleType.Hearse) == RoadManager.VehicleType.Hearse ? "On" : "Off")))
-			//{
-			//	vehicleRestrictions ^= RoadManager.VehicleType.Hearse;
-			//	apply = true;
-			//}
-			//if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Citizens: " + ((vehicleRestrictions & RoadManager.VehicleType.PassengerCar) == RoadManager.VehicleType.PassengerCar ? "On" : "Off")))
-			//{
-			//	vehicleRestrictions ^= RoadManager.VehicleType.PassengerCar;
-			//	apply = true;
-			//}
-			//if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Police: " + ((vehicleRestrictions & RoadManager.VehicleType.PoliceCar) == RoadManager.VehicleType.PoliceCar ? "On" : "Off")))
-			//{
-			//	vehicleRestrictions ^= RoadManager.VehicleType.PoliceCar;
-			//	apply = true;
-			//}
-			//if (GUI.Button(new Rect(10, laneButtonsStart + (laneButtonsHeight + laneButtonsSpacing) * i++, laneButtonsWidth, laneButtonsHeight), "Emergency: " + ((vehicleRestrictions & RoadManager.VehicleType.Emergency) == RoadManager.VehicleType.Emergency ? "On" : "Off")))
-			//{
-			//	vehicleRestrictions ^= RoadManager.VehicleType.Emergency;
-			//	apply = true;
-			//}
-
-			//if (apply)
-			//{
-			//    foreach (SegmentLaneMarker lane in m_selectedLaneMarkers)
-			//    {
-			//        RoadManager.SetVehicleRestrictions(lane.m_lane, vehicleRestrictions);
-			//    }
-			//}
 		}
 
 		protected override void Awake()
@@ -961,14 +875,6 @@ namespace CSL_Traffic
 
 		UIButton TryCreateToolButton()
 		{
-			//GameObject roadsOptionPanel = GameObject.Find("RoadsOptionPanel(RoadsPanel)");
-			//if (roadsOptionPanel == null)
-			//    return null;
-
-			//UITabstrip tabstrip = roadsOptionPanel.GetComponentInChildren<UITabstrip>();
-			//if (tabstrip == null)
-			//    return null;
-
 			GameObject mainToolStrip = GameObject.Find("MainToolstrip");
 			if (mainToolStrip == null)
 				return null;
@@ -980,7 +886,7 @@ namespace CSL_Traffic
 			UIButton roadsButton = (UIButton)tabstrip.tabs.First();
 
 			UIButton btn = mainToolStrip.GetComponent<UIComponent>().AddUIComponent<UIButton>();
-			
+
 			btn.name = "RoadCustomizer";
 			btn.text = "";
 			btn.tooltip = "Road Customizer Tool";
@@ -1006,13 +912,6 @@ namespace CSL_Traffic
 			btn.pressedFgSprite = "rct";
 			btn.group = roadsButton.group;
 
-			//btn.eventClick += delegate(UIComponent component, UIMouseEventParameter eventParam)
-			//{
-			//	//ToolsModifierControl.SetTool<RoadCustomizerTool>();
-			//	//StartCoroutine(SetRoadCustomizerTool());
-			//	ToolsModifierControl.SetTool<RoadCustomizerTool>();
-			//};
-
 			btn.eventButtonStateChanged += delegate(UIComponent component, UIButton.ButtonState value)
 			{
 				if (value == UIButton.ButtonState.Focused)
@@ -1024,7 +923,6 @@ namespace CSL_Traffic
 				}
 				else if (value == UIButton.ButtonState.Normal)
 				{
-					//if (ToolsModifierControl.GetCurrentTool<RoadCustomizerTool>() != null)
 					ToolsModifierControl.SetTool<DefaultTool>();
 				}
 			};
@@ -1036,7 +934,7 @@ namespace CSL_Traffic
 
 		IEnumerator SetRoadCustomizerTool()
 		{
-			ToolsModifierControl.SetTool<RoadCustomizerTool>();   
+			ToolsModifierControl.SetTool<RoadCustomizerTool>();
 
 			while (ToolsModifierControl.GetCurrentTool<RoadCustomizerTool>() != null)
 				yield return new WaitForEndOfFrame();
@@ -1048,54 +946,54 @@ namespace CSL_Traffic
 
 		static readonly Color32[] colors = new Color32[]
 		{
-			new Color32(161, 64, 206, 255), 
-			new Color32(79, 251, 8, 255), 
-			new Color32(243, 96, 44, 255), 
-			new Color32(45, 106, 105, 255), 
-			new Color32(253, 165, 187, 255), 
-			new Color32(90, 131, 14, 255), 
-			new Color32(58, 20, 70, 255), 
-			new Color32(248, 246, 183, 255), 
-			new Color32(255, 205, 29, 255), 
-			new Color32(91, 50, 18, 255), 
-			new Color32(76, 239, 155, 255), 
-			new Color32(241, 25, 130, 255), 
-			new Color32(125, 197, 240, 255), 
-			new Color32(57, 102, 187, 255), 
-			new Color32(160, 27, 61, 255), 
-			new Color32(167, 251, 107, 255), 
-			new Color32(165, 94, 3, 255), 
-			new Color32(204, 18, 161, 255), 
-			new Color32(208, 136, 237, 255), 
-			new Color32(232, 211, 202, 255), 
-			new Color32(45, 182, 15, 255), 
-			new Color32(8, 40, 47, 255), 
-			new Color32(249, 172, 142, 255), 
-			new Color32(248, 99, 101, 255), 
-			new Color32(180, 250, 208, 255), 
-			new Color32(126, 25, 77, 255), 
-			new Color32(243, 170, 55, 255), 
-			new Color32(47, 69, 126, 255), 
-			new Color32(50, 105, 70, 255), 
-			new Color32(156, 49, 1, 255), 
-			new Color32(233, 231, 255, 255), 
-			new Color32(107, 146, 253, 255), 
-			new Color32(127, 35, 26, 255), 
-			new Color32(240, 94, 222, 255), 
-			new Color32(58, 28, 24, 255), 
-			new Color32(165, 179, 240, 255), 
-			new Color32(239, 93, 145, 255), 
-			new Color32(47, 110, 138, 255), 
-			new Color32(57, 195, 101, 255), 
-			new Color32(124, 88, 213, 255), 
-			new Color32(252, 220, 144, 255), 
-			new Color32(48, 106, 224, 255), 
-			new Color32(90, 109, 28, 255), 
-			new Color32(56, 179, 208, 255), 
-			new Color32(239, 73, 177, 255), 
-			new Color32(84, 60, 2, 255), 
-			new Color32(169, 104, 238, 255), 
-			new Color32(97, 201, 238, 255), 
+			new Color32(161, 64, 206, 255),
+			new Color32(79, 251, 8, 255),
+			new Color32(243, 96, 44, 255),
+			new Color32(45, 106, 105, 255),
+			new Color32(253, 165, 187, 255),
+			new Color32(90, 131, 14, 255),
+			new Color32(58, 20, 70, 255),
+			new Color32(248, 246, 183, 255),
+			new Color32(255, 205, 29, 255),
+			new Color32(91, 50, 18, 255),
+			new Color32(76, 239, 155, 255),
+			new Color32(241, 25, 130, 255),
+			new Color32(125, 197, 240, 255),
+			new Color32(57, 102, 187, 255),
+			new Color32(160, 27, 61, 255),
+			new Color32(167, 251, 107, 255),
+			new Color32(165, 94, 3, 255),
+			new Color32(204, 18, 161, 255),
+			new Color32(208, 136, 237, 255),
+			new Color32(232, 211, 202, 255),
+			new Color32(45, 182, 15, 255),
+			new Color32(8, 40, 47, 255),
+			new Color32(249, 172, 142, 255),
+			new Color32(248, 99, 101, 255),
+			new Color32(180, 250, 208, 255),
+			new Color32(126, 25, 77, 255),
+			new Color32(243, 170, 55, 255),
+			new Color32(47, 69, 126, 255),
+			new Color32(50, 105, 70, 255),
+			new Color32(156, 49, 1, 255),
+			new Color32(233, 231, 255, 255),
+			new Color32(107, 146, 253, 255),
+			new Color32(127, 35, 26, 255),
+			new Color32(240, 94, 222, 255),
+			new Color32(58, 28, 24, 255),
+			new Color32(165, 179, 240, 255),
+			new Color32(239, 93, 145, 255),
+			new Color32(47, 110, 138, 255),
+			new Color32(57, 195, 101, 255),
+			new Color32(124, 88, 213, 255),
+			new Color32(252, 220, 144, 255),
+			new Color32(48, 106, 224, 255),
+			new Color32(90, 109, 28, 255),
+			new Color32(56, 179, 208, 255),
+			new Color32(239, 73, 177, 255),
+			new Color32(84, 60, 2, 255),
+			new Color32(169, 104, 238, 255),
+			new Color32(97, 201, 238, 255),
 		};
 	}
 }

@@ -19,7 +19,7 @@ namespace CSL_Traffic
                 }
                 CustomCarAI.sm_speedData[vehicleID].ApplySpeedMultiplier(this.m_info);
             }
-            
+
 
             frameData.m_blinkState = (((vehicleData.m_flags & Vehicle.Flags.Emergency2) == Vehicle.Flags.None) ? 0f : 10f);
             CustomCarAI.SimulationStep(this, vehicleID, ref vehicleData, ref frameData, leaderID, ref leaderData, lodPhysics);
@@ -84,29 +84,8 @@ namespace CSL_Traffic
                 }
             }
             return false;
-
-            //return CustomCarAI.StartPathFind(this, vehicleID, ref vehicleData, startPos, endPos, startBothWays, endBothWays, vehicleType);
         }
 
-        //protected override float CalculateTargetSpeed(ushort vehicleID, ref Vehicle data, float speedLimit, float curve)
-        //{
-        //    float targetSpeed = base.CalculateTargetSpeed(vehicleID, ref data, speedLimit, curve);
-
-        //    if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.None)
-        //        return targetSpeed;
-
-        //    if (m_currentPath != data.m_path)
-        //    {
-        //        m_currentPath = data.m_path;
-
-        //        if ((data.m_flags & Vehicle.Flags.Emergency2) == Vehicle.Flags.Emergency2)
-        //            m_speedMutliplier = Random.Range(1f, 1.25f);
-        //        else
-        //            m_speedMutliplier = Random.Range(0.75f, 1f);
-        //    }
-
-        //    return targetSpeed * m_speedMutliplier;
-        //}
 
         /*
          * Private unmodified methods

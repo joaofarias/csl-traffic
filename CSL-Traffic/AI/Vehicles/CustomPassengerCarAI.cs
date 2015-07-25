@@ -25,7 +25,7 @@ namespace CSL_Traffic
 				}
 				CustomCarAI.sm_speedData[vehicleID].ApplySpeedMultiplier(this.m_info);
 			}
-			
+
 			if ((vehicleData.m_flags & Vehicle.Flags.Stopped) != Vehicle.Flags.None)
 			{
 				vehicleData.m_waitCounter += 1;
@@ -61,8 +61,7 @@ namespace CSL_Traffic
 			float num;
 			float num2;
 			PathUnit.Position endPosA;
-            //    if (PathManager.FindPathPosition(startPos, ItemClass.Service.Road, NetInfo.LaneType.Vehicle | NetInfo.LaneType.TransportVehicle, info.m_vehicleType, allowUnderground, false, 32f, out startPosA, out startPosB, out num, out num2)                     && info2.m_citizenAI.FindPathPosition(driverInstance, ref instance.m_instances.m_buffer[(int)driverInstance], endPos, laneTypes, vehicleType, false, out endPosA))
-            if (CustomPathManager.FindPathPosition(startPos, ItemClass.Service.Road, NetInfo.LaneType.Vehicle | NetInfo.LaneType.TransportVehicle, info.m_vehicleType, allowUnderground, false, 32f, out startPosA, out startPosB, out num, out num2, RoadManager.VehicleType.PassengerCar) && FindPathPosition(driverInstance, ref instance.m_instances.m_buffer[(int)driverInstance], endPos, laneTypes, vehicleType, false, out endPosA))
+			if (CustomPathManager.FindPathPosition(startPos, ItemClass.Service.Road, NetInfo.LaneType.Vehicle | NetInfo.LaneType.TransportVehicle, info.m_vehicleType, allowUnderground, false, 32f, out startPosA, out startPosB, out num, out num2, RoadManager.VehicleType.PassengerCar) && FindPathPosition(driverInstance, ref instance.m_instances.m_buffer[(int)driverInstance], endPos, laneTypes, vehicleType, false, out endPosA))
 			{
 				if (!startBothWays || num < 10f)
 				{

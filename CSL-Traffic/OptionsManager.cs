@@ -21,28 +21,11 @@ namespace CSL_Traffic
 			UseRealisticSpeeds = 8,
 			NoDespawn = 16,
 			ImprovedAI = 32,
-			//noStopForCrossing = 64,
-
 			// bits 55 to 62 reserved for beta tests that won't have their own option
-			//BetaTestNewRoads = 1L << 54,
 			BetaTestRoadCustomizerTool = 1L << 55,
-			//BetaTest3 = 1L << 56,
-			//BetaTest4 = 1L << 57,
-			//BetaTest5 = 1L << 58,
-			//BetaTest6 = 1L << 59,
-			//BetaTest7 = 1L << 60,
-			//BetaTest8 = 1L << 61,
-
 			FixCargoTrucksNotSpawning = 1L << 61,
-
 			GhostMode = 1L << 62
 		}
-
-        //GameObject m_optionsButtonGo;
-        //GameObject m_optionsPanel;
-        //GameObject m_optionsList;
-        //GameObject m_checkboxTemplate;
-
 
 		UICheckBox m_allowTrucksCheckBox = null;
 		UICheckBox m_allowResidentsCheckBox = null;
@@ -52,9 +35,6 @@ namespace CSL_Traffic
 		UICheckBox m_improvedAICheckBox = null;
 		UICheckBox m_betaTestRoadCustomizerCheckBox = null;
 		UICheckBox m_ghostModeCheckBox = null;
-		//UICheckBox m_noStopForCrossing = null;
-
-		//bool m_initialized;
 
 		void Awake()
 		{
@@ -84,164 +64,8 @@ namespace CSL_Traffic
             // This is temporary as the options panel will be reworked in future release
         }
 
-
-//        void Start()
-//        {
-//#if DEBUG
-//            //foreach (var item in GameObject.FindObjectsOfType<GameObject>())
-//            //{
-//            //	if (item.transform.parent == null)
-//            //		Initializer.PrintGameObjects(item, "MainMenuScene_110b.txt");
-//            //}
-//#endif
-
-//            GameObject contentManager = GameObject.Find("(Library) ContentManagerPanel");
-//            if (contentManager == null)
-//                return;
-
-//            Transform mods = contentManager.transform.GetChild(0).FindChild("Mods");
-//            if (mods == null)
-//            {
-//                //Logger.LogInfo("Can't find mods");
-//                return;
-//            }
-
-//            UILabel modLabel = mods.GetComponentsInChildren<UILabel>().FirstOrDefault(l => l.text.Contains("jfarias") || l.text.Contains("Traffic++"));
-//            if (modLabel == null)
-//            {
-//                //Logger.LogInfo("Can't find label");
-//                return;
-//            }
-
-//            GameObject mod = modLabel.transform.parent.gameObject;
-//            UIButton shareButton = mod.GetComponentsInChildren<UIButton>(true).FirstOrDefault(b => b.name == "Share");
-//            if (shareButton == null)
-//                return;
-
-//            //// Options Button
-//            //Transform shareButtonTransform = mod.transform.FindChild("Share");
-//            //if (shareButtonTransform == null)
-//            //{
-//            //	//Logger.LogInfo("Can't find share");
-//            //	return;
-//            //}
-
-//            //UIButton shareButton = shareButtonTransform.gameObject.GetComponent<UIButton>();
-//            this.m_optionsButtonGo = Instantiate<GameObject>(shareButton.gameObject);
-//            this.m_optionsButtonGo.name = "Options";
-//            UIButton optionsButton = mod.GetComponent<UIPanel>().AttachUIComponent(this.m_optionsButtonGo) as UIButton;
-//            this.m_optionsButtonGo.transform.localPosition = shareButton.transform.localPosition;
-			
-//            optionsButton.isVisible = true;
-//            optionsButton.text = "Options";
-//            optionsButton.eventClick += OpenOptionsPanel;
-//            optionsButton.position += Vector3.right * (optionsButton.width * 1.1f);
-
-//            // Options Panel
-//            GameObject optionsPanel = GameObject.Find("(Library) OptionsPanel");
-//            this.m_optionsPanel = Instantiate<GameObject>(optionsPanel);
-//            this.m_optionsPanel.transform.SetParent(GameObject.Find("(Library) ContentManagerPanel").transform);
-//            GameObject.Destroy(this.m_optionsPanel.GetComponent<OptionsPanel>());
-
-//            m_checkboxTemplate = this.m_optionsPanel.GetComponentsInChildren<UICheckBox>().FirstOrDefault(c => c.name == "EdgeScrolling").gameObject;
-//            GameObject.Destroy(m_checkboxTemplate.GetComponent<BindProperty>());
-
-//            // clear panel but keep title
-//            GameObject caption = null;
-//            foreach (Transform transform in m_optionsPanel.transform)
-//            {
-//                if (transform.name == "Caption")
-//                    caption = transform.gameObject;
-//                else
-//                    GameObject.Destroy(transform.gameObject);
-//            }
-
-//            this.m_optionsPanel.GetComponent<UIPanel>().autoFitChildrenVertically = true;
-//            this.m_optionsPanel.GetComponent<UIPanel>().autoFitChildrenHorizontally = true;
-
-//            // set caption
-//            caption.transform.FindChild("Label").GetComponent<UILabel>().text = "Traffic++ Options";
-
-//            // clear close event
-//            UIButton closeButton = caption.transform.FindChild("Close").GetComponent<UIButton>();
-//            GameObject.Destroy(closeButton.GetComponent<BindEvent>());
-//            closeButton.eventClick += CloseOptionsPanel;
-
-//            // set options list
-//            m_optionsList = Instantiate<GameObject>(mod.transform.parent.gameObject);
-//            for (int i = m_optionsList.transform.childCount - 1; i >= 0; i--)
-//            {
-//                Destroy(m_optionsList.transform.GetChild(i).gameObject);
-//            }
-//            m_optionsList.transform.SetParent(this.m_optionsPanel.transform);
-//            m_optionsList.GetComponent<UIScrollablePanel>().AlignTo(this.m_optionsPanel.GetComponent<UIPanel>(), UIAlignAnchor.TopLeft);
-//            m_optionsList.GetComponent<UIScrollablePanel>().position += new Vector3(caption.transform.FindChild("Label").GetComponent<UILabel>().height, -caption.transform.FindChild("Label").GetComponent<UILabel>().height * 2f);
-
-//            // save button
-//            GameObject save = Instantiate<GameObject>(this.m_optionsButtonGo);
-//            save.transform.SetParent(this.m_optionsPanel.transform);
-
-//            UIButton saveButton = save.GetComponent<UIButton>();
-//            saveButton.isVisible = true;
-//            saveButton.eventClick += OnSave;
-//            saveButton.color = Color.green;
-//            saveButton.text = "Save";
-//            saveButton.AlignTo(m_optionsPanel.GetComponent<UIPanel>(), UIAlignAnchor.BottomRight);
-//            Vector3 cornerOffset = new Vector3(saveButton.width * -0.1f, saveButton.height * 0.3f);
-//            saveButton.position += cornerOffset;
-
-//            // add options
-//            m_allowTrucksCheckBox = AddOptionCheckbox("Allow Trucks in Pedestrian Roads", 0);
-//            m_allowResidentsCheckBox = AddOptionCheckbox("Allow Residents in Pedestrian Roads", 1);
-//            m_disableCentralLaneCheckBox = AddOptionCheckbox("Disable Central Lane on Pedestrian Roads", 2);
-//            m_noDespawnCheckBox = AddOptionCheckbox("No Despawn by CBeTHaX", 3);
-//            m_realisticSpeedsCheckBox = AddOptionCheckbox("Beta Test: Realistic Speeds", 4);
-//            m_betaTestRoadCustomizerCheckBox = AddOptionCheckbox("Beta Test: Road Customizer Tool", 5);
-//            m_improvedAICheckBox = AddOptionCheckbox("Beta Test: Improved AI", 6);
-//            //m_noStopForCrossing = AddOptionCheckbox("Beta Test: Cars drive trough pedestrian crossings", 7);
-
-//            m_ghostModeCheckBox = AddOptionCheckbox("Ghost Mode (disables all mod functionality leaving only enough logic to load the map)");
-//            m_ghostModeCheckBox.gameObject.transform.SetParent(m_optionsPanel.transform);
-//            m_ghostModeCheckBox.AlignTo(m_optionsPanel.GetComponent<UIPanel>(), UIAlignAnchor.BottomLeft);
-//            m_ghostModeCheckBox.position += new Vector3(-cornerOffset.x, cornerOffset.y);
-//            m_ghostModeCheckBox.width -= saveButton.width;
-
-//            LoadOptions();
-
-//            m_initialized = true;
-//        }
-
-        //UICheckBox AddOptionCheckbox(string text, int zOrder = -1)
-        //{
-        //    GameObject newCheckbox = Instantiate<GameObject>(m_checkboxTemplate);
-        //    newCheckbox.transform.SetParent(m_optionsList.transform);
-
-        //    UICheckBox checkBox = newCheckbox.GetComponent<UICheckBox>();
-        //    checkBox.isChecked = false;
-        //    checkBox.text = text;
-        //    checkBox.isVisible = true;
-        //    if (zOrder != -1)
-        //        checkBox.zOrder = zOrder;
-
-        //    return checkBox;
-        //}
-
-        //private void OpenOptionsPanel(UIComponent component, UIMouseEventParameter eventParam)
-        //{
-        //    LoadOptions();
-        //    this.m_optionsPanel.GetComponent<UIPanel>().isVisible = true;
-        //    this.m_optionsPanel.GetComponent<UIPanel>().BringToFront();
-        //}
-
-        //private void CloseOptionsPanel(UIComponent component, UIMouseEventParameter eventParam)
-        //{
-        //    this.m_optionsPanel.GetComponent<UIPanel>().isVisible = false;
-        //}
-
 		private void OnSave()
 		{
-			//this.m_optionsPanel.GetComponent<UIPanel>().isVisible = false;
-
 			Options options = new Options();
 			CSLTraffic.Options = ModOptions.None;
 			if (this.m_allowTrucksCheckBox.isChecked)
@@ -279,11 +103,6 @@ namespace CSL_Traffic
 				options.betaTestRoadCustomizer = true;
 				CSLTraffic.Options |= ModOptions.BetaTestRoadCustomizerTool;
 			}
-            //if (this.m_noStopForCrossing.isChecked)
-            //{
-            //    options.noStopForCrossing = true;
-            //    CSLTraffic.Options |= ModOptions.noStopForCrossing;
-            //}
 			if (this.m_ghostModeCheckBox.isChecked)
 			{
 				options.ghostMode = true;
@@ -337,7 +156,6 @@ namespace CSL_Traffic
 				this.m_improvedAICheckBox.isChecked = options.improvedAI;
 				this.m_betaTestRoadCustomizerCheckBox.isChecked = options.betaTestRoadCustomizer;
 				this.m_ghostModeCheckBox.isChecked = options.ghostMode;
-				//this.m_noStopForCrossing.isChecked = options.noStopForCrossing;
 			}
 
 			if (options.allowTrucks)
@@ -358,9 +176,6 @@ namespace CSL_Traffic
 			if (options.improvedAI)
 				CSLTraffic.Options |= ModOptions.ImprovedAI;
 
-            //if (options.noStopForCrossing)
-            //    CSLTraffic.Options |= ModOptions.noStopForCrossing;
-
 			if (options.betaTestRoadCustomizer)
 				CSLTraffic.Options |= ModOptions.BetaTestRoadCustomizerTool;
 
@@ -370,23 +185,6 @@ namespace CSL_Traffic
 			if (options.fixCargoTrucksNotSpawning)
 				CSLTraffic.Options |= ModOptions.FixCargoTrucksNotSpawning;
 		}
-
-        //void OnLevelWasLoaded(int level)
-        //{
-        //    if (level == 5 || level == 3)
-        //        m_initialized = false;
-        //}
-
-        //void Update()
-        //{
-        //    if (Application.loadedLevel == 3 || Application.loadedLevel == 5) // both are the main menu!?
-        //    {
-        //        if (!m_initialized || m_optionsButtonGo == null)
-        //            Start();
-        //        else if (m_optionsButtonGo.GetComponent<UIButton>().isVisible == false)
-        //            m_optionsButtonGo.GetComponent<UIButton>().isVisible = true;
-        //    }
-        //}
 
 		public struct Options
 		{

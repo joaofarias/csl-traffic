@@ -16,7 +16,7 @@ namespace CSL_Traffic
                 }
                 CustomCarAI.sm_speedData[vehicleID].ApplySpeedMultiplier(this.m_info);
             }
-            
+
 
             if ((vehicleData.m_flags & Vehicle.Flags.Stopped) != Vehicle.Flags.None)
             {
@@ -81,8 +81,6 @@ namespace CSL_Traffic
                 }
             }
             return false;
-
-            //return CustomCarAI.StartPathFind(this, vehicleID, ref vehicleData, startPos, endPos, startBothWays, endBothWays, RoadManager.VehicleType.Bus);
         }
 
 

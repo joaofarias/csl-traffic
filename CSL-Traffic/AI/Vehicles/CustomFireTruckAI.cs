@@ -20,7 +20,7 @@ namespace CSL_Traffic
                 }
                 CustomCarAI.sm_speedData[vehicleID].ApplySpeedMultiplier(this.m_info);
             }
-            
+
 
             frameData.m_blinkState = (((vehicleData.m_flags & (Vehicle.Flags.Emergency1 | Vehicle.Flags.Emergency2)) == Vehicle.Flags.None) ? 0f : 10f);
             CustomCarAI.SimulationStep(this, vehicleID, ref vehicleData, ref frameData, leaderID, ref leaderData, lodPhysics);
@@ -135,15 +135,12 @@ namespace CSL_Traffic
                 }
             }
             return false;
-
-            //return CustomCarAI.StartPathFind(this, vehicleID, ref vehicleData, startPos, endPos, startBothWays, endBothWays, vehicleType);
         }
 
 
         /*
          * Private unmodified methods
          */
-        
         private bool ArriveAtTarget(ushort vehicleID, ref Vehicle data)
         {
             if (data.m_targetBuilding == 0)
