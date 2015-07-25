@@ -11,7 +11,7 @@ namespace CSL_Traffic.UI
         private static readonly string kSubbarPanelTemplate = "SubbarPanelTemplate";
         static readonly string[] sm_thumbnailStates = new string[] { "Disabled", "", "Hovered", "Focused" };
         static readonly Dictionary<string, UIUtils.SpriteTextureInfo> sm_thumbnailCoords = new Dictionary<string, UIUtils.SpriteTextureInfo>()
-        {        
+        {
             {"TabBackgrounds", new UIUtils.SpriteTextureInfo() {startX = 763, startY = 50, width = 60, height = 25}},
             {"Vehicle Restrictions", new UIUtils.SpriteTextureInfo() {startX = 763, startY = 0, width = 32, height = 22}},
             {"Speed Restrictions", new UIUtils.SpriteTextureInfo() {startX = 763, startY = 22, width = 32, height = 22}},
@@ -62,13 +62,10 @@ namespace CSL_Traffic.UI
                 GameObject asGameObject = UITemplateManager.GetAsGameObject(kSubbarButtonTemplate);
                 GameObject asGameObject2 = UITemplateManager.GetAsGameObject(kSubbarPanelTemplate);
                 btn = m_strip.AttachUIComponent(asGameObject) as UIButton;
-                //btn = m_strip.AddTab(name, asGameObject, asGameObject2, typeof(RoadCustomizerPanel)) as UIButton;
-                //btn.eventClick += OnClick;
             }
             btn.isEnabled = enabled;
 
             btn.atlas = this.m_atlas;
-            //btn.gameObject.GetComponent<TutorialUITag>().tutorialTag = name;
             string text = spriteBase + name;
             UIUtils.SetThumbnails(text, sm_thumbnailCoords[text], this.m_atlas);
             btn.normalFgSprite = text;
@@ -81,7 +78,7 @@ namespace CSL_Traffic.UI
             btn.focusedBgSprite = "TabBg" + "Focused";
             btn.hoveredBgSprite = btn.pressedBgSprite = "TabBg" + "Hovered";
             btn.disabledBgSprite = "TabBg" + "Disabled";
-            
+
             if (!string.IsNullOrEmpty(localeID) && !string.IsNullOrEmpty(unlockText))
             {
                 btn.tooltip = Locale.Get(localeID, name) + " - " + unlockText;
@@ -100,7 +97,7 @@ namespace CSL_Traffic.UI
             UIButton uIButton = comp as UIButton;
             if (uIButton != null && uIButton.parent == this.m_strip)
             {
-                
+
             }
         }
     }

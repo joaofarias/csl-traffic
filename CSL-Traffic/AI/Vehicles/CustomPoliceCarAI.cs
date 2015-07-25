@@ -96,8 +96,6 @@ namespace CSL_Traffic
                 }
             }
             return false;
-
-			//return CustomCarAI.StartPathFind(this, vehicleID, ref vehicleData, startPos, endPos, startBothWays, endBothWays, vehicleType);
 		}
 
 		/*

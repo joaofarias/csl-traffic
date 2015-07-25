@@ -116,7 +116,6 @@ namespace CSL_Traffic
                                 if (this.m_lines.m_buffer[(int)num3].m_flags != TransportLine.Flags.None)
                                 {
                                     if (BusTransportLineAI.UpdatePaths(ref this.m_lines.m_buffer[(int)num3], num3) && BusTransportLineAI.UpdateMeshData(ref this.m_lines.m_buffer[(int)num3], num3))
-                                    //if (this.m_lines.m_buffer[(int)num3].UpdatePaths(num3) && this.m_lines.m_buffer[(int)num3].UpdateMeshData(num3))
                                     {
                                         num2 &= ~(1uL << j);
                                     }

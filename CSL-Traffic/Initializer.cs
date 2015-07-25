@@ -21,18 +21,18 @@ namespace CSL_Traffic
         enum RoadType
         {
             Normal = 0,
-            
+
             Grass = 1,
             Trees = 2,
-            
+
             Elevated = 4,
             Bridge = 8,
             Slope = 16,
             Tunnel = 32,
-            
+
             Pavement = 64,
             Gravel = 128,
-            
+
             OneWay = 256
         }
 
@@ -55,55 +55,13 @@ namespace CSL_Traffic
             {"Zonable Pedestrian Pavement", new UI.UIUtils.SpriteTextureInfo() {startY = 675, width = 109, height = 75}},
             {"Zonable Pedestrian Gravel", new UI.UIUtils.SpriteTextureInfo() {startY = 750, width = 109, height = 75}},
         };
+
         public static Dictionary<string, TextureInfo> sm_fileIndex = new Dictionary<string, TextureInfo>();
-        //{
-        //	{"RoadLargeBusLanesTrees", new TextureInfo() {name = "RoadLargeBusLanesTrees", mainTex = "RoadLargeBusLanesGrass"}},
-        //	{"RoadSmallBusway", new TextureInfo() {name = "RoadSmallBusway", mainTex = "RoadLargeBusLanesGrass"}},
-        //	{"xsdaf", new TextureInfo() {name = "fdsfs", mainTex = "RoadLargeBusLanesGrass"}},
-        //};
-        //static readonly Dictionary<string, string> sm_fileIndex = new Dictionary<string, string>()
-        //{
-        //	{"RoadLargeBusLanesTrees",				"RoadLargeBusLanesGrass"},
-        //	{"RoadLargeBusLanesTrees-bus",			"RoadLargeBusLanesGrass-bus"},
-        //	{"RoadLargeBusLanesTrees-busBoth",		"RoadLargeBusLanesGrass-busBoth"},
-        //	{"RoadLargeBusLanesElevated",			"RoadLargeBusLanesBridge"},
-            
-        //	{"RoadSmallBuswayElevated",				"RoadSmallBuswayBridge"},
-        //	{"RoadSmallBuswayOneWayBridge",			"RoadSmallBuswayBridge"},
-        //	{"RoadSmallBuswayOneWayElevated",		"RoadSmallBuswayBridge"},
-        //	{"RoadSmallBusway-bus",					"RoadSmallBusway"},
-        //	{"RoadSmallBusway-busBoth",				"RoadSmallBusway"},
-        //	{"RoadSmallBuswayOneWay",				"RoadSmallBusway"},
-        //	{"RoadSmallBuswayOneWay-bus",			"RoadSmallBusway"},
-        //	{"RoadSmallBuswayOneWay-busBoth",		"RoadSmallBusway"},
-        //	{"RoadSmallBuswayGrass-bus",			"RoadSmallBuswayGrass"},
-        //	{"RoadSmallBuswayGrass-busBoth",		"RoadSmallBuswayGrass"},
-        //	{"RoadSmallBuswayTrees",				"RoadSmallBuswayGrass"},
-        //	{"RoadSmallBuswayTrees-bus",			"RoadSmallBuswayGrass"},
-        //	{"RoadSmallBuswayTrees-busBoth",		"RoadSmallBuswayGrass"},
-        //	{"RoadSmallBuswayOneWayGrass",			"RoadSmallBuswayGrass"},
-        //	{"RoadSmallBuswayOneWayGrass-bus",      "RoadSmallBuswayGrass"},
-        //	{"RoadSmallBuswayOneWayGrass-busBoth",  "RoadSmallBuswayGrass"},
-        //	{"RoadSmallBuswayOneWayTrees",          "RoadSmallBuswayGrass"},
-        //	{"RoadSmallBuswayOneWayTrees-bus",      "RoadSmallBuswayGrass"},
-        //	{"RoadSmallBuswayOneWayTrees-busBoth",  "RoadSmallBuswayGrass"},
-        //};
-        //static readonly Dictionary<string, string> sm_lodFileIndex = new Dictionary<string, string>()
-        //{
-        //	{"RoadLargeBusLanesElevated",       "RoadLargeBusLanesBridge"},
-        //	{"RoadSmallBuswayElevated",         "RoadSmallBuswayBridge"},
-        //	{"RoadSmallBuswayOneWayBridge",     "RoadSmallBuswayBridge"},
-        //	{"RoadSmallBuswayOneWayElevated",   "RoadSmallBuswayBridge"},
-        //	{"RoadSmallBuswayOneWay",           "RoadSmallBusway"},
-        //	{"RoadSmallBuswayOneWay-bus",       "RoadSmallBusway-bus"},
-        //	{"RoadSmallBuswayOneWay-busBoth",   "RoadSmallBusway-busBoth"},
-        //};
 
         Dictionary<string, NetLaneProps> m_customNetLaneProps;
         Dictionary<string, PrefabInfo> m_customPrefabs;
         Dictionary<string, Texture2D> m_customTextures;
         Dictionary<string, VehicleAI> m_replacedAIs;
-        //Queue<Action> m_postLoadingActions;
         UITextureAtlas m_thumbnailsTextureAtlas;
         bool m_initialized;
         bool m_incompatibilityWarning;
@@ -118,7 +76,6 @@ namespace CSL_Traffic
             m_customPrefabs = new Dictionary<string, PrefabInfo>();
             m_customTextures = new Dictionary<string, Texture2D>();
             m_replacedAIs = new Dictionary<string, VehicleAI>();
-            //m_postLoadingActions = new Queue<Action>();
 
             LoadTextureIndex();
         }
@@ -130,9 +87,7 @@ namespace CSL_Traffic
                 ReplacePathManager();
                 ReplaceTransportManager();
             }
-#if DEBUG
-            //StartCoroutine(Print());
-#endif
+
         }
 
         void OnLevelWasLoaded(int level)
@@ -158,7 +113,6 @@ namespace CSL_Traffic
                 m_customNetLaneProps.Clear();
                 m_customPrefabs.Clear();
                 m_replacedAIs.Clear();
-                //m_postLoadingActions.Clear();
             }
         }
 
@@ -175,7 +129,6 @@ namespace CSL_Traffic
 
             for (uint i = 0; i < PrefabCollection<VehicleInfo>.LoadedCount(); i++)
             {
-                //SetRealisitcSpeeds(PrefabCollection<VehicleInfo>.GetLoaded(i), false);
                 SetOriginalAI(PrefabCollection<VehicleInfo>.GetLoaded(i));
             }
         }
@@ -196,10 +149,7 @@ namespace CSL_Traffic
             else if (m_gameStartedTime == 0f)
                 m_gameStartedTime = Time.realtimeSinceStartup;
 
-            //while (m_postLoadingActions.Count > 0)
-            //	m_postLoadingActions.Dequeue().Invoke();
-
-            // contributed by Japa
+            // Contributed by Japa.
             TransportTool transportTool = ToolsModifierControl.GetCurrentTool<TransportTool>();
             if (transportTool != null)
             {
@@ -271,7 +221,7 @@ namespace CSL_Traffic
                         break;
                 }
                 count = (count + 1) % 8;
-                
+
                 if (vehicleInfo == null)
                     Logger.LogInfo("Damn it!");
                 else
@@ -324,19 +274,8 @@ namespace CSL_Traffic
                             ReplaceTextures(textureInfo, textureType, folder, netInfo.m_segments[i].m_segmentMaterial);
                         }
                     }
-
                     FileManager.ClearCache();
                 }
-
-                //if (GUI.Button(new Rect(10, 850, 150, 30), "Road Customizer"))
-                //{
-                //    //ToolsModifierControl.SetTool<RoadCustomizerTool>();
-                //    //RoadCustomizerTool.InitializeUI();
-                //}
-                //if (GUI.Button(new Rect(10, 800, 150, 30), "Add Button"))
-                //{
-                //    RoadCustomizerTool.SetUIButton();
-                //}
             }
         }
 
@@ -369,7 +308,7 @@ namespace CSL_Traffic
             cameraController.m_targetAngle = new Vector2(0f, 0f);
         }
 #endif
-        
+
         #region Initialization
 
         /*
@@ -545,56 +484,6 @@ namespace CSL_Traffic
             Logger.LogInfo("Prefabs queued for loading.");
         }
 
-        //IEnumerator Print()
-        //{
-        //    yield return new WaitForSeconds(30f);
-
-        //    foreach (var item in Resources.FindObjectsOfTypeAll<GameObject>().Except(GameObject.FindObjectsOfType<GameObject>()))
-        //    {
-        //        if (item.transform.parent == null)
-        //            printGameObjects(item);
-        //    }
-        //}
-
-        //void printGameObjects(GameObject go, int depth = 0)
-        //{
-        //    StringBuilder sb = new StringBuilder();
-        //    for (int i = 0; i < depth; i++)
-        //    {
-        //        sb.Append(">");
-        //    }
-        //    sb.Append("> ");
-        //    sb.Append(go.name);
-        //    sb.Append("\n");
-
-        //    System.IO.File.AppendAllText("MapScenePrefabs.txt", sb.ToString());
-
-        //    printComponents(go, depth);
-
-        //    foreach (Transform t in go.transform)
-        //    {
-        //        printGameObjects(t.gameObject, depth + 1);
-        //    }
-        //}
-
-        //void printComponents(GameObject go, int depth)
-        //{
-        //    foreach (var item in go.GetComponents<Component>())
-        //    {
-        //        StringBuilder sb = new StringBuilder();
-        //        for (int i = 0; i < depth; i++)
-        //        {
-        //            sb.Append(" ");
-        //        }
-        //        sb.Append("  -- ");
-        //        sb.Append(item.GetType().Name);
-        //        sb.Append("\n");
-
-        //        System.IO.File.AppendAllText("MapScenePrefabs.txt", sb.ToString());
-        //    }
-        //}
-
-
         // Replace the pathfinding system for mine
         void ReplacePathManager()
         {
@@ -609,15 +498,15 @@ namespace CSL_Traffic
             CustomPathManager customPathManager = originalPathManager.gameObject.AddComponent<CustomPathManager>();
             customPathManager.SetOriginalValues(originalPathManager);
 
-            // change the new instance in the singleton
+            // Change the new instance in the singleton.
             sInstance.SetValue(null, customPathManager);
 
-            // change the manager in the SimulationManager
+            // Change the manager in the SimulationManager.
             FastList<ISimulationManager> managers = (FastList<ISimulationManager>)typeof(SimulationManager).GetFieldByName("m_managers").GetValue(null);
             managers.Remove(originalPathManager);
             managers.Add(customPathManager);
 
-            // Destroy in 10 seconds to give time to all references to update to the new manager without crashing
+            // Destroy in 10 seconds to give time to all references to update to the new manager without crashing.
             GameObject.Destroy(originalPathManager, 10f);
 
             Logger.LogInfo("Path Manager successfully replaced.");
@@ -679,7 +568,7 @@ namespace CSL_Traffic
                 if (go != null)
                     return go.GetComponent<T>();
             }
-            
+
             return default(T);
         }
 
@@ -763,7 +652,7 @@ namespace CSL_Traffic
             return ClonePrefab<T>(prefabName, prefabs, newName, customPrefabsHolder, replace, ghostMode);
         }
 
-        T ClonePrefab<T>(string prefabName, T[] prefabs, string newName, Transform customPrefabsHolder, bool replace = false, bool ghostMode = false) where T : PrefabInfo 
+        T ClonePrefab<T>(string prefabName, T[] prefabs, string newName, Transform customPrefabsHolder, bool replace = false, bool ghostMode = false) where T : PrefabInfo
         {
             T originalPrefab = prefabs.FirstOrDefault(p => p.name == prefabName);
             if (originalPrefab == null)
@@ -877,14 +766,14 @@ namespace CSL_Traffic
             }
         }
 
-        // whitespaces is for prefab names, no whitespaces is for texture file names
+        // Whitespaces is for prefab names, no whitespaces is for texture file names.
         static string GetDecoratedName(RoadType roadType, bool whiteSpaces = true)
         {
             StringBuilder sb = new StringBuilder();
 
             if (roadType.HasFlag(RoadType.OneWay))
                 sb.Append(whiteSpaces ? " OneWay" : "OneWay");
-            
+
             if (roadType.HasFlag(RoadType.Elevated))
                 sb.Append(whiteSpaces ? " Elevated" : "Elevated");
             else if (roadType.HasFlag(RoadType.Bridge))
@@ -893,7 +782,7 @@ namespace CSL_Traffic
                 sb.Append(whiteSpaces ? " Slope" : "Slope");
             else if (roadType.HasFlag(RoadType.Tunnel))
                 sb.Append(whiteSpaces ? " Tunnel" : "Tunnel");
-            
+
             if (roadType.HasFlag(RoadType.Grass))
                 sb.Append(whiteSpaces ? " Decoration Grass" : "Grass");
             else if (roadType.HasFlag(RoadType.Trees))
@@ -950,7 +839,7 @@ namespace CSL_Traffic
             if (abort)
                 return;
 
-            // TODO: review this system (roadtype can be big)
+            // TODO: Review this system (roadtype can be big).
             smallRoad.m_UIPriority = 20 + (int)roadType;
             NetInfo highway = collection.m_prefabs.FirstOrDefault(p => p.name == "Highway");
             if (highway != null)
@@ -1047,7 +936,7 @@ namespace CSL_Traffic
             string otherPrefabName = "Large Road" + GetDecoratedName(otherPrefabsType | RoadType.Bridge) + " With Bus Lanes";
             if (!m_customPrefabs.TryGetValue(otherPrefabName, out bridge))
                 bridge = CreateLargeRoadBridgeWithBusLanes(otherPrefabsType | RoadType.Bridge, collection);
-            
+
             PrefabInfo elevated;
             otherPrefabName = "Large Road" + GetDecoratedName(otherPrefabsType | RoadType.Elevated) + " With Bus Lanes";
             if (!m_customPrefabs.TryGetValue(otherPrefabName, out elevated))
@@ -1176,7 +1065,7 @@ namespace CSL_Traffic
 
             pedestrianRoad.m_lanes[0].m_position = -4f;
             pedestrianRoad.m_lanes[0].m_width = 2f;
-            
+
             pedestrianRoad.m_lanes[1].m_position = 4f;
             pedestrianRoad.m_lanes[1].m_width = 2f;
 
@@ -1190,13 +1079,11 @@ namespace CSL_Traffic
             pedestrianRoad.m_lanes[2].m_position = -1.25f;
             pedestrianRoad.m_lanes[2].m_speedLimit = 0.3f;
             pedestrianRoad.m_lanes[2].m_laneType = NetInfo.LaneType.Vehicle;
-            //pedestrianRoad.m_lanes[2].m_laneProps = laneProps;
 
             pedestrianRoad.m_lanes[3] = new NetInfoLane(pedestrianRoad.m_lanes[3], vehiclesAllowed, NetInfoLane.SpecialLaneType.PedestrianLane);
             pedestrianRoad.m_lanes[3].m_position = 1.25f;
             pedestrianRoad.m_lanes[3].m_speedLimit = 0.3f;
             pedestrianRoad.m_lanes[3].m_laneType = NetInfo.LaneType.Vehicle;
-            //pedestrianRoad.m_lanes[5].m_laneProps = laneProps;
 
             if (nLanes == 5)
             {
@@ -1215,7 +1102,7 @@ namespace CSL_Traffic
             NetInfo pedestrianBridge = CloneRoad("Pedestrian", newName, RoadType.Elevated, collection);
             if (pedestrianBridge == null)
                 return null;
-                
+
             pedestrianBridge.m_class = ScriptableObject.CreateInstance<ItemClass>();
             pedestrianBridge.m_class.m_service = ItemClass.Service.Road;
             pedestrianBridge.m_class.m_level = ItemClass.Level.Level1;
@@ -1267,7 +1154,7 @@ namespace CSL_Traffic
          * 2-lane roads: 0.32 / 0.40 / 0.48 / 0.80 / 1.92
          * 4-lane roads: 0.80 / 0.96 / 1.12 / 1.60 / 4.80
          * 6-lane roads: 0.96 / 1.12 / 1.28 / 2.88 / 5.76
-         * 
+         *
          * 2: normal -> grass -> trees: +0.08 each
          *    normal -> elevated: x2.5
          *    normal -> tunnel: x6
@@ -1279,12 +1166,12 @@ namespace CSL_Traffic
          *    normal -> tunnel: x6
          * 2 -> 4: x2.5 for base (normal)
          * 2 -> 6: x3 for base (normal)
-         * 
+         *
          * Bus road maintenance costs (upgrades follow the addition and multiplication rules above):
          * 2-lane: +0.04 for base
          * 4-lane: +0.08 for base (seeing that 4- and 6-lane roads are close; proposed, since it's not available (yet))
          * 6-lane: +0.10 for base
-         * 
+         *
          * Pedestrian road maintenance costs (normal / elevated):
          * Gravel: 0.24 / N/A
          * Pavement: 0.40 / 1.00 (x2.5, same as normal 2-lane roads)
@@ -1419,29 +1306,21 @@ namespace CSL_Traffic
                 {
                     case "Ambulance":
                     accelerationMultiplier = 0.2f;
-                        //vehicle.m_braking *= 0.3f;
-                        //vehicle.m_turning *= 0.25f;
                     maxSpeedMultiplier = 0.5f;
                         break;
                     case "Bus":
                     case "Fire Truck":
                     case "Garbage Truck":
                     accelerationMultiplier = 0.15f;
-                        //vehicle.m_braking *= 0.25f;
-                        //vehicle.m_turning *= 0.2f;
                     maxSpeedMultiplier = 0.5f;
                         break;
                     case "Hearse":
                     case "Police Car":
                     accelerationMultiplier = 0.25f;
-                        //vehicle.m_braking *= 0.35f;
-                        //vehicle.m_turning *= 0.3f;
                     maxSpeedMultiplier = 0.5f;
                         break;
                     default:
                     accelerationMultiplier = 0.25f;
-                        //vehicle.m_braking *= 0.35f;
-                        //vehicle.m_turning *= 0.3f;
                     maxSpeedMultiplier = 0.5f;
                         break;
                 }
@@ -1465,7 +1344,7 @@ namespace CSL_Traffic
                 Logger.LogInfo("Resetting " + vehicle.name + "'s AI failed.");
                 return;
             }
-                
+
             vehicle.m_vehicleAI = this.m_replacedAIs[vehicle.name];
             this.m_replacedAIs[vehicle.name].m_info = vehicle;
             Destroy(vAI);
@@ -1493,10 +1372,10 @@ namespace CSL_Traffic
                         replacedVehicles.Add(info.name);
                         ReplaceVehicleAI(info);
                     }
-                    
+
                     ++index;
-                }					
-                
+                }
+
                 yield return new WaitForEndOfFrame();
             }
         }
@@ -1509,7 +1388,7 @@ namespace CSL_Traffic
             if (m_customNetLaneProps.ContainsKey("BusLane"))
                 return;
 
-            // bus lane
+            // Bus lane.
             PropInfo busLaneText = CreateBusLaneTextProp("Road Arrow F", "BusLaneText");
             if (busLaneText == null)
                 return;
@@ -1573,7 +1452,6 @@ namespace CSL_Traffic
             TransportInfo transportInfo = transportCollection.m_prefabs.FirstOrDefault(p => p.name == transportName);
             if (transportInfo == null)
                 return;
-                //throw new KeyNotFoundException(transportName + " Transport Info not found on " + transportCollection.name);
 
             transportInfo.m_netInfo = transportLine;
         }
@@ -1589,13 +1467,13 @@ namespace CSL_Traffic
 
             toolController.gameObject.AddComponent<T>();
 
-            // contributed by Japa
+            // Contributed by Japa.
             FieldInfo toolControllerField = typeof(ToolController).GetField("m_tools", BindingFlags.Instance | BindingFlags.NonPublic);
             if (toolControllerField != null)
                 toolControllerField.SetValue(toolController, toolController.GetComponents<ToolBase>());
             FieldInfo toolModifierDictionary = typeof(ToolsModifierControl).GetField("m_Tools", BindingFlags.Static | BindingFlags.NonPublic);
             if (toolModifierDictionary != null)
-                toolModifierDictionary.SetValue(null, null); // to force a refresh
+                toolModifierDictionary.SetValue(null, null); // Force a refresh.
         }
 
         #endregion
@@ -1613,7 +1491,7 @@ namespace CSL_Traffic
             BusBothLOD = 10,
             NodeLOD = 12
         }
-        
+
         static string[] sm_mapNames = new string[] { "_MainTex", "_XYSMap", "_ACIMap", "_APRMap" };
 
         bool ReplaceTextures(TextureInfo textureInfo, TextureType textureType, FileManager.Folder textureFolder, Material mat, int anisoLevel = 8, FilterMode filterMode = FilterMode.Trilinear, bool skipCache = false)
@@ -1658,7 +1536,7 @@ namespace CSL_Traffic
                     }
                 }
             }
-            
+
             return success;
         }
 
@@ -1797,7 +1675,6 @@ namespace CSL_Traffic
             if (previewTexture is RenderTexture)
             {
                 DumpRenderTexture((RenderTexture)previewTexture, filename);
-                //Log.Warning(String.Format("Texture dumped to \"{0}\"", filename));
             }
             else if (previewTexture is Texture2D)
             {
@@ -1810,7 +1687,7 @@ namespace CSL_Traffic
                 }
                 catch (UnityException)
                 {
-                    //Log.Warning(String.Format("Texture \"{0}\" is marked as read-only, running workaround..", texture.name));
+
                 }
 
                 if (bytes == null)
@@ -1821,23 +1698,19 @@ namespace CSL_Traffic
                         Graphics.Blit(texture, rt);
                         DumpRenderTexture(rt, filename);
                         RenderTexture.ReleaseTemporary(rt);
-                        //Log.Warning(String.Format("Texture dumped to \"{0}\"", filename));
                     }
                     catch (Exception ex)
                     {
-                        //Log.Error("There was an error while dumping the texture - " + ex.Message);
+
                     }
 
                     return;
                 }
 
                 File.WriteAllBytes(filename, bytes);
-                //Log.Warning(String.Format("Texture dumped to \"{0}\"", filename));
+
             }
-            else
-            {
-                //Log.Error(String.Format("Don't know how to dump type \"{0}\"", previewTexture.GetType()));
-            }
+
         }
 #endif
         #endregion
@@ -1856,7 +1729,7 @@ namespace CSL_Traffic
                 Locale locale = (Locale)typeof(LocaleManager).GetFieldByName("m_Locale").GetValue(SingletonLite<LocaleManager>.instance);
                 if (locale == null)
                     throw new KeyNotFoundException("Locale is null");
-                
+
                 // Pedestrian Pavement
                 Locale.Key k = new Locale.Key()
                 {
@@ -2142,7 +2015,7 @@ namespace CSL_Traffic
         {
             [XmlAttribute]
             public string name;
-            
+
             // normal
             public string mainTex = "";
             public string aprTex = "";
@@ -2152,7 +2025,7 @@ namespace CSL_Traffic
             public string lodAprTex = "";
             public string lodXysTex = "";
             public string lodAciTex = "";
-            
+
             // bus
             public string mainTexBus = "";
             public string aprTexBus = "";

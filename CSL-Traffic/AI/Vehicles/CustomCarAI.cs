@@ -416,7 +416,7 @@ namespace CSL_Traffic
                     }
                 }
             }
-            if (lodPhysics == 0/* && (CSLTraffic.Options & OptionsManager.ModOptions.noStopForCrossing) != OptionsManager.ModOptions.noStopForCrossing*/)
+            if (lodPhysics == 0)
             {
                 CitizenManager instance2 = Singleton<CitizenManager>.instance;
                 float num7 = 0f;
@@ -683,16 +683,12 @@ namespace CSL_Traffic
             public void ApplySpeedMultiplier(VehicleInfo vehicle)
             {
                 vehicle.m_acceleration *= speedMultiplier;
-                //vehicle.m_braking *= speedMultiplier;
-                //vehicle.m_turning *= speedMultiplier;
                 vehicle.m_maxSpeed *= speedMultiplier;
             }
 
             public void RestoreVehicleSpeed(VehicleInfo vehicle)
             {
                 vehicle.m_acceleration /= speedMultiplier;
-                //vehicle.m_braking /= speedMultiplier;
-                //vehicle.m_turning /= speedMultiplier;
                 vehicle.m_maxSpeed /= speedMultiplier;
             }
         }
