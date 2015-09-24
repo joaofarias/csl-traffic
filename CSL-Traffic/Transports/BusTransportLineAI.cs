@@ -291,7 +291,7 @@ namespace CSL_Traffic
 			meshData.m_normals = new Vector3[num2 * 8];
 			meshData.m_tangents = new Vector4[num2 * 8];
 			meshData.m_uvs = new Vector2[num2 * 8];
-			meshData.m_uvs1 = new Vector2[num2 * 8];
+			meshData.m_uvs2 = new Vector2[num2 * 8];
 			meshData.m_colors = new Color32[num2 * 8];
 			meshData.m_triangles = new int[num2 * 30];
 			TransportManager.LineSegment[] array = new TransportManager.LineSegment[num];
