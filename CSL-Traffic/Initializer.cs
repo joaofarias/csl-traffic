@@ -21,18 +21,18 @@ namespace CSL_Traffic
         enum RoadType
         {
             Normal = 0,
-            
+
             Grass = 1,
             Trees = 2,
-            
+
             Elevated = 4,
             Bridge = 8,
             Slope = 16,
             Tunnel = 32,
-            
+
             Pavement = 64,
             Gravel = 128,
-            
+
             OneWay = 256
         }
 
@@ -67,7 +67,7 @@ namespace CSL_Traffic
         //	{"RoadLargeBusLanesTrees-bus",			"RoadLargeBusLanesGrass-bus"},
         //	{"RoadLargeBusLanesTrees-busBoth",		"RoadLargeBusLanesGrass-busBoth"},
         //	{"RoadLargeBusLanesElevated",			"RoadLargeBusLanesBridge"},
-            
+
         //	{"RoadSmallBuswayElevated",				"RoadSmallBuswayBridge"},
         //	{"RoadSmallBuswayOneWayBridge",			"RoadSmallBuswayBridge"},
         //	{"RoadSmallBuswayOneWayElevated",		"RoadSmallBuswayBridge"},
@@ -271,7 +271,7 @@ namespace CSL_Traffic
                         break;
                 }
                 count = (count + 1) % 8;
-                
+
                 if (vehicleInfo == null)
                     Logger.LogInfo("Damn it!");
                 else
@@ -369,7 +369,7 @@ namespace CSL_Traffic
             cameraController.m_targetAngle = new Vector2(0f, 0f);
         }
 #endif
-        
+
         #region Initialization
 
         /*
@@ -481,7 +481,6 @@ namespace CSL_Traffic
             {
                 try
                 {
-
                     CreateLaneProps();
                     this.m_thumbnailsTextureAtlas = UI.UIUtils.LoadThumbnailsTextureAtlas("RoadThumbnails");
 
@@ -679,7 +678,7 @@ namespace CSL_Traffic
                 if (go != null)
                     return go.GetComponent<T>();
             }
-            
+
             return default(T);
         }
 
@@ -763,7 +762,7 @@ namespace CSL_Traffic
             return ClonePrefab<T>(prefabName, prefabs, newName, customPrefabsHolder, replace, ghostMode);
         }
 
-        T ClonePrefab<T>(string prefabName, T[] prefabs, string newName, Transform customPrefabsHolder, bool replace = false, bool ghostMode = false) where T : PrefabInfo 
+        T ClonePrefab<T>(string prefabName, T[] prefabs, string newName, Transform customPrefabsHolder, bool replace = false, bool ghostMode = false) where T : PrefabInfo
         {
             T originalPrefab = prefabs.FirstOrDefault(p => p.name == prefabName);
             if (originalPrefab == null)
@@ -794,7 +793,7 @@ namespace CSL_Traffic
 
         NetInfo CloneRoad(string prefabName, string newName, RoadType roadType, NetCollection collection, FileManager.Folder folder = FileManager.Folder.Roads)
         {
-            bool ghostMode = (CSLTraffic.Options & OptionsManager.ModOptions.GhostMode) == OptionsManager.ModOptions.GhostMode;
+            bool ghostMode = (CSLTraffic.Options & (OptionsManager.ModOptions.GhostMode | OptionsManager.ModOptions.DisableCustomRoads)) != OptionsManager.ModOptions.None;
             NetInfo road = ClonePrefab<NetInfo>(prefabName + GetDecoratedName(roadType & ~RoadType.OneWay), collection.m_prefabs, newName, transform, false, ghostMode);
             if (road == null)
                 return null;
@@ -884,7 +883,7 @@ namespace CSL_Traffic
 
             if (roadType.HasFlag(RoadType.OneWay))
                 sb.Append(whiteSpaces ? " OneWay" : "OneWay");
-            
+
             if (roadType.HasFlag(RoadType.Elevated))
                 sb.Append(whiteSpaces ? " Elevated" : "Elevated");
             else if (roadType.HasFlag(RoadType.Bridge))
@@ -893,7 +892,7 @@ namespace CSL_Traffic
                 sb.Append(whiteSpaces ? " Slope" : "Slope");
             else if (roadType.HasFlag(RoadType.Tunnel))
                 sb.Append(whiteSpaces ? " Tunnel" : "Tunnel");
-            
+
             if (roadType.HasFlag(RoadType.Grass))
                 sb.Append(whiteSpaces ? " Decoration Grass" : "Grass");
             else if (roadType.HasFlag(RoadType.Trees))
@@ -1047,7 +1046,7 @@ namespace CSL_Traffic
             string otherPrefabName = "Large Road" + GetDecoratedName(otherPrefabsType | RoadType.Bridge) + " With Bus Lanes";
             if (!m_customPrefabs.TryGetValue(otherPrefabName, out bridge))
                 bridge = CreateLargeRoadBridgeWithBusLanes(otherPrefabsType | RoadType.Bridge, collection);
-            
+
             PrefabInfo elevated;
             otherPrefabName = "Large Road" + GetDecoratedName(otherPrefabsType | RoadType.Elevated) + " With Bus Lanes";
             if (!m_customPrefabs.TryGetValue(otherPrefabName, out elevated))
@@ -1176,7 +1175,7 @@ namespace CSL_Traffic
 
             pedestrianRoad.m_lanes[0].m_position = -4f;
             pedestrianRoad.m_lanes[0].m_width = 2f;
-            
+
             pedestrianRoad.m_lanes[1].m_position = 4f;
             pedestrianRoad.m_lanes[1].m_width = 2f;
 
@@ -1215,7 +1214,7 @@ namespace CSL_Traffic
             NetInfo pedestrianBridge = CloneRoad("Pedestrian", newName, RoadType.Elevated, collection);
             if (pedestrianBridge == null)
                 return null;
-                
+
             pedestrianBridge.m_class = ScriptableObject.CreateInstance<ItemClass>();
             pedestrianBridge.m_class.m_service = ItemClass.Service.Road;
             pedestrianBridge.m_class.m_level = ItemClass.Level.Level1;
@@ -1354,7 +1353,7 @@ namespace CSL_Traffic
         void ReplaceVehicleAI(VehicleCollection collection)
         {
             foreach (VehicleInfo vehicle in collection.m_prefabs)
-                    ReplaceVehicleAI(vehicle);
+                ReplaceVehicleAI(vehicle);
         }
 
         void ReplaceVehicleAI(VehicleInfo info)
@@ -1410,41 +1409,41 @@ namespace CSL_Traffic
             Logger.LogInfo("Successfully replaced " + vehicle.name + "'s AI.");
         }
 
-                // TODO: set correct values on vehicles for realistic speeds
+        // TODO: set correct values on vehicles for realistic speeds
         void SetRealisitcSpeeds(VehicleInfo vehicle, bool activate)
         {
             float accelerationMultiplier;
             float maxSpeedMultiplier;
-                switch (vehicle.name)
-                {
-                    case "Ambulance":
+            switch (vehicle.name)
+            {
+                case "Ambulance":
                     accelerationMultiplier = 0.2f;
-                        //vehicle.m_braking *= 0.3f;
-                        //vehicle.m_turning *= 0.25f;
+                    //vehicle.m_braking *= 0.3f;
+                    //vehicle.m_turning *= 0.25f;
                     maxSpeedMultiplier = 0.5f;
-                        break;
-                    case "Bus":
-                    case "Fire Truck":
-                    case "Garbage Truck":
+                    break;
+                case "Bus":
+                case "Fire Truck":
+                case "Garbage Truck":
                     accelerationMultiplier = 0.15f;
-                        //vehicle.m_braking *= 0.25f;
-                        //vehicle.m_turning *= 0.2f;
+                    //vehicle.m_braking *= 0.25f;
+                    //vehicle.m_turning *= 0.2f;
                     maxSpeedMultiplier = 0.5f;
-                        break;
-                    case "Hearse":
-                    case "Police Car":
+                    break;
+                case "Hearse":
+                case "Police Car":
                     accelerationMultiplier = 0.25f;
-                        //vehicle.m_braking *= 0.35f;
-                        //vehicle.m_turning *= 0.3f;
+                    //vehicle.m_braking *= 0.35f;
+                    //vehicle.m_turning *= 0.3f;
                     maxSpeedMultiplier = 0.5f;
-                        break;
-                    default:
+                    break;
+                default:
                     accelerationMultiplier = 0.25f;
-                        //vehicle.m_braking *= 0.35f;
-                        //vehicle.m_turning *= 0.3f;
+                    //vehicle.m_braking *= 0.35f;
+                    //vehicle.m_turning *= 0.3f;
                     maxSpeedMultiplier = 0.5f;
-                        break;
-                }
+                    break;
+            }
 
             if (!activate)
             {
@@ -1465,7 +1464,7 @@ namespace CSL_Traffic
                 Logger.LogInfo("Resetting " + vehicle.name + "'s AI failed.");
                 return;
             }
-                
+
             vehicle.m_vehicleAI = this.m_replacedAIs[vehicle.name];
             this.m_replacedAIs[vehicle.name].m_info = vehicle;
             Destroy(vAI);
@@ -1475,7 +1474,7 @@ namespace CSL_Traffic
         {
             foreach (FieldInfo fi in typeof(T).BaseType.GetFields())
             {
-                    fi.SetValue(to, fi.GetValue(from));
+                fi.SetValue(to, fi.GetValue(from));
             }
         }
 
@@ -1493,10 +1492,10 @@ namespace CSL_Traffic
                         replacedVehicles.Add(info.name);
                         ReplaceVehicleAI(info);
                     }
-                    
+
                     ++index;
-                }					
-                
+                }
+
                 yield return new WaitForEndOfFrame();
             }
         }
@@ -1573,7 +1572,7 @@ namespace CSL_Traffic
             TransportInfo transportInfo = transportCollection.m_prefabs.FirstOrDefault(p => p.name == transportName);
             if (transportInfo == null)
                 return;
-                //throw new KeyNotFoundException(transportName + " Transport Info not found on " + transportCollection.name);
+            //throw new KeyNotFoundException(transportName + " Transport Info not found on " + transportCollection.name);
 
             transportInfo.m_netInfo = transportLine;
         }
@@ -1613,7 +1612,7 @@ namespace CSL_Traffic
             BusBothLOD = 10,
             NodeLOD = 12
         }
-        
+
         static string[] sm_mapNames = new string[] { "_MainTex", "_XYSMap", "_ACIMap", "_APRMap" };
 
         bool ReplaceTextures(TextureInfo textureInfo, TextureType textureType, FileManager.Folder textureFolder, Material mat, int anisoLevel = 8, FilterMode filterMode = FilterMode.Trilinear, bool skipCache = false)
@@ -1658,7 +1657,7 @@ namespace CSL_Traffic
                     }
                 }
             }
-            
+
             return success;
         }
 
@@ -1856,7 +1855,7 @@ namespace CSL_Traffic
                 Locale locale = (Locale)typeof(LocaleManager).GetFieldByName("m_Locale").GetValue(SingletonLite<LocaleManager>.instance);
                 if (locale == null)
                     throw new KeyNotFoundException("Locale is null");
-                
+
                 // Pedestrian Pavement
                 Locale.Key k = new Locale.Key()
                 {
@@ -2142,7 +2141,7 @@ namespace CSL_Traffic
         {
             [XmlAttribute]
             public string name;
-            
+
             // normal
             public string mainTex = "";
             public string aprTex = "";
@@ -2152,7 +2151,7 @@ namespace CSL_Traffic
             public string lodAprTex = "";
             public string lodXysTex = "";
             public string lodAciTex = "";
-            
+
             // bus
             public string mainTexBus = "";
             public string aprTexBus = "";

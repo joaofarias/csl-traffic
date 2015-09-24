@@ -446,11 +446,11 @@ namespace CSL_Traffic
 
         private bool GetStopPosition(TransportInfo info, ushort segment, ushort building, ushort firstStop, ref Vector3 hitPos, out bool fixedPlatform)
         {
+            NetManager instance = Singleton<NetManager>.instance;
             bool toggleSnapTarget = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
             fixedPlatform = false;
             if (segment != 0)
             {
-                NetManager instance = Singleton<NetManager>.instance;
                 if (!toggleSnapTarget && (instance.m_segments.m_buffer[(int)segment].m_flags & NetSegment.Flags.Untouchable) != NetSegment.Flags.None)
                 {
                     building = NetSegment.FindOwnerBuilding(segment, 363f);
@@ -521,14 +521,30 @@ namespace CSL_Traffic
                                 vector3 = vector4;
                                 num6 = lineCount;
                             }
+                            else if (lineCount == num6 && Vector3.SqrMagnitude(vector4 - hitPos) < Vector3.SqrMagnitude(vector3 - hitPos))
+                            {
+                                vector3 = vector4;
+                            }
                         }
                         if (firstStop != 0)
                         {
-                            Vector3 position = Singleton<NetManager>.instance.m_nodes.m_buffer[(int)firstStop].m_position;
-                            if (Vector3.SqrMagnitude(position - vector3) < 16384f && instance3.FindBuilding(vector3, 128f, info.m_class.m_service, info.m_class.m_subService, Building.Flags.None, Building.Flags.None) == building)
+                            Vector3 position = instance.m_nodes.m_buffer[(int)firstStop].m_position;
+                            if (Vector3.SqrMagnitude(position - vector3) < 16384f)
                             {
-                                hitPos = position;
-                                return true;
+                                uint lane2 = instance.m_nodes.m_buffer[(int)firstStop].m_lane;
+                                if (lane2 != 0u)
+                                {
+                                    ushort segment2 = instance.m_lanes.m_buffer[(int)((UIntPtr)lane2)].m_segment;
+                                    if (segment2 != 0 && (instance.m_segments.m_buffer[(int)segment2].m_flags & NetSegment.Flags.Untouchable) != NetSegment.Flags.None)
+                                    {
+                                        ushort num7 = NetSegment.FindOwnerBuilding(segment2, 363f);
+                                        if (building == num7)
+                                        {
+                                            hitPos = position;
+                                            return true;
+                                        }
+                                    }
+                                }
                             }
                         }
                         hitPos = vector3;

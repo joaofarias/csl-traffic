@@ -21,31 +21,43 @@ namespace CSL_Traffic
 				CustomCarAI.sm_speedData[vehicleID].ApplySpeedMultiplier(this.m_info);
 			}
 
+            if (this.m_info.m_class.m_level >= ItemClass.Level.Level4)
+            {
+                CustomCarAI.SimulationStep(this, vehicleID, ref vehicleData, ref frameData, leaderID, ref leaderData, lodPhysics);
+                if ((vehicleData.m_flags & Vehicle.Flags.Stopped) != Vehicle.Flags.None && this.CanLeave(vehicleID, ref vehicleData))
+                {
+                    vehicleData.m_flags &= ~Vehicle.Flags.Stopped;
+                    vehicleData.m_flags |= Vehicle.Flags.Leaving;
+                }
+                if ((vehicleData.m_flags & Vehicle.Flags.GoingBack) == Vehicle.Flags.None && this.ShouldReturnToSource(vehicleID, ref vehicleData))
+                {
+                    this.SetTarget(vehicleID, ref vehicleData, 0);
+                }
+            }
+            else
+            {
+                frameData.m_blinkState = (((vehicleData.m_flags & Vehicle.Flags.Emergency2) == Vehicle.Flags.None) ? 0f : 10f);
+                this.TryCollectCrime(vehicleID, ref vehicleData, ref frameData);
+                CustomCarAI.SimulationStep(this, vehicleID, ref vehicleData, ref frameData, leaderID, ref leaderData, lodPhysics);
+                if ((vehicleData.m_flags & Vehicle.Flags.Stopped) != Vehicle.Flags.None)
+                {
+                    if (this.CanLeave(vehicleID, ref vehicleData))
+                    {
+                        vehicleData.m_flags &= ~Vehicle.Flags.Stopped;
+                        vehicleData.m_flags |= Vehicle.Flags.Leaving;
+                    }
+                }
+                else if ((vehicleData.m_flags & Vehicle.Flags.Arriving) != Vehicle.Flags.None && vehicleData.m_targetBuilding != 0 && (vehicleData.m_flags & (Vehicle.Flags.Emergency2 | Vehicle.Flags.WaitingPath | Vehicle.Flags.GoingBack | Vehicle.Flags.WaitingTarget)) == Vehicle.Flags.None)
+                {
+                    this.ArriveAtTarget(vehicleID, ref vehicleData);
+                }
+                if ((vehicleData.m_flags & Vehicle.Flags.GoingBack) == Vehicle.Flags.None && this.ShouldReturnToSource(vehicleID, ref vehicleData))
+                {
+                    this.SetTarget(vehicleID, ref vehicleData, 0);
+                }
+            }
 
-			frameData.m_blinkState = (((vehicleData.m_flags & Vehicle.Flags.Emergency2) == Vehicle.Flags.None) ? 0f : 10f);
-			this.TryCollectCrime(vehicleID, ref vehicleData, ref frameData);
-			CustomCarAI.SimulationStep(this, vehicleID, ref vehicleData, ref frameData, leaderID, ref leaderData, lodPhysics);
-			if ((vehicleData.m_flags & Vehicle.Flags.Stopped) != Vehicle.Flags.None)
-			{
-				if (this.CanLeave(vehicleID, ref vehicleData))
-				{
-					vehicleData.m_flags &= ~Vehicle.Flags.Stopped;
-					vehicleData.m_flags |= Vehicle.Flags.Leaving;
-				}
-			}
-			else
-			{
-				if ((vehicleData.m_flags & Vehicle.Flags.Arriving) != Vehicle.Flags.None && vehicleData.m_targetBuilding != 0 && (vehicleData.m_flags & (Vehicle.Flags.Emergency2 | Vehicle.Flags.WaitingPath | Vehicle.Flags.GoingBack | Vehicle.Flags.WaitingTarget)) == Vehicle.Flags.None)
-				{
-					this.ArriveAtTarget(vehicleID, ref vehicleData);
-				}
-			}
-			if ((vehicleData.m_flags & Vehicle.Flags.GoingBack) == Vehicle.Flags.None && this.ShouldReturnToSource(vehicleID, ref vehicleData))
-			{
-				this.SetTarget(vehicleID, ref vehicleData, 0);
-			}
-
-			if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
+            if ((CSLTraffic.Options & OptionsManager.ModOptions.UseRealisticSpeeds) == OptionsManager.ModOptions.UseRealisticSpeeds)
 			{
 				CustomCarAI.sm_speedData[vehicleID].RestoreVehicleSpeed(this.m_info);
 			}
@@ -148,11 +160,6 @@ namespace CSL_Traffic
 				int num = -this.m_crimeCapacity;
 				BuildingInfo info = building.Info;
 				info.m_buildingAI.ModifyMaterialBuffer(buildingID, ref building, TransferManager.TransferReason.Crime, ref num);
-				if (num != 0)
-				{
-					num = Mathf.Clamp(num, (int)vehicleData.m_transferSize - this.m_crimeCapacity, 0);
-					vehicleData.m_transferSize += (ushort)Mathf.Max(0, -num);
-				}
 			}
 		}
 
@@ -162,31 +169,77 @@ namespace CSL_Traffic
 			{
 				return true;
 			}
-			int num = 0;
-			if ((data.m_flags & Vehicle.Flags.TransferToTarget) != Vehicle.Flags.None)
-			{
-				num = (int)data.m_transferSize;
-			}
-			if ((data.m_flags & Vehicle.Flags.TransferToSource) != Vehicle.Flags.None)
-			{
-				num = Mathf.Min(0, (int)data.m_transferSize - this.m_crimeCapacity);
-			}
-			BuildingInfo info = Singleton<BuildingManager>.instance.m_buildings.m_buffer[(int)data.m_targetBuilding].Info;
-			info.m_buildingAI.ModifyMaterialBuffer(data.m_targetBuilding, ref Singleton<BuildingManager>.instance.m_buildings.m_buffer[(int)data.m_targetBuilding], (TransferManager.TransferReason)data.m_transferType, ref num);
-			data.m_transferSize += (ushort)Mathf.Max(0, -num);
-			if ((data.m_flags & Vehicle.Flags.Emergency2) != Vehicle.Flags.None)
-			{
-				for (int i = 0; i < this.m_policeCount; i++)
-				{
-					this.CreatePolice(vehicleID, ref data, Citizen.AgePhase.Adult0);
-				}
-				data.m_flags |= Vehicle.Flags.Stopped;
-			}
-			this.SetTarget(vehicleID, ref data, 0);
+            if (this.m_info.m_class.m_level >= ItemClass.Level.Level4)
+            {
+                this.ArrestCriminals(vehicleID, ref data, data.m_targetBuilding);
+                data.m_flags |= Vehicle.Flags.Stopped;
+            }
+            else
+            {
+                int num = -this.m_crimeCapacity;
+                BuildingInfo info = Singleton<BuildingManager>.instance.m_buildings.m_buffer[(int)data.m_targetBuilding].Info;
+                info.m_buildingAI.ModifyMaterialBuffer(data.m_targetBuilding, ref Singleton<BuildingManager>.instance.m_buildings.m_buffer[(int)data.m_targetBuilding], (TransferManager.TransferReason)data.m_transferType, ref num);
+                if ((data.m_flags & Vehicle.Flags.Emergency2) != Vehicle.Flags.None)
+                {
+                    this.ArrestCriminals(vehicleID, ref data, data.m_targetBuilding);
+                    for (int i = 0; i < this.m_policeCount; i++)
+                    {
+                        this.CreatePolice(vehicleID, ref data, Citizen.AgePhase.Adult0);
+                    }
+                    data.m_flags |= Vehicle.Flags.Stopped;
+                }
+            }
+            this.SetTarget(vehicleID, ref data, 0);
 			return false;
 		}
 
-		private bool ShouldReturnToSource(ushort vehicleID, ref Vehicle data)
+        private void ArrestCriminals(ushort vehicleID, ref Vehicle vehicleData, ushort building)
+        {
+            if ((int)vehicleData.m_transferSize >= this.m_criminalCapacity)
+            {
+                return;
+            }
+            BuildingManager instance = Singleton<BuildingManager>.instance;
+            CitizenManager instance2 = Singleton<CitizenManager>.instance;
+            uint num = instance.m_buildings.m_buffer[(int)building].m_citizenUnits;
+            int num2 = 0;
+            while (num != 0u)
+            {
+                uint nextUnit = instance2.m_units.m_buffer[(int)((UIntPtr)num)].m_nextUnit;
+                for (int i = 0; i < 5; i++)
+                {
+                    uint citizen = instance2.m_units.m_buffer[(int)((UIntPtr)num)].GetCitizen(i);
+                    if (citizen != 0u && (instance2.m_citizens.m_buffer[(int)((UIntPtr)citizen)].Criminal || instance2.m_citizens.m_buffer[(int)((UIntPtr)citizen)].Arrested) && !instance2.m_citizens.m_buffer[(int)((UIntPtr)citizen)].Dead && instance2.m_citizens.m_buffer[(int)((UIntPtr)citizen)].GetBuildingByLocation() == building)
+                    {
+                        instance2.m_citizens.m_buffer[(int)((UIntPtr)citizen)].SetVehicle(citizen, vehicleID, 0u);
+                        if (instance2.m_citizens.m_buffer[(int)((UIntPtr)citizen)].m_vehicle != vehicleID)
+                        {
+                            vehicleData.m_transferSize = (ushort)this.m_criminalCapacity;
+                            return;
+                        }
+                        instance2.m_citizens.m_buffer[(int)((UIntPtr)citizen)].Arrested = true;
+                        ushort instance3 = instance2.m_citizens.m_buffer[(int)((UIntPtr)citizen)].m_instance;
+                        if (instance3 != 0)
+                        {
+                            instance2.ReleaseCitizenInstance(instance3);
+                        }
+                        instance2.m_citizens.m_buffer[(int)((UIntPtr)citizen)].CurrentLocation = Citizen.Location.Moving;
+                        if ((int)(vehicleData.m_transferSize += 1) >= this.m_criminalCapacity)
+                        {
+                            return;
+                        }
+                    }
+                }
+                num = nextUnit;
+                if (++num2 > 524288)
+                {
+                    CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
+                    break;
+                }
+            }
+        }
+
+        private bool ShouldReturnToSource(ushort vehicleID, ref Vehicle data)
 		{
 			if (data.m_sourceBuilding != 0)
 			{
