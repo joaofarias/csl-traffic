@@ -21,7 +21,7 @@ namespace CSL_Traffic
             UseRealisticSpeeds = 8,
             NoDespawn = 16,
             ImprovedAI = 32,
-            DisableCustomRoads,
+            DisableCustomRoads = 64,
             //noStopForCrossing = 64,
 
             // bits 55 to 62 reserved for beta tests that won't have their own option
