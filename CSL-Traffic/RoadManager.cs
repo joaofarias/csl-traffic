@@ -77,7 +77,7 @@ namespace CSL_Traffic
                 }
                 catch (Exception e)
                 {
-                    Logger.LogInfo("Unexpected " + e.GetType().Name + " loading road data.");
+                    Logger.LogError("Unexpected " + e.GetType().Name + " loading road data.");
                 }
                 finally
                 {
@@ -97,10 +97,11 @@ namespace CSL_Traffic
                 {
                     binaryFormatter.Serialize(memStream, RoadManager.sm_lanes);
                     serializableDataManager.SaveData(LANE_DATA_ID, memStream.ToArray());
+                    Logger.LogInfo("Finished saving road data!");
                 }
                 catch (Exception e)
                 {
-                    Logger.LogInfo("Unexpected " + e.GetType().Name + " saving road data.");
+                    Logger.LogError("Unexpected " + e.GetType().Name + " saving road data.");
                 }
                 finally
                 {
