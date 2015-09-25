@@ -115,36 +115,75 @@ namespace CSL_Traffic
                         }
                     }
                 }
+                /* -------------------- Congestion Changes ------------------------- */
+                // Not everything is new. Changes are commented
                 if ((ulong)(currentFrameIndex >> 4 & 15u) == (ulong)((long)(leaderID & 15)))
                 {
                     bool flag3 = false;
                     uint path = leaderData.m_path;
                     int num9 = b >> 1;
-                    int j = 0;
+                    int j = 0, count = 0; // the count variable is used to keep track of how many of the next 5 lanes are congested
+                    //int j = 0;
                     while (j < 5)
                     {
                         bool flag4;
                         if (PathUnit.GetNextPosition(ref path, ref num9, out pathPos, out flag4))
                         {
                             uint laneID3 = PathManager.GetLaneID(pathPos);
-                            if (laneID3 != 0u && !instance.m_lanes.m_buffer[(int)((UIntPtr)laneID3)].CheckSpace(num7))
+                            if (laneID3 != 0 && !instance.m_lanes.m_buffer[(int)((UIntPtr)laneID3)].CheckSpace(num7))
                             {
                                 j++;
+                                ++count; // this lane is congested so increase count
                                 continue;
                             }
                         }
                         if (flag4)
                         {
                             (carAI as IVehicle).InvalidPath(vehicleID, ref vehicleData, leaderID, ref leaderData);
+                            // flag it as not congested and set count to -1 so that it is neither congested nor completely clear
+                            // this is needed here because, contrary to the default code, it does not leave the cycle below
+                            if ((CSLTraffic.Options & OptionsManager.ModOptions.ImprovedAI) == OptionsManager.ModOptions.ImprovedAI)
+                            {
+                                flag3 = true;
+                                count = -1;
+                                break;
+                            }
                         }
                         flag3 = true;
-                        break;
+                        ++j;
+                        if ((CSLTraffic.Options & OptionsManager.ModOptions.ImprovedAI) != OptionsManager.ModOptions.ImprovedAI)
+                        {
+                            break;
+                        }
+                        // the default code would leave the cycle at this point since it found a non congested lane.
+                        // this has been changed so that vehicles detect congestions a few lanes in advance.
+                        // I am yet to test the performance impact this particular "feature" has.
                     }
-                    if (!flag3)
+
+                    if ((CSLTraffic.Options & OptionsManager.ModOptions.ImprovedAI) == OptionsManager.ModOptions.ImprovedAI)
+                    {
+                        // if at least 2 out of the next 5 lanes are congested and it hasn't tried to find a new path yet, then calculates a new path and flags it as such
+                        // the amounf of congested lanes necessary to calculate a new path can be tweaked to reduce the amount of new paths being calculated, if performance in bigger cities is severely affected
+                        if (count >= 2 && (leaderData.m_flags & (Vehicle.Flags)1073741824) == 0)
+                        {
+                            leaderData.m_flags |= (Vehicle.Flags)1073741824;
+                            (carAI as IVehicle).InvalidPath(vehicleID, ref vehicleData, leaderID, ref leaderData);
+                        }
+                        // if none of the next 5 lanes is congested and the vehicle has already searched for a new path, then it successfully avoided a congestion and the flag is cleared
+                        else if (count == 0 && (leaderData.m_flags & (Vehicle.Flags)1073741824) != 0)
+                        {
+                            leaderData.m_flags &= ~((Vehicle.Flags)1073741824);
+                        }
+                        // default congestion behavior
+                        else if (!flag3)
+                            leaderData.m_flags |= Vehicle.Flags.Congestion;
+                    }
+                    else if (!flag3)
                     {
                         leaderData.m_flags |= Vehicle.Flags.Congestion;
                     }
                 }
+                /* ----------------------------------------------------------------- */
             }
             float num10;
             if ((leaderData.m_flags & Vehicle.Flags.Stopped) != Vehicle.Flags.None)

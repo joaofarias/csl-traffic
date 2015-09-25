@@ -1017,7 +1017,17 @@ namespace CSL_Traffic
 						{
 							num13 *= 2f;
 						}
-						if (this.m_prioritizeBusLanes)
+                        if ((CSLTraffic.Options & OptionsManager.ModOptions.ImprovedAI) == OptionsManager.ModOptions.ImprovedAI)
+                        {
+                            /* ----- Congestion Changes ----- */
+                            // Checks if the lane has space for a vehicle of length 5. If not, increase its cost to avoid it. 
+                            if (!instance.m_lanes.m_buffer[num2].CheckSpace(5)) // the length used here can be tweaked for different results. Haven't had time to test it yet
+                            {
+                                num13 *= 3f; // the factor of cost increase can also be tweaked to achieve different results
+                            }
+                        }
+                        /* ------------------------------ */
+                        if (this.m_prioritizeBusLanes)
 						{
 							NetInfoLane customLane2 = lane2 as NetInfoLane;
 							if (customLane2 != null && customLane2.m_specialLaneType == NetInfoLane.SpecialLaneType.BusLane)

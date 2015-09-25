@@ -1176,6 +1176,15 @@ namespace CSL_Traffic
             pedestrianRoad.m_lanes[0].m_position = -4f;
             pedestrianRoad.m_lanes[0].m_width = 2f;
 
+            NetInfo pedestrianVanilla = beautificationCollection.m_prefabs.FirstOrDefault(p => p.name == "Pedestrian Pavement");
+            if (pedestrianVanilla != null)
+            {
+                pedestrianRoad.m_lanes[0].m_laneProps = NetLaneProps.CreateInstance<NetLaneProps>();
+                pedestrianRoad.m_lanes[0].m_laneProps.m_props = new NetLaneProps.Prop[1];
+                Array.Copy(pedestrianVanilla.m_lanes[0].m_laneProps.m_props, pedestrianRoad.m_lanes[0].m_laneProps.m_props, 1);
+                pedestrianRoad.m_lanes[0].m_laneProps.m_props[0].m_position.x = 0.0f;
+            }
+
             pedestrianRoad.m_lanes[1].m_position = 4f;
             pedestrianRoad.m_lanes[1].m_width = 2f;
 

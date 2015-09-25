@@ -384,8 +384,9 @@ namespace CSL_Traffic
 				uint laneId = segment.m_lanes;
 				for (int j = 0; j < lanes.Length && laneId != 0; j++)
 				{
-					if ((lanes[j].m_laneType & NetInfo.LaneType.Vehicle) == NetInfo.LaneType.Vehicle)
-					{
+                    //if ((lanes[j].m_laneType & (NetInfo.LaneType.Vehicle | NetInfo.LaneType.TransportVehicle)) != NetInfo.LaneType.None)
+                    if ((lanes[j].m_laneType & NetInfo.LaneType.Vehicle) == NetInfo.LaneType.Vehicle)
+                    {
 						Vector3 pos = Vector3.zero;
 						NetInfo.Direction laneDir = ((segment.m_flags & NetSegment.Flags.Invert) == NetSegment.Flags.None) ? lanes[j].m_finalDirection : NetInfo.InvertDirection(lanes[j].m_finalDirection);
 
@@ -471,9 +472,10 @@ namespace CSL_Traffic
 				for (int j = 0; j < laneCount && laneId != 0; j++)
 				{
 					NetLane lane = NetManager.instance.m_lanes.m_buffer[laneId];
-					
-					if ((info.m_lanes[j].m_laneType & NetInfo.LaneType.Vehicle) == NetInfo.LaneType.Vehicle)
-					{
+
+                    //if ((info.m_lanes[j].m_laneType & (NetInfo.LaneType.Vehicle | NetInfo.LaneType.TransportVehicle)) != NetInfo.LaneType.None)
+                    if ((info.m_lanes[j].m_laneType & NetInfo.LaneType.Vehicle) == NetInfo.LaneType.Vehicle)
+                    {
 						Bezier3 bezier = lane.m_bezier;
 						bezier.GetBounds().Expand(1f);
 
@@ -575,7 +577,7 @@ namespace CSL_Traffic
 							}
 						}
 
-						RenderManager.instance.OverlayEffect.DrawCircle(cameraInfo, laneMarker.m_color, laneMarker.m_position, laneMarker.m_size, -1f, 1280f, false, true);
+						RenderManager.instance.OverlayEffect.DrawCircle(cameraInfo, laneMarker.m_color, laneMarker.m_position, laneMarker.m_size, laneMarker.m_position.y - 1f, laneMarker.m_position.y + 1f, true, true);
 					}
 				}
 			}
@@ -590,14 +592,13 @@ namespace CSL_Traffic
 					FastList<SegmentLaneMarker> laneMarkers = keyValuePair.Value;
 					for (int i = 0; i < laneMarkers.m_size; i++)
 					{
-						RenderManager.instance.OverlayEffect.DrawBezier(cameraInfo, new Color(0f, 0f, 1f, 0.75f), laneMarkers.m_buffer[i].m_bezier, renderBig ? 2f : laneMarkers.m_buffer[i].m_size, 0, 0, -1f, 1280f, false, false);
-						//RenderUndergroundLane(laneMarkers.m_buffer[i].m_bezier, new Color(0f, 0f, 1f, 0.75f), renderBig ? 2f : laneMarkers.m_buffer[i].m_size);
+						RenderManager.instance.OverlayEffect.DrawBezier(cameraInfo, new Color(0f, 0f, 1f, 0.75f), laneMarkers.m_buffer[i].m_bezier, renderBig ? 2f : laneMarkers.m_buffer[i].m_size, 0, 0, Mathf.Min(laneMarkers.m_buffer[i].m_bezier.a.y, laneMarkers.m_buffer[i].m_bezier.d.y) - 1f, Mathf.Max(laneMarkers.m_buffer[i].m_bezier.a.y, laneMarkers.m_buffer[i].m_bezier.d.y) + 1f, true, false);
 					}
 				}
 
 				foreach (SegmentLaneMarker marker in m_selectedLaneMarkers)
 				{
-					RenderManager.instance.OverlayEffect.DrawBezier(cameraInfo, new Color(0f, 1f, 0f, 0.75f), marker.m_bezier, 2f, 0, 0, -1f, 1280f, false, false);
+					RenderManager.instance.OverlayEffect.DrawBezier(cameraInfo, new Color(0f, 1f, 0f, 0.75f), marker.m_bezier, 2f, 0, 0, Mathf.Min(marker.m_bezier.a.y, marker.m_bezier.d.y) - 1f, Mathf.Max(marker.m_bezier.a.y, marker.m_bezier.d.y) + 1f, true, false);
 				}
 			}
 
@@ -626,7 +627,7 @@ namespace CSL_Traffic
 			if (m_hoveredNode != 0)
 			{
 				NetNode node = NetManager.instance.m_nodes.m_buffer[m_hoveredNode];
-				RenderManager.instance.OverlayEffect.DrawCircle(cameraInfo, new Color(0f, 0f, 0.5f, 0.75f), node.m_position, 15f, -1f, 1280f, false, true);
+				RenderManager.instance.OverlayEffect.DrawCircle(cameraInfo, new Color(0f, 0f, 0.5f, 0.75f), node.m_position, 15f, node.m_position.y - 1f, node.m_position.y + 1f, true, true);
 			}
 		}
 
@@ -643,63 +644,7 @@ namespace CSL_Traffic
 			bezier.d = end;
 			NetSegment.CalculateMiddlePoints(bezier.a, (middlePoint - bezier.a).normalized, bezier.d, (middlePoint - bezier.d).normalized, false, false, out bezier.b, out bezier.c);
 
-			RenderManager.instance.OverlayEffect.DrawBezier(cameraInfo, color, bezier, size, 0, 0, -1f, 1280f, false, true);
-		}
-
-		void RenderUndergroundLane(Vector3 start, Vector3 end, Vector3 middlePoint, Color color, float size = 0.1f)
-		{
-			Bezier3 bezier;
-			bezier.a = start;
-			bezier.d = end;
-			NetSegment.CalculateMiddlePoints(bezier.a, (middlePoint - bezier.a).normalized, bezier.d, (middlePoint - bezier.d).normalized, false, false, out bezier.b, out bezier.c);
-
-			RenderUndergroundLane(bezier, color, size);
-		}
-
-		// FIXME: Lines aren't always drawn
-		void RenderUndergroundLane(Bezier3 bezier, Color color, float size)
-		{
-			Material mat = new Material(Shader.Find("Legacy Shaders/VertexLit"));
-			mat.color = color;
-			Mesh quadMesh = new Mesh();
-			Vector3 start = bezier.Position(0f);
-			for (int i = 1; i <= 10; i++)
-			{
-				Vector3 end = bezier.Position(i / 10f);
-				Vector3 normal = Vector3.up; //Vector3.Cross(start, end);
-				Vector3 side = Vector3.Cross(normal, end - start);
-				side.Normalize();
-
-				Vector3[] vertices = new Vector3[]
-				{
-					start + side * (size / 2f) + Vector3.up * 0.1f,
-					start + side * (-size / 2f) + Vector3.up * 0.1f,
-					end + side * (size / 2f) + Vector3.up * 0.1f,
-					end + side * (-size / 2f) + Vector3.up * 0.1f,
-				};				
-				quadMesh.vertices = vertices;
-
-				int[] tri = new int[]
-				{
-					0, 1, 3,
-					3, 2, 0
-				};
-				quadMesh.triangles = tri;
-
-				Vector3[] normals = new Vector3[]
-				{
-					normal, normal, normal, normal
-				};
-				quadMesh.normals = normals;
-
-				if (mat.SetPass(0))
-					Graphics.DrawMeshNow(quadMesh, Matrix4x4.identity);
-				//else
-				//	System.IO.File.AppendAllText("RenderMesh.txt", "NO GO!!\n");
-					//Graphics.DrawMesh(quadMesh, Vector3.zero, Quaternion.identity, mat);
-
-				start = end;
-			}
+			RenderManager.instance.OverlayEffect.DrawBezier(cameraInfo, color, bezier, size, 0, 0, Mathf.Min(bezier.a.y, bezier.d.y) - 1f, Mathf.Max(bezier.a.y, bezier.d.y) + 1f, true, true);
 		}
 
 		bool RayCastSegmentAndNode(out RaycastOutput output)
