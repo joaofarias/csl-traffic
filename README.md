@@ -19,7 +19,7 @@ The goal of this mod is to improve traffic in Cities: Skylines by adding new roa
 - Other Features:
 	- Multi-track Station Enabler (via Sims Firehouse)
 	- Realistic Speeds (optional)
-	- Prevent vehicle despawn (optionak, via CBeTHaX)
+	- Prevent vehicle despawn (optional, via CBeTHaX)
 
 # Roadmap
 - Allow info overlays to be active while building roads
